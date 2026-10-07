@@ -604,8 +604,8 @@ let canSave = true;
     if (!downloads) {
       canSave = false;
       $$('[data-save]').forEach((b) => (b.hidden = true));
-      const note = $('#files-note');
-      if (note) note.hidden = false;
+      $('#files-hint').hidden = true;
+      $('#files-note').hidden = false;
     }
   }
 })();
@@ -642,6 +642,23 @@ function renderFrame() {
 $('#save-png').addEventListener('click', () => {
   renderFrame();
   renderer.domElement.toBlob((blob) => blob && offer('kawasaki-zx6r-2019.png', blob), 'image/png');
+});
+// self-contained copy of this page (three.js inlined) to open from disk
+const offlineBtn = $('#save-offline');
+if (location.protocol === 'file:') {
+  offlineBtn.hidden = true;
+  $('#hint-offline').hidden = true;
+}
+offlineBtn.addEventListener('click', async () => {
+  say('กำลังเตรียมไฟล์ HTML…');
+  try {
+    const res = await fetch(offlineBtn.dataset.src);
+    if (!res.ok) throw new Error(String(res.status));
+    const blob = await res.blob();
+    offer('kawasaki-zx6r-2019.html', new Blob([blob], { type: 'text/html' }));
+  } catch {
+    say('ดาวน์โหลดไฟล์ HTML ไม่ได้ ลองดาวน์โหลดจาก GitHub แทน');
+  }
 });
 $('#save-glb').addEventListener('click', () => {
   say('กำลังเตรียมไฟล์ GLB…');

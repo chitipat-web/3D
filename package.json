@@ -7,7 +7,10 @@
   "scripts": {
     "serve": "npx http-server -c-1 -p 8080 .",
     "render": "node tools/render.mjs",
-    "export": "node tools/export-glb.mjs"
+    "export": "node tools/export-glb.mjs krt && node tools/export-glb.mjs gray",
+    "export:usdz": "node tools/export-glb.mjs krt usdz && node tools/fix-usdz.mjs models/kawasaki-zx6r-2019.usdz",
+    "standalone": "node tools/build-standalone.mjs",
+    "build:artifact": "node tools/build-artifact.mjs"
   },
   "devDependencies": {
     "delaunator": "^5.0.1",

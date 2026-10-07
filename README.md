@@ -24,12 +24,24 @@
 - **ไฟล์**: บันทึกภาพ PNG และดาวน์โหลดโมเดล GLB
 - ภาพมีเงาในซอกด้วย ambient occlusion และไฟ LED มีแสงฟุ้ง (bloom) ถ้าเครื่องช้าจะลดคุณภาพลงเอง
 
+## เปิดนอกเว็บ
+
+| ใช้กับ | วิธีเปิด |
+| --- | --- |
+| คอม (Windows / Mac / Linux) | ดาวน์โหลด [`offline/kawasaki-zx6r-2019.html`](offline/kawasaki-zx6r-2019.html) แล้วดับเบิลคลิก เปิดใน Chrome, Edge, Safari หรือ Firefox ได้ทันที ไม่ต้องต่อเน็ต ไม่ต้องล็อกอิน ส่งต่อให้คนอื่นทาง LINE หรืออีเมลได้ |
+| Android | ดาวน์โหลดไฟล์ HTML เดียวกัน แล้วเลือกเปิดด้วย Chrome |
+| iPhone / iPad | ดาวน์โหลด [`models/kawasaki-zx6r-2019.usdz`](models/kawasaki-zx6r-2019.usdz) แล้วแตะเปิดจากแอป Files จะหมุนดูแบบ 3 มิติได้ และกด AR เพื่อวางรถขนาดจริงในห้อง |
+| Blender และโปรแกรม 3D อื่น | เปิด `models/kawasaki-zx6r-2019.glb` (File → Import → glTF 2.0) |
+| ลิงก์ที่ใครก็เปิดได้ | เปิด GitHub Pages ของ repo นี้: Settings → Pages → Source: Deploy from a branch → `main` / `(root)` → Save แล้วจะได้ลิงก์ `https://chitipat-web.github.io/3D/` |
+
 ## ไฟล์ที่ใช้งานได้ทันที
 
 | ไฟล์ | ใช้ทำอะไร |
 | --- | --- |
 | `models/kawasaki-zx6r-2019.glb` | โมเดลสี KRT Edition (Lime Green / Ebony / Graphite Gray) เปิดได้ใน Blender, Windows 3D Viewer, https://gltf-viewer.donmccurdy.com ฯลฯ |
 | `models/kawasaki-zx6r-2019-gray.glb` | โมเดลสี Pearl Storm Gray / Metallic Spark Black |
+| `models/kawasaki-zx6r-2019.usdz` | โมเดลสี KRT สำหรับ iPhone/iPad (AR Quick Look) ขนาดจริง |
+| `offline/kawasaki-zx6r-2019.html` | หน้าดูโมเดลแบบไฟล์เดียว เปิดจากเครื่องได้โดยไม่ต้องต่อเน็ต |
 | `index.html` | หน้าเว็บดูโมเดล (รายละเอียดด้านบน) |
 
 ไฟล์ GLB ใช้หน่วยเมตร ขนาดจริง (แกน +X ไปทางหน้ารถ, +Y ขึ้นบน) ประมาณ 198,000 สามเหลี่ยม แยกชิ้นส่วนตามชื่อ
@@ -93,8 +105,10 @@ src/
   vendor/          delaunator (ISC) สำหรับ triangulation
 tools/
   render.mjs           เรนเดอร์ภาพนิ่งด้วย Chromium แบบ headless
-  export-glb.mjs       ส่งออกไฟล์ GLB  (node tools/export-glb.mjs [krt|gray])
-  build-artifact.mjs   รวมหน้าเว็บเป็นไฟล์เดียว
+  export-glb.mjs       ส่งออกไฟล์ GLB/USDZ  (node tools/export-glb.mjs [krt|gray] [glb|usdz])
+  fix-usdz.mjs         แก้ชนิดข้อมูลใน USDZ ให้ผ่านตัวตรวจของ USD และจัดไฟล์ในแพ็กเกจให้ตรงสเปก
+  build-standalone.mjs สร้างหน้าดูโมเดลแบบไฟล์เดียวเปิดออฟไลน์ (offline/)
+  build-artifact.mjs   รวมหน้าเว็บเป็นไฟล์เดียวสำหรับ Claude Artifact
   check-geometry.mjs   ตรวจหา normal/ตำแหน่งที่ผิดปกติในทุก mesh
 ```
 

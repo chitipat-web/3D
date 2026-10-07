@@ -135,7 +135,8 @@ h1 .yr { font-style: normal; font-weight: 500; color: var(--muted); font-size: 0
 .tabs [role="tab"][aria-selected="true"] { color: var(--fg); box-shadow: inset 0 -2px 0 var(--accent); }
 .tabs [role="tab"]:hover { color: var(--fg); }
 .panel { padding: 11px 12px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; min-height: 56px; box-sizing: border-box; }
-.panel .hint { flex-basis: 100%; text-align: center; margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.panel .hint { flex-basis: 100%; text-align: center; margin: 2px 0 0; font-size: 12px; color: var(--muted); text-wrap: balance; }
+.panel .hint a { color: inherit; text-decoration: underline; text-underline-offset: 2px; }
 .sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 2px; }
 .rpm { font: 500 13px/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; text-align: center; }
 #engine-start[aria-pressed="true"] { background: #c7302d; border-color: #c7302d; color: #fff; }
@@ -302,8 +303,10 @@ button[aria-pressed="true"] { background: var(--accent); border-color: var(--acc
   </div>
   <div class="panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden>
     <button type="button" id="save-png" data-save>บันทึกภาพ PNG</button>
-    <button type="button" id="save-glb" data-save>ดาวน์โหลดโมเดล GLB</button>
-    <p class="hint" id="files-note" hidden>หน้านี้บันทึกไฟล์ไม่ได้ ดาวน์โหลด GLB ได้จาก GitHub: chitipat-web/3D</p>
+    <button type="button" id="save-glb" data-save>โมเดล GLB</button>
+    <button type="button" id="save-offline" data-save data-src="offline/kawasaki-zx6r-2019.html">เปิดนอกเว็บ (ไฟล์ HTML)</button>
+    <p class="hint" id="files-hint"><span id="hint-offline">ไฟล์ HTML ดับเบิลคลิกเปิดในเบราว์เซอร์ได้เลย ไม่ต้องต่อเน็ต · </span>ไฟล์ AR สำหรับ iPhone (USDZ) อยู่ที่ <a href="https://github.com/chitipat-web/3D/tree/main/models" target="_blank" rel="noopener">GitHub</a></p>
+    <p class="hint" id="files-note" hidden>หน้านี้บันทึกไฟล์ไม่ได้ ดาวน์โหลดได้จาก <a href="https://github.com/chitipat-web/3D" target="_blank" rel="noopener">GitHub: chitipat-web/3D</a></p>
   </div>
 </nav>
 <section class="card" id="hotspot-card" hidden aria-live="polite">
