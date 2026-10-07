@@ -1,5 +1,7 @@
 # Kawasaki Ninja ZX-6R 2019 — โมเดล 3 มิติ
 
+**ดูออนไลน์: https://chitipat-web.github.io/3D/**
+
 โมเดล 3 มิติของ **Kawasaki Ninja ZX-6R ปี 2019 (ZX636G)** สร้างด้วยโค้ด three.js ทั้งคัน
 ไม่ได้ใช้ไฟล์โมเดลหรือรูปภาพจากภายนอก สัดส่วนอิงจากสเปกจริง และรูปทรงแฟริ่งลอกจากภาพถ่ายด้านข้างของรถจริง
 ที่ปรับสเกลด้วยฐานล้อ 1,400 mm
@@ -32,7 +34,7 @@
 | Android | ดาวน์โหลดไฟล์ HTML เดียวกัน แล้วเลือกเปิดด้วย Chrome |
 | iPhone / iPad | ดาวน์โหลด [`models/kawasaki-zx6r-2019.usdz`](models/kawasaki-zx6r-2019.usdz) แล้วแตะเปิดจากแอป Files จะหมุนดูแบบ 3 มิติได้ และกด AR เพื่อวางรถขนาดจริงในห้อง |
 | Blender และโปรแกรม 3D อื่น | เปิด `models/kawasaki-zx6r-2019.glb` (File → Import → glTF 2.0) |
-| ลิงก์ที่ใครก็เปิดได้ | เปิด GitHub Pages ของ repo นี้: Settings → Pages → Source: Deploy from a branch → `main` / `(root)` → Save แล้วจะได้ลิงก์ `https://chitipat-web.github.io/3D/` |
+| ลิงก์ที่ใครก็เปิดได้ | **https://chitipat-web.github.io/3D/** เปิดได้ทุกเครื่องโดยไม่ต้องล็อกอิน บนมือถือมีปุ่ม "ดูขนาดจริงใน AR" (iPhone ใช้ AR Quick Look, Android ใช้ Scene Viewer) |
 
 ## ไฟล์ที่ใช้งานได้ทันที
 
@@ -84,6 +86,14 @@ npm run serve        # แล้วเปิด http://localhost:8080
   หม้อพักใต้เครื่อง, ปลายท่อสแตนเลสเหลี่ยม, โซ่และสเตอร์ 15/43 ฟัน, เกียร์โยง, ขาตั้งข้าง
 - **หน้าปัด**: เข็มวัดรอบหน้าปัดขาว 0–16 (โซนแดง 15,000 rpm ขึ้นไป) และจอ LCD แสดงเกียร์/ความเร็ว
 - **สีและลาย**: KRT Edition และ Pearl Storm Gray วาดด้วย canvas ในโค้ด
+
+## อัปเดตเว็บ
+
+เว็บ GitHub Pages ดึงไฟล์จาก branch `gh-pages` ซึ่งเป็นสำเนาของ `main` หลังแก้ไขและ push `main` แล้ว ให้อัปเดตเว็บด้วย
+
+```bash
+git push origin main:gh-pages
+```
 
 ## โครงสร้างโค้ด
 
