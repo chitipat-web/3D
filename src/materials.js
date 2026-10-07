@@ -1,0 +1,125 @@
+// Material library and liveries for the ZX-6R model.
+import * as THREE from 'three';
+
+export const LIVERIES = {
+  krt: {
+    id: 'krt',
+    name: 'KRT Edition',
+    colors: 'Lime Green / Ebony / Metallic Graphite Gray',
+    primary: { color: '#58b81c', metalness: 0.08, roughness: 0.28 },
+    body: { color: '#0a0b0d', metalness: 0.2, roughness: 0.26 },
+    accent: { color: '#4a4e53', metalness: 0.55, roughness: 0.35 },
+    stripeA: '#5cbc1e', // lime green
+    stripeB: '#d9e23a', // yellow-green
+    stripeC: '#c9ced3', // silver line
+    stripeD: '#4a4e53', // graphite panel
+    rim: '#62c02c',
+    script: '#ffffff',
+    screenTint: '#9fd28a',
+  },
+  gray: {
+    id: 'gray',
+    name: 'Pearl Storm Gray',
+    colors: 'Pearl Storm Gray / Metallic Spark Black',
+    primary: { color: '#8b9096', metalness: 0.45, roughness: 0.3 },
+    body: { color: '#121316', metalness: 0.45, roughness: 0.3 },
+    accent: { color: '#5d6168', metalness: 0.55, roughness: 0.33 },
+    stripeA: '#9aa0a6',
+    stripeB: '#c8343a',
+    stripeC: '#d4d8dc',
+    stripeD: '#5d6168',
+    rim: '#c8343a',
+    script: '#e9ecef',
+    screenTint: '#a9b2b8',
+  },
+};
+
+const std = (o) => new THREE.MeshStandardMaterial(o);
+const phys = (o) => new THREE.MeshPhysicalMaterial(o);
+
+export function createMaterials() {
+  const M = {
+    // ---- livery driven paint
+    primary: phys({ color: '#5fb52a', roughness: 0.32, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
+    body: phys({ color: '#0b0c0e', roughness: 0.3, metalness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
+    accent: phys({ color: '#4a4e53', roughness: 0.35, metalness: 0.55, clearcoat: 1, clearcoatRoughness: 0.06, side: THREE.DoubleSide }),
+    decalSide: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
+    decalTank: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
+    decalTail: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
+    rimStripe: std({ color: '#62c02c', roughness: 0.35, metalness: 0.1 }),
+
+    // ---- plastics, rubber, trim
+    plastic: std({ color: '#121315', roughness: 0.62, metalness: 0.0, side: THREE.DoubleSide }),
+    plasticGloss: phys({ color: '#0d0e10', roughness: 0.25, metalness: 0.1, clearcoat: 0.6, side: THREE.DoubleSide }),
+    rubber: std({ color: '#141414', roughness: 0.9, metalness: 0 }),
+    tire: std({ color: '#161616', roughness: 0.82, metalness: 0 }),
+    seat: std({ color: '#151516', roughness: 0.78, metalness: 0, side: THREE.DoubleSide }),
+    seatStitch: std({ color: '#2a2b2d', roughness: 0.8 }),
+
+    // ---- metals
+    wheel: phys({ color: '#0c0c0d', roughness: 0.28, metalness: 0.35, clearcoat: 0.8, clearcoatRoughness: 0.08 }),
+    chrome: std({ color: '#f2f4f6', roughness: 0.06, metalness: 1 }),
+    steel: std({ color: '#c3c7cc', roughness: 0.3, metalness: 1 }),
+    disc: std({ color: '#b4b8bd', roughness: 0.26, metalness: 1 }),
+    alu: std({ color: '#b9bec4', roughness: 0.36, metalness: 1 }),
+    aluDark: std({ color: '#202226', roughness: 0.38, metalness: 0.75 }),
+    frame: phys({ color: '#141518', roughness: 0.42, metalness: 0.45, clearcoat: 0.4, clearcoatRoughness: 0.25 }),
+    forkOuter: std({ color: '#1b1c1f', roughness: 0.32, metalness: 0.7 }),
+    forkInner: std({ color: '#e8eaec', roughness: 0.05, metalness: 1 }),
+    engine: std({ color: '#8d9197', roughness: 0.42, metalness: 0.88 }),
+    engineDark: std({ color: '#2b2d31', roughness: 0.5, metalness: 0.6 }),
+    engineBlack: std({ color: '#17181a', roughness: 0.55, metalness: 0.4 }),
+    caliper: std({ color: '#2b2d31', roughness: 0.42, metalness: 0.55 }),
+    chain: std({ color: '#3d3e41', roughness: 0.4, metalness: 0.95 }),
+    sprocket: std({ color: '#9ea3a9', roughness: 0.3, metalness: 1 }),
+    exhaust: phys({ color: '#141517', roughness: 0.28, metalness: 0.65, clearcoat: 0.6 }),
+    exhaustTip: std({ color: '#d7dade', roughness: 0.14, metalness: 1 }),
+    exhaustHot: std({ color: '#9b8b78', roughness: 0.32, metalness: 1 }),
+    radiator: std({ color: '#1a1b1d', roughness: 0.7, metalness: 0.3 }),
+    bolt: std({ color: '#c9ccd0', roughness: 0.25, metalness: 1 }),
+    gold: std({ color: '#c8a24a', roughness: 0.3, metalness: 1 }),
+
+    // ---- glass and lights
+    screen: phys({ color: '#9fd28a', roughness: 0.03, metalness: 0, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false }),
+    lens: phys({ color: '#ffffff', roughness: 0.02, metalness: 0, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
+    lensRed: phys({ color: '#b3121b', roughness: 0.08, metalness: 0, transparent: true, opacity: 0.75, side: THREE.DoubleSide }),
+    headlightInner: std({ color: '#c8ccd2', roughness: 0.15, metalness: 1 }),
+    led: std({ color: '#ffffff', emissive: '#e9f3ff', emissiveIntensity: 2.4, roughness: 0.3 }),
+    ledRed: std({ color: '#ff2a2a', emissive: '#ff1010', emissiveIntensity: 1.6, roughness: 0.4 }),
+    amber: std({ color: '#ffae2a', emissive: '#ff8c00', emissiveIntensity: 0.25, roughness: 0.3 }),
+    reflector: std({ color: '#c0121c', roughness: 0.35, metalness: 0.2 }),
+    gauge: std({ color: '#ffffff', roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 0.25 }),
+    mesh: std({ color: '#0a0a0b', roughness: 0.8, metalness: 0.2, side: THREE.DoubleSide }),
+  };
+  for (const [k, m] of Object.entries(M)) m.name = k;
+  return M;
+}
+
+export function applyLivery(M, livery, textures) {
+  const L = LIVERIES[livery] || LIVERIES.krt;
+  const set = (mat, spec) => {
+    mat.color.set(spec.color);
+    mat.metalness = spec.metalness;
+    mat.roughness = spec.roughness;
+    mat.needsUpdate = true;
+  };
+  set(M.primary, L.primary);
+  set(M.body, L.body);
+  set(M.accent, L.accent);
+  M.rimStripe.color.set(L.rim);
+  M.screen.color.set(L.screenTint);
+  if (textures) {
+    for (const key of Object.keys(textures)) {
+      if (!M[key]) continue;
+      const t = textures[key](L);
+      if (t) {
+        if (M[key].map) M[key].map.dispose();
+        M[key].map = t;
+        M[key].metalness = L.body.metalness;
+        M[key].roughness = L.body.roughness;
+        M[key].needsUpdate = true;
+      }
+    }
+  }
+  return L;
+}

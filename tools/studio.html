@@ -1,0 +1,113 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>ZX-6R studio renders</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+<style>html,body{margin:0;background:#777}</style>
+</head>
+<body>
+<script type="module">
+import * as THREE from 'three';
+
+window.addEventListener('error', (e) => { window.__error = String(e.message || e); });
+window.addEventListener('unhandledrejection', (e) => { window.__error = String(e.reason && (e.reason.stack || e.reason)); });
+
+try {
+  const { buildZX6R } = await import('../src/zx6r.js');
+  const { createEnvironment, addStudioLights, createFloor } = await import('../src/studio.js');
+  const q = new URLSearchParams(location.search);
+  const W = +(q.get('w') || 1400), H = +(q.get('h') || 900);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(1);
+  renderer.setSize(W, H);
+  renderer.toneMapping = q.get('tm') === 'aces' ? THREE.ACESFilmicToneMapping : THREE.NeutralToneMapping;
+  renderer.toneMappingExposure = +(q.get('exp') || 1.0);
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.appendChild(renderer.domElement);
+
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color(q.get('bg') || '#cfd2d4');
+  const dark = q.get('dark') === '1';
+  scene.environment = createEnvironment(renderer, { dark });
+  scene.environmentIntensity = +(q.get('env') || 1.0);
+  addStudioLights(scene, { dark });
+  scene.add(createFloor(q.get('bg') || '#cfd2d4'));
+
+  const bike = buildZX6R({ livery: q.get('livery') || 'krt' });
+  bike.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
+  scene.add(bike);
+
+  if (q.get('ref')) {
+    // reference silhouette grid: 10 cm lines on a vertical plane at z = -0.5
+    const grid = new THREE.GridHelper(3, 30, 0xff0000, 0x999999);
+    grid.rotation.x = Math.PI / 2;
+    grid.position.set(0, 1.5, -0.4);
+    scene.add(grid);
+  }
+
+  const views = {
+    side: { p: [0, 0.58, 9.5], t: [0, 0.58, 0], fov: 14 },
+    left: { p: [0, 0.58, -9.5], t: [0, 0.58, 0], fov: 14 },
+    front34: { p: [2.7, 1.25, 2.6], t: [0.05, 0.55, 0], fov: 30 },
+    rear34: { p: [-2.8, 1.3, 2.3], t: [-0.1, 0.55, 0], fov: 30 },
+    front: { p: [6.5, 0.7, 0], t: [0, 0.6, 0], fov: 14 },
+    rear: { p: [-6.5, 0.8, 0], t: [0, 0.6, 0], fov: 14 },
+    top: { p: [0, 7.5, 0.0001], t: [0, 0, 0], fov: 18 },
+    photo: { p: [2.0, 0.95, 3.2], t: [0.0, 0.55, 0], fov: 33 },
+    leftfront: { p: [1.6, 1.4, -2.8], t: [0.05, 0.55, 0], fov: 32 },
+    nose: { p: [2.3, 1.0, 0.9], t: [0.75, 0.78, 0], fov: 26 },
+    detailRear: { p: [-1.2, 0.8, 1.6], t: [-0.55, 0.5, 0], fov: 30 },
+    cockpit: { p: [-0.6, 1.55, 0.25], t: [0.5, 0.85, 0], fov: 40 },
+  };
+  if (q.get('cam')) {
+    const v = q.get('cam').split(',').map(Number);
+    views.custom = { p: v.slice(0, 3), t: v.slice(3, 6), fov: v[6] || 30 };
+  }
+  const list = (q.get('views') || 'side,front34,rear34,front,top').split(',');
+  const camera = new THREE.PerspectiveCamera(30, W / H, 0.05, 100);
+  const shots = [];
+  for (const name of list) {
+    const v = views[name];
+    if (!v) continue;
+    camera.fov = v.fov;
+    camera.aspect = W / H;
+    camera.position.set(...v.p);
+    camera.lookAt(new THREE.Vector3(...v.t));
+    camera.updateProjectionMatrix();
+    renderer.render(scene, camera);
+    shots.push({ name: (q.get('prefix') || '') + name, data: renderer.domElement.toDataURL('image/png') });
+  }
+  if (q.get('export')) {
+    const { GLTFExporter } = await import('three/addons/exporters/GLTFExporter.js');
+    const glb = await new GLTFExporter().parseAsync(bike, { binary: true, onlyVisible: true });
+    const bytes = new Uint8Array(glb);
+    let bin = '';
+    for (let i = 0; i < bytes.length; i += 0x8000) bin += String.fromCharCode.apply(null, bytes.subarray(i, i + 0x8000));
+    window.__glb = btoa(bin);
+    const box = new THREE.Box3().setFromObject(bike);
+    window.__bbox = { min: box.min.toArray(), max: box.max.toArray() };
+  }
+  let tris = 0, meshes = 0;
+  bike.traverse((o) => { if (o.isMesh) { meshes++; const g = o.geometry; tris += (g.index ? g.index.count : g.attributes.position.count) / 3; } });
+  window.__stats = { meshes, tris: Math.round(tris), calls: renderer.info.render.calls };
+  if (q.get('meshstats')) {
+    const list = [];
+    bike.traverse((o) => { if (o.isMesh) { const g = o.geometry; list.push([o.name, (g.index ? g.index.count : g.attributes.position.count) / 3, g.attributes.position.count]); } });
+    list.sort((a, b) => b[1] - a[1]);
+    window.__stats.top = list.slice(0, 25).map(([n, t, v]) => `${n}:${Math.round(t)}t/${v}v`);
+  }
+  window.__shots = shots;
+} catch (e) {
+  window.__error = String(e && (e.stack || e));
+}
+</script>
+</body>
+</html>

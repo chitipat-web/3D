@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8">
+<title>GLB check</title>
+<script type="importmap">
+{ "imports": {
+  "three": "https://cdn.jsdelivr.net/npm/three@0.170.0/build/three.module.js",
+  "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.170.0/examples/jsm/"
+} }
+</script>
+</head>
+<body style="margin:0">
+<script type="module">
+// Loads the exported GLB with GLTFLoader (as any other app would) and renders it.
+import * as THREE from 'three';
+import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+try {
+  const q = new URLSearchParams(location.search);
+  const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
+  renderer.setSize(1100, 700);
+  renderer.toneMapping = THREE.NeutralToneMapping;
+  document.body.appendChild(renderer.domElement);
+  const scene = new THREE.Scene();
+  scene.background = new THREE.Color('#d6d9dd');
+  scene.environment = new THREE.PMREMGenerator(renderer).fromScene(new RoomEnvironment(), 0.04).texture;
+  scene.add(new THREE.DirectionalLight(0xffffff, 2).translateX(2).translateY(4).translateZ(3));
+  const gltf = await new GLTFLoader().loadAsync('../models/' + (q.get('file') || 'kawasaki-zx6r-2019.glb'));
+  scene.add(gltf.scene);
+  let meshes = 0, mats = new Set(), tex = new Set();
+  gltf.scene.traverse((o) => { if (o.isMesh) { meshes++; [].concat(o.material).forEach((m) => { mats.add(m.name); if (m.map) tex.add(m.map.uuid); }); } });
+  const cam = new THREE.PerspectiveCamera(32, 1100 / 700, 0.05, 50);
+  cam.position.set(2.4, 1.1, 2.3);
+  cam.lookAt(0.05, 0.55, 0);
+  renderer.render(scene, cam);
+  window.__stats = { meshes, materials: mats.size, textures: tex.size, extensions: gltf.parser.json.extensionsUsed || [] };
+  window.__shots = [{ name: 'glb_' + (q.get('file') || 'krt').replace('.glb', ''), data: renderer.domElement.toDataURL('image/png') }];
+} catch (e) { window.__error = String(e.stack || e); }
+</script>
+</body>
+</html>
