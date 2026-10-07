@@ -643,6 +643,35 @@ $('#save-png').addEventListener('click', () => {
   renderFrame();
   renderer.domElement.toBlob((blob) => blob && offer('kawasaki-zx6r-2019.png', blob), 'image/png');
 });
+// AR: iPhone/iPad (AR Quick Look, USDZ) and Android (Scene Viewer, GLB).
+// Shown only where the model files are served next to the page.
+(async () => {
+  const link = $('#ar-link');
+  if (!link || location.protocol === 'file:') return;
+  const a = document.createElement('a');
+  const quickLook = !!(a.relList && a.relList.supports && a.relList.supports('ar'));
+  const android = /Android/i.test(navigator.userAgent);
+  if (!quickLook && !android) return;
+  const file = quickLook ? 'models/kawasaki-zx6r-2019.usdz' : 'models/kawasaki-zx6r-2019.glb';
+  try {
+    const res = await fetch(file, { method: 'HEAD' });
+    if (!res.ok) return;
+  } catch {
+    return;
+  }
+  if (android) {
+    const abs = new URL(file, location.href).href;
+    const fallback = encodeURIComponent(location.href);
+    link.removeAttribute('rel');
+    link.href =
+      'intent://arvr.google.com/scene-viewer/1.0?file=' + encodeURIComponent(abs) + '&mode=ar_preferred&title=' +
+      encodeURIComponent('Kawasaki Ninja ZX-6R 2019') +
+      '#Intent;scheme=https;package=com.google.android.googlequicksearchbox;action=android.intent.action.VIEW;S.browser_fallback_url=' +
+      fallback + ';end;';
+  }
+  link.hidden = false;
+})();
+
 // self-contained copy of this page (three.js inlined) to open from disk
 const offlineBtn = $('#save-offline');
 if (location.protocol === 'file:') {
