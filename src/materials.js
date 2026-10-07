@@ -12,7 +12,8 @@ export const LIVERIES = {
     stripeA: '#5cbc1e', // lime green
     stripeB: '#d9e23a', // yellow-green
     stripeC: '#c9ced3', // silver line
-    stripeD: '#4a4e53', // graphite panel
+    stripeD: '#43474c', // graphite panel
+    tankLogo: '#16181b',
     rim: '#62c02c',
     script: '#ffffff',
     screenTint: '#9fd28a',
@@ -28,6 +29,7 @@ export const LIVERIES = {
     stripeB: '#c8343a',
     stripeC: '#d4d8dc',
     stripeD: '#5d6168',
+    tankLogo: '#c8343a',
     rim: '#c8343a',
     script: '#e9ecef',
     screenTint: '#a9b2b8',
@@ -43,9 +45,13 @@ export function createMaterials() {
     primary: phys({ color: '#5fb52a', roughness: 0.32, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
     body: phys({ color: '#0b0c0e', roughness: 0.3, metalness: 0.15, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
     accent: phys({ color: '#4a4e53', roughness: 0.35, metalness: 0.55, clearcoat: 1, clearcoatRoughness: 0.06, side: THREE.DoubleSide }),
-    decalSide: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
+    decalSide: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.09, side: THREE.DoubleSide }),
     decalTank: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
     decalTail: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
+    decalSideL: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.09, side: THREE.DoubleSide }),
+    decalFront: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
+    tankLogo: std({ color: '#ffffff', roughness: 0.3, metalness: 0, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }),
+    screenBand: phys({ color: '#101214', roughness: 0.1, metalness: 0, transparent: true, opacity: 0.82, side: THREE.DoubleSide }),
     rimStripe: std({ color: '#62c02c', roughness: 0.35, metalness: 0.1 }),
 
     // ---- plastics, rubber, trim
@@ -58,10 +64,10 @@ export function createMaterials() {
 
     // ---- metals
     wheel: phys({ color: '#0c0c0d', roughness: 0.28, metalness: 0.35, clearcoat: 0.8, clearcoatRoughness: 0.08 }),
-    chrome: std({ color: '#f2f4f6', roughness: 0.06, metalness: 1 }),
+    chrome: std({ color: '#f2f4f6', roughness: 0.06, metalness: 1, side: THREE.DoubleSide }),
     steel: std({ color: '#c3c7cc', roughness: 0.3, metalness: 1 }),
     disc: std({ color: '#b4b8bd', roughness: 0.26, metalness: 1 }),
-    alu: std({ color: '#b9bec4', roughness: 0.36, metalness: 1 }),
+    alu: std({ color: '#a3a9b0', roughness: 0.38, metalness: 1 }),
     aluDark: std({ color: '#202226', roughness: 0.38, metalness: 0.75 }),
     frame: phys({ color: '#141518', roughness: 0.42, metalness: 0.45, clearcoat: 0.4, clearcoatRoughness: 0.25 }),
     forkOuter: std({ color: '#1b1c1f', roughness: 0.32, metalness: 0.7 }),
@@ -74,6 +80,7 @@ export function createMaterials() {
     sprocket: std({ color: '#9ea3a9', roughness: 0.3, metalness: 1 }),
     exhaust: phys({ color: '#141517', roughness: 0.28, metalness: 0.65, clearcoat: 0.6 }),
     exhaustTip: std({ color: '#d7dade', roughness: 0.14, metalness: 1 }),
+    brushed: phys({ color: '#c9cdd1', roughness: 0.3, metalness: 1, clearcoat: 0.3, clearcoatRoughness: 0.2 }),
     exhaustHot: std({ color: '#9b8b78', roughness: 0.32, metalness: 1 }),
     radiator: std({ color: '#1a1b1d', roughness: 0.7, metalness: 0.3 }),
     bolt: std({ color: '#c9ccd0', roughness: 0.25, metalness: 1 }),

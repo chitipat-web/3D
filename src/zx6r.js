@@ -6,13 +6,13 @@ import { buildWheel, buildFrontBrakes, buildRearBrake, buildFrontEnd, buildContr
 import { buildFrame, buildSwingarm, buildChain, buildRearShock, buildFootControls } from './frame.js';
 import { buildEngine, buildExhaust } from './engine.js';
 import { buildBodywork } from './body.js';
-import { sideTexture, tailTexture } from './decals.js';
+import { sideLivery, frontLivery, tankLogo } from './livery.js';
 
 const TEXTURES = {
-  decalSide: (L) => sideTexture(L, false),
-  decalSideL: (L) => sideTexture(L, true),
-  decalTail: (L) => tailTexture(L, false),
-  decalTailL: (L) => tailTexture(L, true),
+  decalSide: (L) => sideLivery(L, false),
+  decalSideL: (L) => sideLivery(L, true),
+  decalFront: (L) => frontLivery(L),
+  tankLogo: (L) => tankLogo(L),
 };
 
 export { LIVERIES };
@@ -39,7 +39,7 @@ export function buildZX6R({ livery = 'krt' } = {}) {
   root.add(buildFootControls(M));
   root.add(buildEngine(M));
   root.add(buildExhaust(M));
-  root.add(buildBodywork(M, livery));
+  root.add(buildBodywork(M));
 
   root.userData.materials = M;
   root.userData.textures = TEXTURES;

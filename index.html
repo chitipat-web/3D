@@ -8,7 +8,7 @@
 <meta name="description" content="Procedural 3D model of the 2019 Kawasaki Ninja ZX-6R (ZX636G) built with three.js from real dimensions.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Kanit:ital,wght@0,500;0,600;1,700;1,800&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@500&family=IBM+Plex+Sans+Thai:wght@400;500;600&family=Kanit:ital,wght@0,500;0,600;1,700;1,800&family=Kaushan+Script&display=swap">
 <style>
 /* Layout: full-bleed 3D studio stage; title and spec sheet float in the top corners, controls dock along the bottom. */
 :root {
@@ -40,6 +40,7 @@
   --panel: rgba(26, 29, 34, 0.86); --line: rgba(255, 255, 255, 0.12); --chip: #23272d; --accent: #7cd335; --accent-ink: #0e1a05;
   color-scheme: dark;
 }
+[hidden] { display: none !important; }
 html, body { height: 100%; }
 body {
   margin: 0;
@@ -110,23 +111,70 @@ h1 .yr { font-style: normal; font-weight: 500; color: var(--muted); font-size: 0
   left: 50%;
   bottom: calc(env(safe-area-inset-bottom, 0px) + 16px);
   transform: translateX(-50%);
-  width: max-content;
-  max-width: calc(100vw - 32px);
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px 18px;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 10px 14px 12px;
+  width: min(720px, calc(100vw - 32px));
   background: var(--panel);
   border: 1px solid var(--line);
   border-radius: 14px;
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
+  overflow: hidden;
 }
-.group { display: flex; flex-direction: column; gap: 6px; min-width: 0; }
-.group > span { font: 500 10.5px/1 var(--font-mono); letter-spacing: 0.14em; text-transform: uppercase; color: var(--muted); }
-.row { display: flex; flex-wrap: wrap; gap: 6px; }
+.tabs { display: flex; border-bottom: 1px solid var(--line); }
+.tabs [role="tab"] {
+  flex: 1 1 0;
+  min-width: 0;
+  justify-content: center;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  padding: 10px 6px 9px;
+  font: 500 12.5px/1 var(--font-body);
+  color: var(--muted);
+  box-shadow: inset 0 -2px 0 transparent;
+}
+.tabs [role="tab"][aria-selected="true"] { color: var(--fg); box-shadow: inset 0 -2px 0 var(--accent); }
+.tabs [role="tab"]:hover { color: var(--fg); }
+.panel { padding: 11px 12px 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; justify-content: center; min-height: 56px; box-sizing: border-box; }
+.panel .hint { flex-basis: 100%; text-align: center; margin: 2px 0 0; font-size: 12px; color: var(--muted); }
+.sep { width: 1px; align-self: stretch; background: var(--line); margin: 0 2px; }
+.rpm { font: 500 13px/1 var(--font-mono); font-variant-numeric: tabular-nums; color: var(--muted); min-width: 92px; text-align: center; }
+#engine-start[aria-pressed="true"] { background: #c7302d; border-color: #c7302d; color: #fff; }
+#engine-rev { touch-action: none; user-select: none; -webkit-user-select: none; }
+#engine-rev:disabled { opacity: 0.45; cursor: not-allowed; }
+#engine-rev.held { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); transform: scale(0.97); }
+.ico { width: 16px; height: 16px; flex: none; }
+
+.hot {
+  width: 26px; height: 26px; padding: 0; justify-content: center;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: 600 12px/1 var(--font-mono);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
+  transition: opacity 0.2s, transform 0.15s;
+}
+.hot:hover, .hot.on { transform: scale(1.18); background: #fff; color: #111; border-color: var(--accent); }
+.card {
+  position: fixed;
+  z-index: 3;
+  left: 20px;
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 128px);
+  width: min(340px, calc(100vw - 40px));
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 12px 14px 12px;
+  box-sizing: border-box;
+}
+.card header { display: flex; align-items: center; gap: 10px; }
+.card .num { width: 24px; height: 24px; border-radius: 50%; background: var(--accent); color: var(--accent-ink); display: grid; place-items: center; font: 600 12px/1 var(--font-mono); flex: none; }
+.card h3 { margin: 0; font: 600 16px/1.25 var(--font-display); flex: 1; min-width: 0; text-wrap: balance; }
+.card p { margin: 8px 0 10px; font-size: 13.5px; line-height: 1.6; }
+.card nav { display: flex; gap: 6px; justify-content: flex-end; }
+.card button { padding: 6px 10px; font-size: 12.5px; }
 button {
   font: 500 13px/1 var(--font-body);
   color: var(--fg);
@@ -168,14 +216,21 @@ button[aria-pressed="true"] { background: var(--accent); border-color: var(--acc
 @media (max-width: 760px) {
   .title { left: 16px; top: calc(env(safe-area-inset-top, 0px) + 14px); }
   .lede { display: none; }
-  .spec { top: auto; right: 16px; left: 16px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 168px); display: none; }
+  .spec { top: auto; right: 16px; left: 16px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 132px); display: none; max-height: 52vh; overflow: auto; }
   .spec.open { display: block; }
   #spec-toggle { display: inline-flex; }
-  .dock { gap: 8px 12px; padding: 9px 10px 10px; bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+  .dock { bottom: calc(env(safe-area-inset-bottom, 0px) + 12px); }
+  .tabs [role="tab"] { font-size: 12px; padding: 10px 2px 9px; }
+  .panel { padding: 9px 8px 10px; gap: 6px; }
   button { padding: 7px 9px; font-size: 12.5px; }
+  .card { left: 16px; right: 16px; width: auto; bottom: calc(env(safe-area-inset-bottom, 0px) + 124px); }
+  .sep { display: none; }
+}
+@media (min-width: 761px) {
+  #spec-toggle { display: none; }
 }
 @media (prefers-reduced-motion: reduce) {
-  button { transition: none; }
+  button, .hot { transition: none; }
 }
 </style>
 <!-- /artifact:head -->
@@ -188,7 +243,7 @@ button[aria-pressed="true"] { background: var(--accent); border-color: var(--acc
 <header class="hud title">
   <p class="eyebrow"><b>Kawasaki</b> · ZX636G · 636 cc</p>
   <h1>Ninja ZX-6R<span class="yr">2019</span></h1>
-  <p class="lede">โมเดล 3 มิติที่สร้างจากขนาดจริงของรถ ลากเพื่อหมุน ใช้ล้อเมาส์หรือสองนิ้วเพื่อซูม</p>
+  <p class="lede">โมเดล 3 มิติที่สร้างจากขนาดและภาพจริงของรถ ลากเพื่อหมุน ใช้ล้อเมาส์หรือสองนิ้วเพื่อซูม</p>
   <p class="livery-line" id="livery-name">Lime Green / Ebony / Metallic Graphite Gray</p>
 </header>
 
@@ -211,40 +266,55 @@ button[aria-pressed="true"] { background: var(--accent); border-color: var(--acc
 </aside>
 
 <nav class="hud dock" aria-label="ตัวควบคุม">
-  <div class="group">
-    <span>สีตัวรถ</span>
-    <div class="row">
-      <button type="button" id="liv-krt" data-livery="krt" aria-pressed="true"><i class="sw krt"></i>KRT Edition</button>
-      <button type="button" id="liv-gray" data-livery="gray" aria-pressed="false"><i class="sw gray"></i>Storm Gray</button>
-    </div>
+  <div class="tabs" role="tablist" aria-label="หมวดตัวควบคุม">
+    <button type="button" role="tab" id="tab-explore" aria-controls="panel-explore" aria-selected="true">สำรวจ</button>
+    <button type="button" role="tab" id="tab-engine" aria-controls="panel-engine" aria-selected="false" tabindex="-1">เครื่องยนต์</button>
+    <button type="button" role="tab" id="tab-view" aria-controls="panel-view" aria-selected="false" tabindex="-1">มุมมอง</button>
+    <button type="button" role="tab" id="tab-color" aria-controls="panel-color" aria-selected="false" tabindex="-1">สี</button>
+    <button type="button" role="tab" id="tab-files" aria-controls="panel-files" aria-selected="false" tabindex="-1">ไฟล์</button>
   </div>
-  <div class="group">
-    <span>มุมมอง</span>
-    <div class="row">
-      <button type="button" id="v-front34" data-view="front34" aria-pressed="true">หน้า ¾</button>
-      <button type="button" id="v-side" data-view="side" aria-pressed="false">ข้าง</button>
-      <button type="button" id="v-rear34" data-view="rear34" aria-pressed="false">หลัง ¾</button>
-      <button type="button" id="v-front" data-view="front" aria-pressed="false">หน้า</button>
-      <button type="button" id="v-top" data-view="top" aria-pressed="false">บน</button>
-    </div>
+  <div class="panel" role="tabpanel" id="panel-explore" aria-labelledby="tab-explore">
+    <button type="button" id="toggle-explode" aria-pressed="false">แยกชิ้นส่วน</button>
+    <button type="button" id="toggle-hot" aria-pressed="false">จุดอธิบาย</button>
+    <button type="button" id="toggle-dims" aria-pressed="false">ขนาด</button>
+    <button type="button" id="toggle-lights" aria-pressed="true">ไฟ</button>
+    <button type="button" id="spec-toggle" aria-expanded="false" aria-controls="spec" aria-pressed="false">สเปก</button>
   </div>
-  <div class="group">
-    <span>แสดง</span>
-    <div class="row">
-      <button type="button" id="toggle-rotate" aria-pressed="false">หมุนเอง</button>
-      <button type="button" id="toggle-lights" aria-pressed="true">ไฟ</button>
-      <button type="button" id="toggle-dims" aria-pressed="false">ขนาด</button>
-      <button type="button" id="spec-toggle" aria-expanded="false" aria-controls="spec">สเปก</button>
-    </div>
+  <div class="panel" role="tabpanel" id="panel-engine" aria-labelledby="tab-engine" hidden>
+    <button type="button" id="engine-start" aria-pressed="false"><svg class="ico" viewBox="0 0 16 16" aria-hidden="true"><path d="M8 1.5v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/><path d="M4.4 3.8a5.2 5.2 0 1 0 7.2 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" fill="none"/></svg><span>สตาร์ทเครื่อง</span></button>
+    <button type="button" id="engine-rev" disabled>บิดคันเร่ง (กดค้าง)</button>
+    <span class="rpm" id="rpm" aria-live="off">ดับเครื่อง</span>
+    <p class="hint">มีเสียงเครื่องยนต์ · บนคอมกด Space ค้างเพื่อบิดได้</p>
   </div>
-  <div class="group">
-    <span>ไฟล์</span>
-    <div class="row">
-      <button type="button" id="save-png" data-save>ภาพ PNG</button>
-      <button type="button" id="save-glb" data-save>GLB</button>
-    </div>
+  <div class="panel" role="tabpanel" id="panel-view" aria-labelledby="tab-view" hidden>
+    <button type="button" id="v-front34" data-view="front34" aria-pressed="true">หน้า ¾</button>
+    <button type="button" id="v-side" data-view="side" aria-pressed="false">ข้าง</button>
+    <button type="button" id="v-rear34" data-view="rear34" aria-pressed="false">หลัง ¾</button>
+    <button type="button" id="v-front" data-view="front" aria-pressed="false">หน้า</button>
+    <button type="button" id="v-top" data-view="top" aria-pressed="false">บน</button>
+    <button type="button" id="v-cockpit" data-view="cockpit" aria-pressed="false">มุมคนขี่</button>
+    <span class="sep" aria-hidden="true"></span>
+    <button type="button" id="toggle-rotate" aria-pressed="false">หมุนเอง</button>
+  </div>
+  <div class="panel" role="tabpanel" id="panel-color" aria-labelledby="tab-color" hidden>
+    <button type="button" id="liv-krt" data-livery="krt" aria-pressed="true"><i class="sw krt"></i>KRT Edition</button>
+    <button type="button" id="liv-gray" data-livery="gray" aria-pressed="false"><i class="sw gray"></i>Pearl Storm Gray</button>
+  </div>
+  <div class="panel" role="tabpanel" id="panel-files" aria-labelledby="tab-files" hidden>
+    <button type="button" id="save-png" data-save>บันทึกภาพ PNG</button>
+    <button type="button" id="save-glb" data-save>ดาวน์โหลดโมเดล GLB</button>
+    <p class="hint" id="files-note" hidden>หน้านี้บันทึกไฟล์ไม่ได้ ดาวน์โหลด GLB ได้จาก GitHub: chitipat-web/3D</p>
   </div>
 </nav>
+<section class="card" id="hotspot-card" hidden aria-live="polite">
+  <header><span class="num" id="hot-num">1</span><h3 id="hot-title"></h3></header>
+  <p id="hot-body"></p>
+  <nav>
+    <button type="button" id="hot-prev">ก่อนหน้า</button>
+    <button type="button" id="hot-next">ถัดไป</button>
+    <button type="button" id="hot-close">ปิด</button>
+  </nav>
+</section>
 <div id="status" role="status" hidden></div>
 
 <script type="importmap">

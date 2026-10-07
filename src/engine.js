@@ -82,19 +82,19 @@ export function buildEngine(M) {
   for (const z of [-0.105, -0.035, 0.035, 0.105]) black.push(tilt(cyl(0.012, 0.012, 0.03, 12), 0.34, -0.012).translate(0, 0, z));
 
   // right side: clutch cover + crank-end cover
-  silver.push(sideCover(0.0, 0.39 , 0.155, 0.092, 0.042, 1));
-  silver.push(sideCover(0.118, 0.37, 0.155, 0.058, 0.036, 1));
+  silver.push(sideCover(0.0, 0.425, 0.155, 0.088, 0.036, 1));
+  silver.push(sideCover(0.13, 0.4, 0.155, 0.056, 0.032, 1));
   silver.push(sideCover(0.06, 0.465, 0.155, 0.03, 0.026, 1));
   // left side: alternator cover + starter clutch cover
-  silver.push(sideCover(0.118, 0.37, -0.155, 0.072, 0.042, -1));
+  silver.push(sideCover(0.11, 0.41, -0.155, 0.068, 0.036, -1));
   dark.push(sideCover(0.02, 0.45, -0.155, 0.04, 0.03, -1));
   for (let k = 0; k < 11; k++) {
     const a = (k / 11) * Math.PI * 2 + 0.2;
-    bolts.push(place(cyl(0.0055, 0.0055, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.0 + 0.098 * Math.cos(a), 0.39 + 0.098 * Math.sin(a), 0.19] }));
+    bolts.push(place(cyl(0.0055, 0.0055, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.0 + 0.094 * Math.cos(a), 0.425 + 0.094 * Math.sin(a), 0.184] }));
   }
   for (let k = 0; k < 8; k++) {
     const a = (k / 8) * Math.PI * 2;
-    bolts.push(place(cyl(0.005, 0.005, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.118 + 0.078 * Math.cos(a), 0.37 + 0.078 * Math.sin(a), -0.19] }));
+    bolts.push(place(cyl(0.005, 0.005, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.11 + 0.074 * Math.cos(a), 0.41 + 0.074 * Math.sin(a), -0.184] }));
   }
   // sprocket cover (left)
   black.push(extrude(shape(Y([[-0.115, 0.44], [-0.02, 0.445], [0.01, 0.4], [-0.005, 0.33], [-0.06, 0.31], [-0.115, 0.33]])), 0.025, 0.006, 2, 4).translate(0, 0, -0.17));
@@ -181,45 +181,36 @@ export function buildExhaust(M) {
     { closed: true, su: 4, sv: 3 }
   );
   grp.add(mesh(chamber, M.exhaustHot, 'PreChamber'));
-  // link pipe to the silencer
-  grp.add(mesh(tube([v3(-0.23, 0.175, 0.085), v3(-0.285, 0.21, 0.13), v3(-0.315, 0.3, 0.16), v3(-0.34, 0.38, 0.168)], 0.025, 30, 14), M.exhaustHot, 'LinkPipe'));
+  // link pipe from the pre-chamber up to the silencer
+  grp.add(mesh(tube([v3(-0.235, 0.18, 0.085), v3(-0.29, 0.235, 0.13), v3(-0.335, 0.3, 0.16), v3(-0.37, 0.345, 0.17)], 0.026, 30, 14), M.exhaustHot, 'LinkPipe'));
 
-  // silencer body
-  const A = v3(-0.36, 0.4, 0.172);
-  const B = v3(-0.88, 0.662, 0.172);
-  const body = sweep(segPts(A, B, 16), (t) => mufflerSection(0.88 + 0.12 * Math.min(1, t * 4) - 0.04 * Math.max(0, t - 0.9) * 10), {
-    steps: 24,
-    up: v3(0, 1, 0),
-    spline: false,
-  });
-  grp.add(mesh(body, M.exhaust, 'Silencer'));
-  // brushed lower guard panel
+  // stock silencer: brushed stainless canister angled up towards the tail
+  // (traced from the right-side studio photo)
+  const A = v3(-0.548, 0.42, 0.176);
+  const B = v3(-0.88, 0.558, 0.176);
   const dir = B.clone().sub(A).normalize();
-  const nUp = v3(-dir.y, dir.x, 0);
-  const guard = sweep(segPts(A.clone().addScaledVector(dir, 0.18), B.clone().addScaledVector(dir, -0.04), 2), () => [[-0.06, -0.064], [-0.076, -0.03], [-0.076, 0.0], [-0.06, -0.01], [-0.045, -0.05]], { steps: 4, up: v3(0, 1, 0), spline: false });
-  grp.add(mesh(guard, M.steel, 'SilencerGuard'));
-  // end cap
-  const capC = B.clone().addScaledVector(dir, 0.004);
-  const cap = sweep(segPts(capC.clone().addScaledVector(dir, -0.012), capC.clone().addScaledVector(dir, 0.03), 4), (t) => mufflerSection(0.98 - 0.25 * t), {
-    steps: 4,
-    up: v3(0, 1, 0),
-    spline: false,
-  });
-  grp.add(mesh(cap, M.exhaustTip, 'SilencerEndCap'));
-  const outlet = place(cyl(0.024, 0.026, 0.02, 24), { p: [0, 0, 0] });
+  const sec = (k = 1) => rrect(0.172 * k, 0.122 * k, 0.034 * k, 4);
+  const body = sweep(segPts(A, B, 12), () => sec(1), { steps: 12, up: v3(0, 1, 0), spline: false });
+  grp.add(mesh(body, M.brushed, 'Silencer'));
+  // rear end cap with an angled face and outlet
+  const capA = B.clone().addScaledVector(dir, -0.004);
+  const capB = B.clone().addScaledVector(dir, 0.026);
+  const cap = sweep(segPts(capA, capB, 3), (t) => sec(1.012 - 0.06 * t), { steps: 3, up: v3(0, 1, 0), spline: false });
+  grp.add(mesh(cap, M.engineBlack, 'SilencerEndCap'));
+  const outlet = cyl(0.026, 0.026, 0.012, 24);
   outlet.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(v3(0, 1, 0), dir));
-  const op = capC.clone().addScaledVector(dir, 0.034).addScaledVector(nUp, -0.006);
+  const op = capB.clone().addScaledVector(dir, 0.002).add(v3(0, -0.02, 0));
   outlet.translate(op.x, op.y, op.z);
-  grp.add(mesh(outlet, M.engineBlack, 'SilencerOutlet'));
-  // front shroud (matte black), pointed towards the front
-  const T0 = A.clone().addScaledVector(dir, -0.11).add(v3(0, -0.035, -0.006));
-  const T1 = A.clone().addScaledVector(dir, 0.22);
-  const shroud = sweep([T0, A.clone().addScaledVector(dir, 0.02), T1], (t) => {
-    const s = 0.18 + 0.94 * Math.min(1, Math.pow(t * 1.5, 0.55));
-    return mufflerSection(s).map(([a, b]) => [a + (1 - Math.min(1, t * 1.6)) * -0.02, b]);
-  }, { steps: 20, up: v3(0, 1, 0) });
-  grp.add(mesh(shroud, M.plastic, 'SilencerShroud'));
-  // hanger strap to the pillion peg bracket
-  grp.add(mesh(rod(v3(-0.56, 0.58, 0.165), v3(-0.5, 0.59, 0.14), 0.008, 8), M.frame, 'SilencerHanger'));
+  grp.add(mesh(outlet, M.exhaustTip, 'SilencerOutlet'));
+  // black front cone/heat shield tapering into the link pipe
+  const F0 = v3(-0.36, 0.337, 0.17);
+  const F1 = A.clone().addScaledVector(dir, 0.03);
+  const cone = sweep(segPts(F0, F1, 10), (t) => {
+    const k = 0.3 + 0.72 * Math.pow(t, 0.7);
+    return sec(k);
+  }, { steps: 10, up: v3(0, 1, 0), spline: false });
+  grp.add(mesh(cone, M.engineBlack, 'SilencerCone'));
+  // hanger to the pillion footpeg bracket
+  grp.add(mesh(rod(v3(-0.66, 0.565, 0.165), v3(-0.55, 0.615, 0.138), 0.009, 8), M.frame, 'SilencerHanger'));
   return grp;
 }

@@ -74,6 +74,17 @@ try {
   const list = (q.get('views') || 'side,front34,rear34,front,top').split(',');
   const camera = new THREE.PerspectiveCamera(30, W / H, 0.05, 100);
   const shots = [];
+  if (q.get('ortho') === 'side19') {
+    // matches the calibrated 2019 KRT studio side photo (1300 x 710, left side)
+    renderer.setSize(1300, 710);
+    const oc = new THREE.OrthographicCamera(-1.1272, 1.1512, 1.1786, -0.0658, 0.1, 30);
+    oc.position.set(0, 0, -10);
+    oc.lookAt(0, 0, 0);
+    scene.background = new THREE.Color('#ffffff');
+    renderer.render(scene, oc);
+    shots.push({ name: (q.get('prefix') || '') + 'ortho_side19', data: renderer.domElement.toDataURL('image/png') });
+    list.length = 0;
+  }
   for (const name of list) {
     const v = views[name];
     if (!v) continue;

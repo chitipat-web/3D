@@ -440,7 +440,7 @@ function RAKE_Z() {
 
 // ---------------------------------------------------------------------------
 // Clip-on handlebars, grips, levers, switchgear, master cylinder, mirrors are
-// in body.js (mirrors mount on the fairing).
+// in body.js (the mirrors mount on the fairing).
 // ---------------------------------------------------------------------------
 export function buildControls(M) {
   const grp = new THREE.Group();

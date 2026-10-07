@@ -10,6 +10,7 @@
     "export": "node tools/export-glb.mjs"
   },
   "devDependencies": {
+    "delaunator": "^5.0.1",
     "esbuild": "^0.24.2",
     "playwright": "^1.56.1",
     "three": "0.170.0"
