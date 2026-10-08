@@ -42,7 +42,7 @@ try {
   const hdrEnv = q.get('hdr') === '0' ? null : await loadStudioHDR(renderer, '../assets/studio_small_08_1k.hdr');
   scene.environment = hdrEnv || createEnvironment(renderer, { dark });
   scene.environmentIntensity = +(q.get('env') || 1.0);
-  scene.environmentRotation.set(0, (+(q.get('rot') ?? 45) * Math.PI) / 180, 0);
+  scene.environmentRotation.set(0, (+(q.get('rot') ?? 135) * Math.PI) / 180, 0);
   const L = addStudioLights(scene, { dark });
   if (hdrEnv) {
     L.key.intensity = +(q.get('key') || 1.7);
@@ -64,12 +64,29 @@ try {
   // diagnostics: draw the named meshes solid black (e.g. the clear screen)
   // paintenv=k scales the environment reflection of the painted panels,
   // paintcc=r sets their clearcoat roughness (material experiments)
-  if (q.get('paintenv') || q.get('paintcc')) {
+  if (q.get('paintenv') || q.get('paintcc') || q.get('paintrough') || q.get('paintmetal') || q.get('paintcol')) {
     const Mt = bike.userData.materials;
     for (const k of ['body', 'accent', 'decalSide', 'decalSideL', 'plasticGloss']) {
       if (q.get('paintenv')) Mt[k].envMapIntensity = +q.get('paintenv');
       if (q.get('paintcc')) Mt[k].clearcoatRoughness = +q.get('paintcc');
+      if (q.get('paintrough')) Mt[k].roughness = +q.get('paintrough');
+      if (q.get('paintmetal')) Mt[k].metalness = +q.get('paintmetal');
     }
+    if (q.get('paintcol')) Mt.body.color.set('#' + q.get('paintcol'));
+  }
+  // dbg=Mesh1,Mesh2&dbgmode=noenv|nocc|nomap|normals: per-mesh material probes
+  if (q.get('dbg')) {
+    const names = q.get('dbg').split(',');
+    const mode = q.get('dbgmode') || 'noenv';
+    bike.traverse((o) => {
+      if (!o.isMesh || !names.includes(o.name)) return;
+      if (mode === 'normals') { o.material = new THREE.MeshNormalMaterial({ side: THREE.DoubleSide }); return; }
+      o.material = o.material.clone();
+      if (mode === 'noenv') o.material.envMapIntensity = 0;
+      if (mode === 'nocc') o.material.clearcoat = 0;
+      if (mode === 'nomap') o.material.map = null;
+      o.material.needsUpdate = true;
+    });
   }
   // (name or name:rrggbb; e.g. solid=ScreenGlass,MainFrame:ff0000)
   if (q.get('solid')) {

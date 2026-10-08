@@ -134,7 +134,9 @@ function applyTheme() {
   floor.material.color.set(css('--floor') || (dark ? '#1b1f24' : '#cfd3d8'));
   if (hdrEnv) {
     scene.environment = hdrEnv;
-    scene.environmentRotation.set(0, Math.PI / 4, 0);
+    // 135 deg puts the HDRI's soft boxes overhead and behind for the default
+    // views, so black panels show soft gradients instead of a white glare
+    scene.environmentRotation.set(0, (3 * Math.PI) / 4, 0);
     scene.environmentIntensity = dark ? 0.8 : 1.0;
     lights.key.intensity = dark ? 1.5 : 1.7;
     lights.fill.intensity = 0.25;
@@ -180,6 +182,7 @@ const EXPLODE = {
   Mirrors: [0.14, 0.3, 0.06],
   UpperSideCowl: [0.08, 0.06, 0.34],
   MidSideCowl: [0.06, -0.02, 0.44],
+  RadiatorVents: [0.04, -0.02, 0.3],
   SideCover: [0, 0.08, 0.36],
   SeatSideCover: [-0.04, 0.12, 0.3],
   FairingLiner: [0.06, 0.02, 0.24],

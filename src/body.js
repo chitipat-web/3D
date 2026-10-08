@@ -532,44 +532,48 @@ function buildTailEnd(M) {
     });
     grp.add(mesh(loft(rings, { su: 3, sv: 2 }), M.plastic, 'Undertray'));
   }
-  // tail light: sloped rear face under the tip
-  const xs = linspace(-0.79, -0.885, 6);
+  // tail light: a wide red lens tucked under the tail tip, its rear face
+  // sloping forward-down (traced: x -0.80..-0.885, y 0.925..0.97)
+  const xs = linspace(-0.795, -0.886, 7);
   const rings = xs.map((x) => {
-    const t = (x + 0.79) / -0.095;
-    const yL = TAIL.low(Math.max(-0.876, x)) - 0.004;
-    const yU = lerp(0.955, 1.03, t);
-    const w = TAIL.w(Math.max(-0.876, x)) * 0.92;
-    return [[x, yL, -w * 0.8], [x, yL - 0.006, 0], [x, yL, w * 0.8], [x, yU, w * 0.6], [x, yU + 0.004, 0], [x, yU, -w * 0.6]];
+    const t = (x + 0.795) / -0.091;
+    const yU = TAIL.low(Math.max(-0.876, x)) + 0.004;
+    const yL = yU - lerp(0.016, 0.044, Math.sqrt(t));
+    const w = TAIL.w(Math.max(-0.876, x)) * 0.94;
+    return [[x, yL, -w * 0.82], [x, yL - 0.004, 0], [x, yL, w * 0.82], [x, yU, w * 0.9], [x, yU + 0.002, 0], [x, yU, -w * 0.9]];
   });
   grp.add(mesh(loft(rings, { closed: true, su: 2, sv: 2 }), M.lensRed, 'TailLightLens'));
   const leds = [];
-  for (let i = 0; i < 4; i++) {
-    const x = -0.8 - i * 0.022;
-    const y = lerp(0.948, 1.0, i / 3);
-    const w = TAIL.w(Math.max(-0.876, x)) * 0.7;
-    leds.push(rod(v3(x + 0.006, y, -w), v3(x + 0.006, y, w), 0.0028, 6));
+  for (let i = 0; i < 3; i++) {
+    const x = -0.845 - i * 0.016;
+    const y = TAIL.low(Math.max(-0.876, x)) - 0.01 - i * 0.008;
+    const w = TAIL.w(Math.max(-0.876, x)) * 0.72;
+    leds.push(rod(v3(x - 0.004, y, -w), v3(x - 0.004, y, w), 0.0028, 6));
   }
   grp.add(mesh(merge(leds), M.ledRed, 'TailLightLED'));
   // undertray / licence-plate holder extending rearwards
   {
     // short arm from under the tail light back to the plate
-    const xs2 = linspace(-0.7, -0.978, 10);
+    const xs2 = linspace(-0.72, -0.935, 10);
     const rr = xs2.map((x, i) => {
       const t = i / (xs2.length - 1);
-      const yt = lerp(0.878, 0.846, t);
-      const yb = lerp(0.85, 0.818, t);
+      const yt = lerp(0.872, 0.842, t);
+      const yb = lerp(0.852, 0.826, t);
       const w = lerp(0.062, 0.034, Math.pow(t, 1.2));
       return [[x, yt, -w * 0.8], [x, yt + 0.004, 0], [x, yt, w * 0.8], [x, (yt + yb) / 2, w], [x, yb, w * 0.75], [x, yb - 0.002, 0], [x, yb, -w * 0.75], [x, (yt + yb) / 2, -w]];
     });
     grp.add(mesh(loft(rr, { closed: true, su: 2, sv: 2 }), M.plastic, 'PlateHolderArm'));
     // vertical bracket down to the plate
     const blade = sweep(
-      [v3(-0.884, 0.838, 0), v3(-0.903, 0.79, 0), v3(-0.92, 0.742, 0), v3(-0.936, 0.694, 0)],
+      [v3(-0.908, 0.838, 0), v3(-0.922, 0.812, 0), v3(-0.936, 0.79, 0)],
       (t) => rrect(0.012, lerp(0.09, 0.08, t), 0.004, 2),
       { steps: 16, up: v3(0, 1, 0) }
     );
     grp.add(mesh(blade, M.plastic, 'PlateBracket'));
-    grp.add(mesh(place(rbox(0.008, 0.045, 0.072, 0.004), { p: [-0.92, 0.758, 0], r: [0, 0, 0.32] }), M.reflector, 'RearReflector'));
+    // licence plate (black dealer plate with the wordmark), leaning back
+    const plate = place(rbox(0.004, 0.11, 0.17, 0.006), { p: [-0.964, 0.748, 0], r: [0, 0, -0.55] });
+    grp.add(mesh(plate, M.plate || M.plastic, 'LicencePlate'));
+    grp.add(mesh(place(rbox(0.008, 0.026, 0.07, 0.004), { p: [-0.93, 0.808, 0], r: [0, 0, -0.55] }), M.reflector, 'RearReflector'));
     const stalks = [];
     const lensG = [];
     for (const s of [-1, 1]) {
@@ -708,6 +712,36 @@ function buildMirrors(M) {
   return grp;
 }
 
+// Louvred vents behind the mid panels, where hot air leaves the radiator:
+// a black frame with vertical slats angled rearwards (traced from the 3/4
+// studio photo: x 0.13-0.255, y 0.545-0.63, just inside the fairing).
+function buildRadiatorVents(M) {
+  const frame = [];
+  const slats = [];
+  const x0 = 0.132;
+  const x1 = 0.254;
+  const yb = (x) => 0.545 + 0.02 * (x - x0) / (x1 - x0);
+  const yt = (x) => 0.628 - 0.004 * (x - x0) / (x1 - x0);
+  for (const s of [-1, 1]) {
+    const z = s * 0.192;
+    // dark back plate and a frame round the opening
+    frame.push(place(rbox(x1 - x0 + 0.01, 0.092, 0.004, 0.0015), { p: [(x0 + x1) / 2, 0.588, s * 0.18] }));
+    frame.push(sweep([v3(x0, yb(x0), z), v3(x1, yb(x1), z), v3(x1, yt(x1), z), v3(x0, yt(x0), z), v3(x0, yb(x0), z)], () => rrect(0.006, 0.014, 0.002, 1), { steps: 4, up: v3(0, 0, 1), spline: false }));
+    // vertical slats, each turned 35 deg so they read as louvres
+    const n = 9;
+    for (let i = 1; i < n; i++) {
+      const x = lerp(x0, x1, i / n);
+      const h = yt(x) - yb(x) - 0.004;
+      slats.push(place(rbox(0.0035, h, 0.013, 0.001), { p: [x, (yt(x) + yb(x)) / 2, z - s * 0.003], r: [0, s * 0.6, 0] }));
+    }
+  }
+  const grp = new THREE.Group();
+  grp.name = 'RadiatorVents';
+  grp.add(mesh(merge(frame), M.plastic, 'VentFrames'));
+  grp.add(mesh(merge(slats), M.plasticGloss, 'VentSlats'));
+  return grp;
+}
+
 function buildFrontSignals(M) {
   // large clear-lens indicators under the "Ninja" panel, tapering down and
   // back along the front edge of the mid panel (traced from the side photo)
@@ -774,7 +808,7 @@ export function buildBodywork(M) {
   grp.add(sidePanel(P2, R, Lm, 'MidSideCowl'));
   grp.add(sidePanel(P3, R, Lm, 'SideCover'));
   grp.add(sidePanel(P3B, M.plastic, M.plastic, 'SeatSideCover'));
-  grp.add(sidePanel(P4, R, Lm, 'LowerFairing', { flange: 0.012 }));
+  grp.add(sidePanel(P4, M.decalLower, M.decalLowerL, 'LowerFairing', { flange: 0.012 }));
   grp.add(sidePanel(INNER, M.plastic, M.plastic, 'InnerCover', { roll: 0.004, flange: 0.01 }));
   grp.add(sidePanel(LINER, M.plastic, M.plastic, 'FairingLiner', { roll: 0, flange: 0, spacing: 0.02 }));
   grp.add(sidePanel(CHIN_SIDE, M.primary, M.primary, 'ChinSide', { roll: 0.004, flange: 0.01, spacing: 0.006, edgeStep: 0.003 }));
@@ -786,5 +820,6 @@ export function buildBodywork(M) {
   grp.add(buildFender(M));
   grp.add(buildMirrors(M));
   grp.add(buildFrontSignals(M));
+  grp.add(buildRadiatorVents(M));
   return grp;
 }

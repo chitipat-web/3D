@@ -13,7 +13,7 @@ export const LIVERIES = {
     stripeB: '#cfe03a', // yellow-green
     stripeC: '#c9ced3', // silver line
     stripeD: '#77797d', // graphite panel
-    lower: '#2c2e32', // lower fairing (dark graphite)
+    lower: '#33363a', // lower fairing (dark graphite)
     tankLogo: '#16181b',
     rim: '#62c02c',
     script: '#ffffff',
@@ -73,6 +73,28 @@ function facetTexture() {
   return t;
 }
 
+// Black dealer plate with the wordmark (as on the press-photo bike).
+function plateTexture() {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas');
+  c.width = 512;
+  c.height = 330;
+  const g = c.getContext('2d');
+  g.fillStyle = '#0d0e10';
+  g.fillRect(0, 0, c.width, c.height);
+  g.strokeStyle = '#d9dcdf';
+  g.lineWidth = 8;
+  g.strokeRect(18, 18, c.width - 36, c.height - 36);
+  g.fillStyle = '#f2f3f4';
+  g.font = 'italic 900 92px "Kanit", "Arial Black", Arial, sans-serif';
+  g.textAlign = 'center';
+  g.textBaseline = 'middle';
+  g.fillText('Kawasaki', c.width / 2, c.height / 2 + 4);
+  const t = new THREE.CanvasTexture(c);
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
+
 export function createMaterials() {
   const M = {
     // ---- livery driven paint
@@ -83,10 +105,15 @@ export function createMaterials() {
     decalTank: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
     decalTail: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
     decalSideL: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.1, clearcoat: 1, clearcoatRoughness: 0.09, side: THREE.DoubleSide }),
+    // lower fairing: same artwork, satin finish so the belly does not mirror
+    // the bright floor (it reads dark in the studio photos)
+    decalLower: phys({ color: '#ffffff', roughness: 0.5, metalness: 0.05, clearcoat: 0.3, clearcoatRoughness: 0.3, side: THREE.DoubleSide }),
+    decalLowerL: phys({ color: '#ffffff', roughness: 0.5, metalness: 0.05, clearcoat: 0.3, clearcoatRoughness: 0.3, side: THREE.DoubleSide }),
     decalFront: phys({ color: '#ffffff', roughness: 0.3, metalness: 0.05, clearcoat: 1, clearcoatRoughness: 0.05, side: THREE.DoubleSide }),
     tankLogo: std({ color: '#ffffff', roughness: 0.3, metalness: 0, transparent: true, depthWrite: false, polygonOffset: true, polygonOffsetFactor: -4 }),
     screenBand: phys({ color: '#101214', roughness: 0.1, metalness: 0, transparent: true, opacity: 0.82, side: THREE.DoubleSide }),
     rimStripe: std({ color: '#62c02c', roughness: 0.35, metalness: 0.1 }),
+    plate: std({ color: '#ffffff', map: plateTexture(), roughness: 0.45, metalness: 0.1 }),
 
     // ---- plastics, rubber, trim
     plastic: std({ color: '#121315', roughness: 0.62, metalness: 0.0, side: THREE.DoubleSide }),
@@ -108,7 +135,7 @@ export function createMaterials() {
     forkInner: std({ color: '#e8eaec', roughness: 0.05, metalness: 1 }),
     engine: std({ color: '#5b5f65', roughness: 0.5, metalness: 0.6 }),
     // cast side covers (alternator, clutch): warm satin metallic gray, as in the photos
-    engineCover: std({ color: '#8d877d', roughness: 0.42, metalness: 0.75 }),
+    engineCover: std({ color: '#b3b5b7', roughness: 0.34, metalness: 0.82 }),
     engineDark: std({ color: '#383b40', roughness: 0.5, metalness: 0.5 }),
     engineBlack: std({ color: '#1a1b1e', roughness: 0.45, metalness: 0.35 }),
     caliper: std({ color: '#2b2d31', roughness: 0.42, metalness: 0.55 }),
@@ -136,20 +163,13 @@ export function createMaterials() {
     gauge: std({ color: '#ffffff', roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 0.25 }),
     mesh: std({ color: '#0a0a0b', roughness: 0.8, metalness: 0.2, side: THREE.DoubleSide }),
   };
-  // painted panels: dimmer, slightly softer reflections so large flat panels
-  // read dark with crisp highlights (as in the studio photos), not as mirrors
-  for (const k of ['body', 'accent', 'decalSide', 'decalSideL', 'plasticGloss']) {
-    M[k].envMapIntensity = 0.32;
-    M[k].clearcoatRoughness = 0.1;
-  }
-  // black wheels: keep the clearcoat highlight, drop the grey sheen
-  M.wheel.envMapIntensity = 0.22;
+  // NB: with scene.environment (no per-material envMap) three.js r170 uses
+  // scene.environmentIntensity for every material and ignores
+  // material.envMapIntensity, so reflections are tuned by clearcoat roughness
+  // and by the environment rotation in the viewer instead.
+  for (const k of ['body', 'accent', 'decalSide', 'decalSideL', 'plasticGloss']) M[k].clearcoatRoughness = 0.1;
+  for (const k of ['primary', 'decalFront']) M[k].clearcoatRoughness = 0.08;
   M.wheel.clearcoatRoughness = 0.16;
-  M.disc.envMapIntensity = 0.75;
-  for (const k of ['primary', 'decalFront']) {
-    M[k].envMapIntensity = 0.8;
-    M[k].clearcoatRoughness = 0.08;
-  }
   for (const [k, m] of Object.entries(M)) m.name = k;
   return M;
 }
@@ -181,6 +201,12 @@ export function applyLivery(M, livery, textures) {
         M[key].needsUpdate = true;
       }
     }
+  }
+  // the lower fairing shares the side artwork
+  if (M.decalLower && M.decalSide.map) {
+    M.decalLower.map = M.decalSide.map;
+    M.decalLowerL.map = M.decalSideL.map;
+    M.decalLower.needsUpdate = M.decalLowerL.needsUpdate = true;
   }
   return L;
 }
