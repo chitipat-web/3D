@@ -599,7 +599,7 @@ function buildFender(M) {
 // Mirror: angular housing whose large flat back carries the glass and whose
 // front shell tapers to a blunt point (front-view outline traced from the
 // studio close-up). Built for the right side and mirrored.
-const MIRROR_OUTLINE = [[0.0, -0.015], [0.105, -0.028], [0.148, -0.01], [0.144, 0.043], [0.01, 0.018]];
+const MIRROR_OUTLINE = [[0.0, -0.02], [0.105, -0.036], [0.15, -0.016], [0.146, 0.05], [0.01, 0.024]];
 function chamfered(pts, d = 0.007) {
   const out = [];
   const n = pts.length;
@@ -620,13 +620,14 @@ function buildMirrors(M) {
   const stalks = [];
   const shells = [];
   const glass = [];
-  const c = { x: 0.69, y: 0.985, z: 0.212 };
+  const c = { x: 0.668, y: 0.987, z: 0.212 };
   const ring = chamfered(MIRROR_OUTLINE, 0.005);
   const cz = 0.09;
   const cy = 0.01;
-  // back plane at x = c.x; faceted shell tapering to a flat front
-  const sections = [[0, 1.0], [0.005, 1.0], [0.026, 0.86], [0.046, 0.42]];
-  const rings = sections.map(([dx, k]) => ring.map(([zz, yy]) => [c.x + dx, c.y + cy + (yy - cy) * k, c.z + cz + (zz - cz) * k]));
+  // back plane at x = c.x; faceted shell tapering to a flat front that sits
+  // low, so from the side the housing reads as a forward-leaning wedge
+  const sections = [[0, 1.0, 0], [0.006, 1.0, 0], [0.042, 0.84, -0.006], [0.078, 0.42, -0.02]];
+  const rings = sections.map(([dx, k, dy]) => ring.map(([zz, yy]) => [c.x + dx, c.y + cy + dy + (yy - cy) * k, c.z + cz + (zz - cz) * k]));
   const shell = loft(rings, { closed: true, su: 1, sv: 1 });
   // front cap closing the shell
   const front = rings[rings.length - 1];
@@ -666,11 +667,11 @@ function buildMirrors(M) {
     gl.computeVertexNormals();
   }
   const housing = merge([shell, cap, back]);
-  const stalk = sweep([v3(0.724, 0.905, 0.2), v3(0.716, 0.946, 0.232), v3(0.704, 0.972, 0.262)], (t) => rrect(0.015, lerp(0.024, 0.018, t), 0.006, 2), {
+  const stalk = sweep([v3(0.728, 0.9, 0.2), v3(0.73, 0.93, 0.232), v3(0.722, 0.962, 0.262)], (t) => rrect(0.016, lerp(0.026, 0.02, t), 0.006, 2), {
     steps: 10,
     up: v3(1, 0, 0),
   });
-  const foot = place(rbox(0.03, 0.012, 0.03, 0.004), { p: [0.724, 0.902, 0.2] });
+  const foot = place(rbox(0.034, 0.012, 0.032, 0.004), { p: [0.728, 0.897, 0.2] });
   for (const s of [1, -1]) {
     shells.push(s > 0 ? housing.clone() : mirrorZ(housing));
     glass.push(s > 0 ? gl.clone() : mirrorZ(gl));
@@ -710,11 +711,11 @@ function buildFrontSignals(M) {
 function buildInstruments(M) {
   const grp = new THREE.Group();
   grp.name = 'Instruments';
-  grp.add(mesh(rbox(0.045, 0.092, 0.205, 0.014), M.plastic, 'GaugeHousing'));
+  grp.add(mesh(rbox(0.036, 0.086, 0.2, 0.012), M.plastic, 'GaugeHousing'));
   const gauge = createGauge();
   M.gauge = gauge;
   const face = new THREE.Mesh(
-    new THREE.PlaneGeometry(0.19, 0.089),
+    new THREE.PlaneGeometry(0.184, 0.084),
     new THREE.MeshStandardMaterial({
       map: gauge ? gauge.texture : null,
       emissiveMap: gauge ? gauge.texture : null,
@@ -727,10 +728,12 @@ function buildInstruments(M) {
   face.name = 'GaugeFace';
   face.material.name = 'gauge';
   face.rotation.y = -Math.PI / 2;
-  face.position.x = -0.0231;
+  face.position.x = -0.0186;
   grp.add(face);
-  grp.position.set(0.57, 0.955, 0);
-  grp.rotation.z = -50 * DEG;
+  // tucked under the screen: lower, further forward and more upright than
+  // before (traced from the side photos, where it sits below the cowl line)
+  grp.position.set(0.598, 0.93, 0);
+  grp.rotation.z = -30 * DEG;
   return grp;
 }
 

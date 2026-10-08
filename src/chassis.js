@@ -442,6 +442,8 @@ function RAKE_Z() {
 // Clip-on handlebars, grips, levers, switchgear, master cylinder, mirrors are
 // in body.js (the mirrors mount on the fairing).
 // ---------------------------------------------------------------------------
+const v3c = (x, y, z) => new THREE.Vector3(x, y, z);
+
 export function buildControls(M) {
   const grp = new THREE.Group();
   grp.name = 'Controls';
@@ -450,15 +452,19 @@ export function buildControls(M) {
   const black = [];
   const levers = [];
   for (const s of [-1, 1]) {
-    const c = forkAt(S_UPPER_CLAMP - 0.032);
+    // clip-ons clamp the fork tubes above the top yoke (traced from the
+    // 2019 side photos, where the grips stand clear of the fairing)
+    const c = forkAt(S_FORK_TOP - 0.004);
     const cz = s * FORK_Z;
     // clamp ring
-    const ring = cyl(0.034, 0.034, 0.03, 24);
+    const ring = cyl(0.033, 0.033, 0.024, 24);
     ring.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 1, 0), SD));
     ring.translate(c.x, c.y, cz);
     bars.push(ring);
-    // bar: outward, swept back 14 deg, dropping 7 deg
-    const dir = new THREE.Vector3(-Math.sin(14 * DEG), -Math.sin(7 * DEG), s).normalize();
+    // bar: outward, swept back 20 deg, dropping 12 deg
+    const sweepA = 20 * DEG;
+    const dropA = 12 * DEG;
+    const dir = new THREE.Vector3(-Math.sin(sweepA) * Math.cos(dropA), -Math.sin(dropA), s * Math.cos(sweepA) * Math.cos(dropA)).normalize();
     const start = new THREE.Vector3(c.x, c.y, cz).addScaledVector(dir, 0.03);
     const end = new THREE.Vector3(c.x, c.y, cz).addScaledVector(dir, 0.235);
     bars.push(rod(start, end, 0.011, 16));
@@ -492,12 +498,13 @@ export function buildControls(M) {
       // front brake master cylinder + reservoir
       const mc = perch.clone().add(new THREE.Vector3(0.0, 0.0, -s * 0.035));
       black.push(place(cyl(0.012, 0.012, 0.06, 16), { r: [0, 0, Math.PI / 2], p: [mc.x + 0.005, mc.y + 0.004, mc.z] }));
-      // reservoir cup stands well above the bar (it shows over the tank in
-      // the side photos): pale cup, black cap
-      const res = new THREE.Vector3(c.x - 0.035, c.y + 0.125, cz + s * 0.062);
-      black.push(tube([mc.clone().add(new THREE.Vector3(0, 0.012, 0)), mc.clone().add(new THREE.Vector3(-0.02, 0.06, s * 0.03)), res], 0.0045, 16, 8));
-      levers.push(place(cyl(0.019, 0.017, 0.04, 20), { p: [res.x, res.y + 0.014, res.z] }));
-      black.push(place(cyl(0.0205, 0.0205, 0.009, 20), { p: [res.x, res.y + 0.038, res.z] }));
+      // reservoir on a stay ahead of the bar, standing above the switchgear
+      // (it shows over the tank line in both side photos): pale cup, black cap
+      const res = new THREE.Vector3(0.5, 0.956, 0.128);
+      black.push(tube([mc.clone().add(new THREE.Vector3(0, 0.012, 0)), mc.clone().lerp(res, 0.5).add(new THREE.Vector3(0, 0.03, 0)), res], 0.0045, 16, 8));
+      levers.push(place(cyl(0.019, 0.017, 0.036, 20), { p: [res.x, res.y + 0.018, res.z] }));
+      black.push(place(cyl(0.0205, 0.0205, 0.009, 20), { p: [res.x, res.y + 0.04, res.z] }));
+      black.push(sweep([v3c(res.x - 0.012, res.y + 0.006, res.z - 0.018), v3c(0.47, 0.9, 0.11)], () => rrect(0.01, 0.006, 0.002, 1), { steps: 3, up: new THREE.Vector3(1, 0, 0), spline: false }));
     } else {
       // clutch cable (disappears behind the fairing)
       const cs = perch.clone().add(new THREE.Vector3(0.02, 0.0, 0.02));

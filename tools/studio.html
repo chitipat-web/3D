@@ -55,6 +55,13 @@ try {
   bike.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   scene.add(bike);
 
+  // diagnostics: draw the named meshes solid black (e.g. the clear screen)
+  if (q.get('solid')) {
+    const names = q.get('solid').split(',');
+    const black = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
+    bike.traverse((o) => { if (o.isMesh && names.includes(o.name)) o.material = black; });
+  }
+
   if (q.get('ref')) {
     // reference silhouette grid: 10 cm lines on a vertical plane at z = -0.5
     const grid = new THREE.GridHelper(3, 30, 0xff0000, 0x999999);
