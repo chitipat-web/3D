@@ -150,10 +150,15 @@ function applyTheme() {
 }
 applyTheme();
 (async () => {
-  // the offline single-file build embeds the HDRI as base64
+  // the offline single-file build embeds the HDRI as base64; the published
+  // page ships it as a base64 text file, since its host does not serve .hdr
   let source = STUDIO_HDR;
-  if (window.__ZX6R_HDR) {
-    const bin = atob(window.__ZX6R_HDR);
+  let b64 = window.__ZX6R_HDR;
+  if (!b64 && window.__ZX6R_HDR_TXT) {
+    b64 = await fetch(window.__ZX6R_HDR_TXT).then((r) => (r.ok ? r.text() : null)).catch(() => null);
+  }
+  if (b64) {
+    const bin = atob(b64);
     const buf = new Uint8Array(bin.length);
     for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
     source = buf.buffer;

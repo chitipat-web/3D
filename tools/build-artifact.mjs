@@ -27,7 +27,14 @@ const pick = (tag) => {
   if (a < 0 || b < 0) throw new Error('missing section ' + tag);
   return html.slice(a + `<!-- artifact:${tag} -->`.length, b).trim();
 };
-const page = `${pick('head')}\n${pick('body')}\n<script type="module">\n${js}</script>\n`;
+// The artifact host does not serve .hdr files, so the studio HDRI goes next
+// to the page as base64 text (publish it at HDR_TXT) and the viewer decodes it.
+const HDR_TXT = 'assets/studio_small_08_1k.hdr.txt';
+const hdrHint = `<script>window.__ZX6R_HDR_TXT = '${HDR_TXT}';</script>`;
+const page = `${pick('head')}\n${pick('body')}\n${hdrHint}\n<script type="module">\n${js}</script>\n`;
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, page);
+const hdrOut = path.join(path.dirname(out), path.basename(HDR_TXT));
+fs.writeFileSync(hdrOut, fs.readFileSync(path.join(root, 'assets/studio_small_08_1k.hdr')).toString('base64'));
 console.log('wrote', out, (page.length / 1024).toFixed(1), 'KB');
+console.log('wrote', hdrOut, '-> publish as', HDR_TXT);
