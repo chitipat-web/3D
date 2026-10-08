@@ -9,7 +9,7 @@ import { GTAOPass } from 'three/addons/postprocessing/GTAOPass.js';
 import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { buildZX6R, setLivery } from './zx6r.js';
-import { createEnvironment, addStudioLights, createFloor } from './studio.js';
+import { createEnvironment, addStudioLights, createFloor, loadStudioHDR, STUDIO_HDR } from './studio.js';
 import { SPEC, FA, RA, PF, forkAt } from './layout.js';
 import { EngineSound, IDLE_RPM } from './engine-sound.js';
 import { LIVERY_FONTS } from './livery.js';
@@ -83,8 +83,8 @@ scene.add(beam, beam.target);
 let lightsOn = true;
 function setLights(on) {
   lightsOn = on;
-  M.led.emissiveIntensity = on ? 3.2 : 0;
-  M.ledRed.emissiveIntensity = on ? 2.2 : 0.12;
+  M.led.emissiveIntensity = on ? 7 : 0;
+  M.ledRed.emissiveIntensity = on ? 5 : 0.12;
   beam.intensity = on ? 10 : 0;
   $('#toggle-lights').setAttribute('aria-pressed', String(on));
 }
@@ -97,8 +97,8 @@ const composer = new EffectComposer(renderer, new THREE.WebGLRenderTarget(1, 1, 
 const renderPass = new RenderPass(scene, camera);
 const gtao = new GTAOPass(scene, camera, 1, 1);
 gtao.output = GTAOPass.OUTPUT.Default;
-gtao.blendIntensity = 0.9;
-gtao.updateGtaoMaterial({ radius: 0.14, distanceExponent: 1.4, thickness: 1.0, scale: 1.0, samples: 12, distanceFallOff: 1.0 });
+gtao.blendIntensity = 0.8;
+gtao.updateGtaoMaterial({ radius: 0.12, distanceExponent: 1.4, thickness: 1.0, scale: 1.0, samples: 12, distanceFallOff: 1.0 });
 gtao.updatePdMaterial({ lumaPhi: 10, depthPhi: 2, normalPhi: 3, radius: 5, radiusExponent: 1, rings: 2, samples: 12 });
 // keep glass out of the AO normal/depth pass
 gtao.overrideVisibility = function () {
@@ -109,7 +109,7 @@ gtao.overrideVisibility = function () {
   });
 };
 // threshold sits above the lit floor/paint (HDR), so only LEDs and hot specular highlights glow
-const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.55, 0.32, 2.0);
+const bloom = new UnrealBloomPass(new THREE.Vector2(1, 1), 0.45, 0.3, 4.5);
 composer.addPass(renderPass);
 composer.addPass(gtao);
 composer.addPass(bloom);
@@ -120,19 +120,47 @@ function applyQuality() {
 }
 applyQuality();
 
-// ---------------------------------------------------------------- theme
+// ---------------------------------------------------------------- theme + studio
+// Reflections come from a photographed studio (HDRI); until it has loaded,
+// or if it cannot load, a procedural soft-box studio stands in.
+let hdrEnv = null;
+let proceduralEnv = null;
 function applyTheme() {
   const dark = isDark();
   const bg = new THREE.Color(css('--stage') || (dark ? '#15181c' : '#dcdfe3'));
   scene.background = bg;
   scene.fog = new THREE.Fog(bg, 7, 16);
   floor.material.color.set(css('--floor') || (dark ? '#1b1f24' : '#cfd3d8'));
-  if (scene.environment) scene.environment.dispose();
-  scene.environment = createEnvironment(renderer, { dark });
-  lights.key.intensity = dark ? 2.0 : 2.4;
-  lights.hemi.intensity = dark ? 0.2 : 0.35;
+  if (hdrEnv) {
+    scene.environment = hdrEnv;
+    scene.environmentRotation.set(0, Math.PI / 4, 0);
+    scene.environmentIntensity = dark ? 0.8 : 1.0;
+    lights.key.intensity = dark ? 1.5 : 1.7;
+    lights.fill.intensity = 0.25;
+    lights.hemi.intensity = 0;
+  } else {
+    if (proceduralEnv) proceduralEnv.dispose();
+    proceduralEnv = createEnvironment(renderer, { dark });
+    scene.environment = proceduralEnv;
+    scene.environmentIntensity = 1;
+    lights.key.intensity = dark ? 2.0 : 2.4;
+    lights.fill.intensity = dark ? 0.5 : 0.7;
+    lights.hemi.intensity = dark ? 0.2 : 0.35;
+  }
 }
 applyTheme();
+(async () => {
+  // the offline single-file build embeds the HDRI as base64
+  let source = STUDIO_HDR;
+  if (window.__ZX6R_HDR) {
+    const bin = atob(window.__ZX6R_HDR);
+    const buf = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
+    source = buf.buffer;
+  }
+  hdrEnv = await loadStudioHDR(renderer, source);
+  if (hdrEnv) applyTheme();
+})();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);
 new MutationObserver(applyTheme).observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
 

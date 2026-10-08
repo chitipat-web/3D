@@ -9,14 +9,14 @@ export const LIVERIES = {
     primary: { color: '#58b81c', metalness: 0.08, roughness: 0.28 },
     body: { color: '#0a0b0d', metalness: 0.2, roughness: 0.26 },
     accent: { color: '#4a4e53', metalness: 0.55, roughness: 0.35 },
-    stripeA: '#5cbc1e', // lime green
-    stripeB: '#d9e23a', // yellow-green
+    stripeA: '#63c124', // lime green
+    stripeB: '#cfe03a', // yellow-green
     stripeC: '#c9ced3', // silver line
-    stripeD: '#43474c', // graphite panel
+    stripeD: '#666c73', // graphite panel
     tankLogo: '#16181b',
     rim: '#62c02c',
     script: '#ffffff',
-    screenTint: '#9fd28a',
+    screenTint: '#c3ccd2',
   },
   gray: {
     id: 'gray',
@@ -32,12 +32,45 @@ export const LIVERIES = {
     tankLogo: '#c8343a',
     rim: '#c8343a',
     script: '#e9ecef',
-    screenTint: '#a9b2b8',
+    screenTint: '#b9c1c7',
   },
 };
 
 const std = (o) => new THREE.MeshStandardMaterial(o);
 const phys = (o) => new THREE.MeshPhysicalMaterial(o);
+
+// Faceted chrome reflector pattern for the headlight housings.
+function facetTexture() {
+  if (typeof document === 'undefined') return null;
+  const c = document.createElement('canvas');
+  c.width = c.height = 256;
+  const g = c.getContext('2d');
+  let seed = 7;
+  const rnd = () => ((seed = (seed * 16807) % 2147483647) / 2147483647);
+  const n = 8;
+  const pts = [];
+  for (let j = 0; j <= n; j++) for (let i = 0; i <= n; i++) {
+    const edge = i === 0 || j === 0 || i === n || j === n;
+    pts.push([(i + (edge ? 0 : (rnd() - 0.5) * 0.7)) * (256 / n), (j + (edge ? 0 : (rnd() - 0.5) * 0.7)) * (256 / n)]);
+  }
+  const P = (i, j) => pts[j * (n + 1) + i];
+  for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
+    for (const tri of [[P(i, j), P(i + 1, j), P(i + 1, j + 1)], [P(i, j), P(i + 1, j + 1), P(i, j + 1)]]) {
+      const v = 120 + Math.floor(rnd() * 135);
+      g.fillStyle = `rgb(${v},${v},${Math.min(255, v + 6)})`;
+      g.beginPath();
+      g.moveTo(...tri[0]);
+      g.lineTo(...tri[1]);
+      g.lineTo(...tri[2]);
+      g.closePath();
+      g.fill();
+    }
+  }
+  const t = new THREE.CanvasTexture(c);
+  t.wrapS = t.wrapT = THREE.RepeatWrapping;
+  t.colorSpace = THREE.SRGBColorSpace;
+  return t;
+}
 
 export function createMaterials() {
   const M = {
@@ -72,25 +105,25 @@ export function createMaterials() {
     frame: phys({ color: '#141518', roughness: 0.42, metalness: 0.45, clearcoat: 0.4, clearcoatRoughness: 0.25 }),
     forkOuter: std({ color: '#1b1c1f', roughness: 0.32, metalness: 0.7 }),
     forkInner: std({ color: '#e8eaec', roughness: 0.05, metalness: 1 }),
-    engine: std({ color: '#8d9197', roughness: 0.42, metalness: 0.88 }),
-    engineDark: std({ color: '#2b2d31', roughness: 0.5, metalness: 0.6 }),
-    engineBlack: std({ color: '#17181a', roughness: 0.55, metalness: 0.4 }),
+    engine: std({ color: '#8e949b', roughness: 0.58, metalness: 0.55 }),
+    engineDark: std({ color: '#2b2d31', roughness: 0.55, metalness: 0.45 }),
+    engineBlack: std({ color: '#1a1b1e', roughness: 0.45, metalness: 0.35 }),
     caliper: std({ color: '#2b2d31', roughness: 0.42, metalness: 0.55 }),
     chain: std({ color: '#3d3e41', roughness: 0.4, metalness: 0.95 }),
     sprocket: std({ color: '#9ea3a9', roughness: 0.3, metalness: 1 }),
     exhaust: phys({ color: '#141517', roughness: 0.28, metalness: 0.65, clearcoat: 0.6 }),
     exhaustTip: std({ color: '#d7dade', roughness: 0.14, metalness: 1 }),
     brushed: phys({ color: '#c9cdd1', roughness: 0.3, metalness: 1, clearcoat: 0.3, clearcoatRoughness: 0.2 }),
-    exhaustHot: std({ color: '#9b8b78', roughness: 0.32, metalness: 1 }),
+    exhaustHot: std({ color: '#4a4540', roughness: 0.5, metalness: 0.85 }),
     radiator: std({ color: '#1a1b1d', roughness: 0.7, metalness: 0.3 }),
     bolt: std({ color: '#c9ccd0', roughness: 0.25, metalness: 1 }),
     gold: std({ color: '#c8a24a', roughness: 0.3, metalness: 1 }),
 
     // ---- glass and lights
-    screen: phys({ color: '#9fd28a', roughness: 0.03, metalness: 0, transparent: true, opacity: 0.32, side: THREE.DoubleSide, depthWrite: false }),
+    screen: phys({ color: '#c3ccd2', roughness: 0.03, metalness: 0, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }),
     lens: phys({ color: '#ffffff', roughness: 0.02, metalness: 0, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
     lensRed: phys({ color: '#b3121b', roughness: 0.08, metalness: 0, transparent: true, opacity: 0.75, side: THREE.DoubleSide }),
-    headlightInner: std({ color: '#c8ccd2', roughness: 0.15, metalness: 1 }),
+    headlightInner: std({ color: '#d4d8de', roughness: 0.12, metalness: 1, map: facetTexture(), side: THREE.DoubleSide }),
     led: std({ color: '#ffffff', emissive: '#e9f3ff', emissiveIntensity: 2.4, roughness: 0.3 }),
     ledRed: std({ color: '#ff2a2a', emissive: '#ff1010', emissiveIntensity: 1.6, roughness: 0.4 }),
     amber: std({ color: '#ffae2a', emissive: '#ff8c00', emissiveIntensity: 0.25, roughness: 0.3 }),
@@ -98,6 +131,7 @@ export function createMaterials() {
     gauge: std({ color: '#ffffff', roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 0.25 }),
     mesh: std({ color: '#0a0a0b', roughness: 0.8, metalness: 0.2, side: THREE.DoubleSide }),
   };
+  for (const k of ['body', 'accent', 'decalSide', 'decalSideL', 'plasticGloss']) M[k].envMapIntensity = 0.7;
   for (const [k, m] of Object.entries(M)) m.name = k;
   return M;
 }

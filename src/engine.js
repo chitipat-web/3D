@@ -27,10 +27,12 @@ function finTexture() {
   return t;
 }
 
-// Dome-shaped engine side cover facing +z (s = 1) or -z (s = -1).
+// Cast engine side cover facing +z (s = 1) or -z (s = -1): straight wall,
+// chamfered edge, flat face with a low central boss.
 function sideCover(cx, cy, z0, r, depth, s) {
   const prof = [
-    [r, 0], [r, depth * 0.35], [r * 0.95, depth * 0.62], [r * 0.82, depth * 0.84], [r * 0.6, depth * 0.96], [r * 0.25, depth], [0.0001, depth],
+    [r, 0], [r, depth * 0.55], [r * 0.97, depth * 0.72], [r * 0.9, depth * 0.78], [r * 0.42, depth * 0.8], [r * 0.38, depth * 0.94], [r * 0.3, depth],
+    [0.0001, depth],
   ];
   const g = latheZ(prof, 48);
   if (s < 0) g.scale(1, 1, -1).index && flipIdx(g);
@@ -73,7 +75,7 @@ export function buildEngine(M) {
     g.translate(p.x, p.y, 0);
     return g;
   };
-  dark.push(tilt(rbox(0.112, 0.15, 0.33, 0.014), 0.13));
+  silver.push(tilt(rbox(0.112, 0.15, 0.33, 0.014), 0.13));
   silver.push(tilt(rbox(0.142, 0.085, 0.338, 0.016), 0.245, 0.004));
   black.push(tilt(rbox(0.125, 0.05, 0.3, 0.02), 0.305, -0.004));
   // cam cover ribs
@@ -81,13 +83,21 @@ export function buildEngine(M) {
   // plug coils
   for (const z of [-0.105, -0.035, 0.035, 0.105]) black.push(tilt(cyl(0.012, 0.012, 0.03, 12), 0.34, -0.012).translate(0, 0, z));
 
-  // right side: clutch cover + crank-end cover
-  silver.push(sideCover(0.0, 0.425, 0.155, 0.088, 0.036, 1));
-  silver.push(sideCover(0.13, 0.4, 0.155, 0.056, 0.032, 1));
-  silver.push(sideCover(0.06, 0.465, 0.155, 0.03, 0.026, 1));
+  // right side: clutch cover + crank-end cover (black cast, machined rims)
+  const covers = [];
+  const rims = [];
+  const cover = (cx, cy, z0, r, depth, sd) => {
+    covers.push(sideCover(cx, cy, z0, r, depth, sd));
+    const rim = new THREE.TorusGeometry(r * 0.93, 0.0028, 6, 48);
+    rim.translate(cx, cy, z0 + sd * depth * 0.76);
+    rims.push(rim);
+  };
+  cover(0.0, 0.425, 0.155, 0.088, 0.034, 1);
+  cover(0.13, 0.4, 0.155, 0.056, 0.03, 1);
+  cover(0.06, 0.465, 0.155, 0.03, 0.024, 1);
   // left side: alternator cover + starter clutch cover
-  silver.push(sideCover(0.11, 0.41, -0.155, 0.068, 0.036, -1));
-  dark.push(sideCover(0.02, 0.45, -0.155, 0.04, 0.03, -1));
+  cover(0.11, 0.41, -0.155, 0.068, 0.034, -1);
+  cover(0.02, 0.45, -0.155, 0.04, 0.028, -1);
   for (let k = 0; k < 11; k++) {
     const a = (k / 11) * Math.PI * 2 + 0.2;
     bolts.push(place(cyl(0.0055, 0.0055, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.0 + 0.094 * Math.cos(a), 0.425 + 0.094 * Math.sin(a), 0.184] }));
@@ -107,7 +117,9 @@ export function buildEngine(M) {
   black.push(place(cyl(0.028, 0.028, 0.12, 18), { r: [Math.PI / 2, 0, 0], p: [0.02, 0.475 + dy, -0.06] }));
 
   grp.add(mesh(merge(dark), M.engineDark, 'Crankcase'));
-  grp.add(mesh(merge(silver), M.engine, 'EngineCovers'));
+  grp.add(mesh(merge(silver), M.engine, 'CylinderBlock'));
+  grp.add(mesh(merge(covers), M.engineBlack, 'EngineCovers'));
+  grp.add(mesh(merge(rims), M.alu, 'CoverRims'));
   grp.add(mesh(merge(black), M.engineBlack, 'EngineBlack'));
   grp.add(mesh(merge(bolts), M.bolt, 'EngineBolts'));
 

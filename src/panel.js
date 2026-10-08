@@ -320,6 +320,45 @@ export function buildPanel(opts) {
   g.setAttribute('uv', new THREE.Float32BufferAttribute(uvs, 2));
   g.setIndex(idx);
   g.computeVertexNormals();
+  // Replace the skin normals with ones taken from the surface itself (central
+  // differences of z = surface - edge roll), so reflections stay smooth on the
+  // irregular Delaunay mesh.
+  if (cap && !globalThis.__noAnalyticNormals) {
+    const rmax = Math.max(roll, holeRoll) * 1.2;
+    const zf = (x, y) => {
+      let z = surface(x, y);
+      if (roll > 0) {
+        const d = dist(x, y, rmax);
+        if (d < roll) {
+          const t = 1 - d / roll;
+          z -= rollProfile === 'round' ? roll - Math.sqrt(Math.max(0, roll * roll - (roll * t) * (roll * t))) : roll * t * t;
+        }
+      }
+      return z;
+    };
+    const h = 0.0006;
+    const nrm = g.attributes.normal;
+    for (let i = 0; i < pts.length; i++) {
+      // the rolled edge band keeps its mesh normals: they follow the
+      // structured edge rows, while the distance-field gradient is faceted
+      if (kind[i]) continue;
+      const [x, y] = pts[i];
+      if (Math.max(roll, holeRoll) > 0 && dist(x, y, rmax) < Math.max(roll, holeRoll) * 1.05) continue;
+      const fx = (zf(x + h, y) - zf(x - h, y)) / (2 * h);
+      const fy = (zf(x, y + h) - zf(x, y - h)) / (2 * h);
+      const l = Math.hypot(fx, fy, 1);
+      nrm.setXYZ(i, -fx / l, -fy / l, 1 / l);
+    }
+    nrm.needsUpdate = true;
+  }
+  // vertices left without faces (or on degenerate ones) get the panel normal
+  // so no NaN can reach the shading
+  {
+    const nrm = g.attributes.normal;
+    for (let i = 0; i < nrm.count; i++) {
+      if (nrm.getX(i) ** 2 + nrm.getY(i) ** 2 + nrm.getZ(i) ** 2 < 1e-10) nrm.setXYZ(i, 0, 0, 1);
+    }
+  }
   return g;
 }
 

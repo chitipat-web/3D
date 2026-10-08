@@ -19,8 +19,9 @@ window.addEventListener('error', (e) => { window.__error = String(e.message || e
 window.addEventListener('unhandledrejection', (e) => { window.__error = String(e.reason && (e.reason.stack || e.reason)); });
 
 try {
+  if (new URLSearchParams(location.search).get('nonormals') === '1') globalThis.__noAnalyticNormals = true;
   const { buildZX6R } = await import('../src/zx6r.js');
-  const { createEnvironment, addStudioLights, createFloor } = await import('../src/studio.js');
+  const { createEnvironment, addStudioLights, createFloor, loadStudioHDR } = await import('../src/studio.js');
   const q = new URLSearchParams(location.search);
   const W = +(q.get('w') || 1400), H = +(q.get('h') || 900);
   const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true });
@@ -29,16 +30,23 @@ try {
   renderer.toneMapping = q.get('tm') === 'aces' ? THREE.ACESFilmicToneMapping : THREE.NeutralToneMapping;
   renderer.toneMappingExposure = +(q.get('exp') || 1.0);
   renderer.outputColorSpace = THREE.SRGBColorSpace;
-  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.enabled = q.get('noshadow') !== '1';
   renderer.shadowMap.type = THREE.PCFSoftShadowMap;
   document.body.appendChild(renderer.domElement);
 
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(q.get('bg') || '#cfd2d4');
   const dark = q.get('dark') === '1';
-  scene.environment = createEnvironment(renderer, { dark });
+  const hdrEnv = q.get('hdr') === '0' ? null : await loadStudioHDR(renderer, '../assets/studio_small_08_1k.hdr');
+  scene.environment = hdrEnv || createEnvironment(renderer, { dark });
   scene.environmentIntensity = +(q.get('env') || 1.0);
-  addStudioLights(scene, { dark });
+  scene.environmentRotation.set(0, (+(q.get('rot') ?? 45) * Math.PI) / 180, 0);
+  const L = addStudioLights(scene, { dark });
+  if (hdrEnv) {
+    L.key.intensity = +(q.get('key') || 1.7);
+    L.fill.intensity = 0.25;
+    L.hemi.intensity = 0.0;
+  }
   scene.add(createFloor(q.get('bg') || '#cfd2d4'));
 
   const bike = buildZX6R({ livery: q.get('livery') || 'krt' });
@@ -71,8 +79,13 @@ try {
     const v = q.get('cam').split(',').map(Number);
     views.custom = { p: v.slice(0, 3), t: v.slice(3, 6), fov: v[6] || 30 };
   }
+  if (q.get('camE')) {
+    // explicit camera from a solved photo match: px,py,pz,rx,ry,rz,fov (Euler YXZ)
+    const v = q.get('camE').split(',').map(Number);
+    views.camE = { e: v };
+  }
   const list = (q.get('views') || 'side,front34,rear34,front,top').split(',');
-  const camera = new THREE.PerspectiveCamera(30, W / H, 0.05, 100);
+  const camera = new THREE.PerspectiveCamera(30, W / H, 0.05, 200);
   const shots = [];
   if (q.get('ortho') === 'side19') {
     // matches the calibrated 2019 KRT studio side photo (1300 x 710, left side)
@@ -88,10 +101,16 @@ try {
   for (const name of list) {
     const v = views[name];
     if (!v) continue;
-    camera.fov = v.fov;
     camera.aspect = W / H;
-    camera.position.set(...v.p);
-    camera.lookAt(new THREE.Vector3(...v.t));
+    if (v.e) {
+      camera.fov = v.e[6];
+      camera.position.set(v.e[0], v.e[1], v.e[2]);
+      camera.rotation.set(v.e[3], v.e[4], v.e[5], 'YXZ');
+    } else {
+      camera.fov = v.fov;
+      camera.position.set(...v.p);
+      camera.lookAt(new THREE.Vector3(...v.t));
+    }
     camera.updateProjectionMatrix();
     renderer.render(scene, camera);
     shots.push({ name: (q.get('prefix') || '') + name, data: renderer.domElement.toDataURL('image/png') });

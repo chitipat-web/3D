@@ -68,15 +68,16 @@ export function buildFrame(M) {
   // ---- sub-frame (seat rails) and pillion peg hangers
   const sub = [];
   for (const s of [-1, 1]) {
-    sub.push(sweep([v3(-0.12, 0.66, s * 0.11), v3(-0.32, 0.72, s * 0.092), v3(-0.6, 0.79, s * 0.075), v3(-0.84, 0.84, s * 0.055)], (t) =>
+    // upper rail runs inside the tail cowl
+    sub.push(sweep([v3(-0.12, 0.66, s * 0.11), v3(-0.3, 0.77, s * 0.092), v3(-0.45, 0.8, s * 0.082), v3(-0.6, 0.866, s * 0.07), v3(-0.74, 0.93, s * 0.055)], (t) =>
       rrect(0.03, 0.022, 0.006, 2), { steps: 24, up: UP }));
     sub.push(sweep([v3(-0.15, 0.52, s * 0.115), v3(-0.32, 0.62, s * 0.1), v3(-0.52, 0.765, s * 0.08)], (t) => rrect(0.024, 0.02, 0.006, 2), {
       steps: 16,
       up: UP,
     }));
   }
-  sub.push(place(rbox(0.03, 0.025, 0.16, 0.006), { p: [-0.62, 0.79, 0] }));
-  sub.push(place(rbox(0.03, 0.025, 0.12, 0.006), { p: [-0.82, 0.835, 0] }));
+  sub.push(place(rbox(0.03, 0.025, 0.15, 0.006), { p: [-0.6, 0.866, 0] }));
+  sub.push(place(rbox(0.03, 0.025, 0.12, 0.006), { p: [-0.74, 0.93, 0] }));
   grp.add(mesh(merge(sub), M.frame, 'SubFrame'));
 
   // pillion peg hangers (cast, black) with triangular openings

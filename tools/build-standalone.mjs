@@ -28,6 +28,8 @@ const pick = (tag) => {
   return html.slice(a + `<!-- artifact:${tag} -->`.length, b).trim();
 };
 const body = pick('body').replace(/<script type="importmap">[\s\S]*?<\/script>/, '').trim();
+// embed the studio HDRI so reflections work without any network
+const hdr = fs.readFileSync(path.join(root, 'assets/studio_small_08_1k.hdr')).toString('base64');
 const page = `<!doctype html>
 <html lang="th">
 <head>
@@ -37,6 +39,7 @@ ${pick('head')}
 </head>
 <body>
 ${body}
+<script>window.__ZX6R_HDR = "${hdr}";</script>
 <script>
 ${js}</script>
 </body>

@@ -1,7 +1,41 @@
-// Studio lighting: a procedural soft-box environment for reflections, plus
-// key/fill lights and a shadow-catching floor. Shared by the viewer and the
-// headless render tool.
+// Studio lighting: a photographed studio HDRI (with a procedural soft-box
+// fallback) for reflections, plus key/fill lights and a shadow-catching floor.
+// Shared by the viewer and the headless render tool.
 import * as THREE from 'three';
+import { RGBELoader } from 'three/addons/loaders/RGBELoader.js';
+
+// "Studio Small 08" by Sergej Majboroda, Poly Haven (CC0)
+export const STUDIO_HDR = 'assets/studio_small_08_1k.hdr';
+
+// Load the HDRI and turn it into a prefiltered environment map. `source` is a
+// URL, or an ArrayBuffer with the .hdr file contents. Resolves null on failure.
+export async function loadStudioHDR(renderer, source = STUDIO_HDR) {
+  try {
+    const loader = new RGBELoader();
+    let tex;
+    if (source instanceof ArrayBuffer) {
+      const data = loader.parse(source);
+      tex = new THREE.DataTexture(data.data, data.width, data.height, THREE.RGBAFormat, data.type);
+      tex.colorSpace = THREE.LinearSRGBColorSpace;
+      tex.minFilter = THREE.LinearFilter;
+      tex.magFilter = THREE.LinearFilter;
+      tex.generateMipmaps = false;
+      tex.flipY = true;
+      tex.needsUpdate = true;
+    } else {
+      tex = await loader.loadAsync(source);
+    }
+    tex.mapping = THREE.EquirectangularReflectionMapping;
+    const pm = new THREE.PMREMGenerator(renderer);
+    const env = pm.fromEquirectangular(tex).texture;
+    pm.dispose();
+    tex.dispose();
+    return env;
+  } catch (e) {
+    console.warn('studio HDRI unavailable, using the procedural studio', e);
+    return null;
+  }
+}
 
 function gradientSphere(top, horizon, bottom) {
   const geo = new THREE.SphereGeometry(30, 48, 24);
