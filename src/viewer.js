@@ -13,6 +13,7 @@ import { createEnvironment, addStudioLights, createFloor, loadStudioHDR, STUDIO_
 import { SPEC, FA, RA, PF, forkAt } from './layout.js';
 import { EngineSound, IDLE_RPM } from './engine-sound.js';
 import { LIVERY_FONTS } from './livery.js';
+import { loadLiveryFonts } from './fonts.js';
 
 const $ = (sel) => document.querySelector(sel);
 const $$ = (sel) => document.querySelectorAll(sel);
@@ -68,12 +69,12 @@ scene.add(bike);
 const M = bike.userData.materials;
 let currentLivery = 'krt';
 
-// re-draw the livery once the web fonts used by the graphics have loaded
-if (document.fonts && document.fonts.load) {
-  Promise.all(LIVERY_FONTS.map((f) => document.fonts.load(f).catch(() => null)))
-    .then(() => setLivery(bike, currentLivery))
-    .catch(() => {});
-}
+// re-draw the livery once its lettering fonts (bundled copies) have loaded
+loadLiveryFonts()
+  .catch(() => false)
+  .then(() => (document.fonts && document.fonts.load ? Promise.all(LIVERY_FONTS.map((f) => document.fonts.load(f).catch(() => null))) : null))
+  .then(() => setLivery(bike, currentLivery))
+  .catch(() => {});
 
 // headlight beam on the floor + light state
 const beam = new THREE.SpotLight(0xf2f6ff, 0, 7, 0.45, 0.7, 1.1);
@@ -180,6 +181,8 @@ const EXPLODE = {
   UpperSideCowl: [0.08, 0.06, 0.34],
   MidSideCowl: [0.06, -0.02, 0.44],
   SideCover: [0, 0.08, 0.36],
+  SeatSideCover: [-0.04, 0.12, 0.3],
+  FairingLiner: [0.06, 0.02, 0.24],
   LowerFairing: [0.04, -0.08, 0.42],
   InnerCover: [0.04, 0.08, 0.14],
   FrontSignals: [0.08, -0.02, 0.48],

@@ -21,6 +21,8 @@ window.addEventListener('unhandledrejection', (e) => { window.__error = String(e
 try {
   if (new URLSearchParams(location.search).get('nonormals') === '1') globalThis.__noAnalyticNormals = true;
   const { buildZX6R } = await import('../src/zx6r.js');
+  const { loadLiveryFonts } = await import('../src/fonts.js');
+  window.__fontsOk = await loadLiveryFonts('../assets/fonts/');
   const { createEnvironment, addStudioLights, createFloor, loadStudioHDR } = await import('../src/studio.js');
   const q = new URLSearchParams(location.search);
   const W = +(q.get('w') || 1400), H = +(q.get('h') || 900);
@@ -93,7 +95,7 @@ try {
     const oc = new THREE.OrthographicCamera(-1.1272, 1.1512, 1.1786, -0.0658, 0.1, 30);
     oc.position.set(0, 0, -10);
     oc.lookAt(0, 0, 0);
-    scene.background = new THREE.Color('#ffffff');
+    scene.background = new THREE.Color(q.get('obg') ? '#' + q.get('obg') : '#ffffff');
     renderer.render(scene, oc);
     shots.push({ name: (q.get('prefix') || '') + 'ortho_side19', data: renderer.domElement.toDataURL('image/png') });
     list.length = 0;

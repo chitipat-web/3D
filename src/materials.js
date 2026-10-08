@@ -105,7 +105,7 @@ export function createMaterials() {
     frame: phys({ color: '#141518', roughness: 0.42, metalness: 0.45, clearcoat: 0.4, clearcoatRoughness: 0.25 }),
     forkOuter: std({ color: '#1b1c1f', roughness: 0.32, metalness: 0.7 }),
     forkInner: std({ color: '#e8eaec', roughness: 0.05, metalness: 1 }),
-    engine: std({ color: '#8e949b', roughness: 0.58, metalness: 0.55 }),
+    engine: std({ color: '#7a7f86', roughness: 0.58, metalness: 0.55 }),
     engineDark: std({ color: '#2b2d31', roughness: 0.55, metalness: 0.45 }),
     engineBlack: std({ color: '#1a1b1e', roughness: 0.45, metalness: 0.35 }),
     caliper: std({ color: '#2b2d31', roughness: 0.42, metalness: 0.55 }),

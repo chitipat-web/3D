@@ -129,7 +129,7 @@ export function sideLivery(L, mirror = false) {
   text(0.07, 0.276, 'Kawasaki', 0.042, { font: BOLD, weight: '900', style: 'italic', color: '#f2f3f4', rot: -0.07, sxk: 1.05 });
   if (L.id === 'krt') text(0.065, 0.246, 'Racing Team', 0.022, { font: BOLD, weight: '800', style: 'italic', color: '#d5d8db', rot: -0.07 });
   // ---- upper cowl script
-  text(0.585, 0.728, 'Ninja', 0.05, { font: SCRIPT, weight: '700', style: 'italic', color: '#dfe2e5', rot: -0.13 });
+  text(0.577, 0.697, 'Ninja', 0.058, { font: SCRIPT, weight: '700', style: 'italic', color: '#dfe2e5', rot: -0.13 });
   // ---- tail cowl: graphite side with a silver swoosh and colour insert
   poly([[-0.25, 0.8], [-0.45, 0.83], [-0.58, 0.885], [-0.72, 0.95], [-0.9, 1.0], [-0.9, 1.1], [-0.25, 1.1]], D);
   band([-0.3, 0.81], [-0.88, 1.008], 0, 0.005, C);

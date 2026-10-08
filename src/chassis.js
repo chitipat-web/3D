@@ -492,10 +492,12 @@ export function buildControls(M) {
       // front brake master cylinder + reservoir
       const mc = perch.clone().add(new THREE.Vector3(0.0, 0.0, -s * 0.035));
       black.push(place(cyl(0.012, 0.012, 0.06, 16), { r: [0, 0, Math.PI / 2], p: [mc.x + 0.005, mc.y + 0.004, mc.z] }));
-      const res = new THREE.Vector3(c.x - 0.03, c.y + 0.07, cz + s * 0.06);
-      levers.push(rod(mc.clone().add(new THREE.Vector3(0, 0.015, 0)), res, 0.004, 8));
-      black.push(place(cyl(0.017, 0.016, 0.038, 20), { p: [res.x, res.y + 0.012, res.z] }));
-      grips.push(place(cyl(0.0175, 0.0175, 0.008, 20), { p: [res.x, res.y + 0.034, res.z] }));
+      // reservoir cup stands well above the bar (it shows over the tank in
+      // the side photos): pale cup, black cap
+      const res = new THREE.Vector3(c.x - 0.035, c.y + 0.125, cz + s * 0.062);
+      black.push(tube([mc.clone().add(new THREE.Vector3(0, 0.012, 0)), mc.clone().add(new THREE.Vector3(-0.02, 0.06, s * 0.03)), res], 0.0045, 16, 8));
+      levers.push(place(cyl(0.019, 0.017, 0.04, 20), { p: [res.x, res.y + 0.014, res.z] }));
+      black.push(place(cyl(0.0205, 0.0205, 0.009, 20), { p: [res.x, res.y + 0.038, res.z] }));
     } else {
       // clutch cable (disappears behind the fairing)
       const cs = perch.clone().add(new THREE.Vector3(0.02, 0.0, 0.02));

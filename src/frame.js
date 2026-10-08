@@ -1,6 +1,6 @@
 // Frame, sub-frame, swing-arm, rear suspension, chain, foot controls.
 import * as THREE from 'three';
-import { DEG, sweep, rrect, circle, shape, circlePts, extrude, rbox, cyl, rod, tube, place, merge, latheZ, loft } from './geom.js';
+import { DEG, kf, clamp, sweep, rrect, circle, shape, circlePts, extrude, rbox, cyl, rod, tube, place, merge, latheZ, loft, mirrorZ, flipGeometry } from './geom.js';
 import { RA, PIVOT, SPROCKET_F, CHAIN_Z, steerAt, S_LOWER_CLAMP, S_UPPER_CLAMP, SD } from './layout.js';
 import { mesh } from './chassis.js';
 
@@ -20,6 +20,57 @@ function beam(A, B, w, h, r = 0.005) {
 // Flat plate from a 2-D outline in the XY plane at depth z.
 function plate(pts, z, thick, holes = [], bevel = 0.0015) {
   return extrude(shape(pts, holes), thick, bevel, 1, 6).translate(0, 0, z);
+}
+
+// Box-section arm built from constant-x cross-sections: rounded rectangles in
+// the z-y plane spanning bot(x)..top(x) and zIn(x)..zOut(x). dent(x, y) pushes
+// the outer face in (cast scallops). Right side; mirror for the left.
+function sectionArm(xs, { top, bot, zIn, zOut, r = 0.012, dent = null, nFace = 10 }) {
+  const rings = xs.map((x) => {
+    const y0 = bot(x);
+    const y1 = top(x);
+    const z0 = zIn(x);
+    const z1 = zOut(x);
+    const rr = Math.min(r, (y1 - y0) * 0.45, (z1 - z0) * 0.45);
+    const ring = [];
+    const arc = (cz, cy, a0) => {
+      for (let k = 1; k < 4; k++) {
+        const a = a0 + (k / 4) * (Math.PI / 2);
+        ring.push([x, cy + rr * Math.sin(a), cz + rr * Math.cos(a)]);
+      }
+    };
+    for (let k = 0; k <= nFace; k++) {
+      const y = y0 + rr + ((y1 - y0 - 2 * rr) * k) / nFace;
+      ring.push([x, y, z1 - (dent ? dent(x, y) : 0)]);
+    }
+    arc(z1 - rr, y1 - rr, 0);
+    ring.push([x, y1, z1 - rr], [x, y1 + 0.002, (z0 + z1) / 2], [x, y1, z0 + rr]);
+    arc(z0 + rr, y1 - rr, Math.PI / 2);
+    for (let k = 0; k <= 3; k++) ring.push([x, y1 - rr - ((y1 - y0 - 2 * rr) * k) / 3, z0]);
+    arc(z0 + rr, y0 + rr, Math.PI);
+    ring.push([x, y0, z0 + rr], [x, y0 - 0.002, (z0 + z1) / 2], [x, y0, z1 - rr]);
+    arc(z1 - rr, y0 + rr, (3 * Math.PI) / 2);
+    return ring;
+  });
+  let g = loft(rings, { closed: true, su: 1, sv: 2 });
+  // outward-facing skin: the outer-face normal must point to +z
+  const mid = Math.floor(rings.length / 2) * 2 * rings[0].length + 5;
+  if (g.attributes.normal.getZ(mid) < 0) g = flipGeometry(g);
+  const cap = (ring, dir) => {
+    const c = ring.reduce((a, p) => [a[0] + p[0] / ring.length, a[1] + p[1] / ring.length, a[2] + p[2] / ring.length], [0, 0, 0]);
+    const pos = [...c];
+    ring.forEach((p) => pos.push(...p));
+    const idx = [];
+    for (let k = 0; k < ring.length; k++) idx.push(0, 1 + k, 1 + ((k + 1) % ring.length));
+    let cg = new THREE.BufferGeometry();
+    cg.setAttribute('position', new THREE.Float32BufferAttribute(pos, 3));
+    cg.setAttribute('uv', new THREE.Float32BufferAttribute(new Array(pos.length / 3 * 2).fill(0), 2));
+    cg.setIndex(idx);
+    cg.computeVertexNormals();
+    if (cg.attributes.normal.getX(0) * dir < 0) cg = flipGeometry(cg);
+    return cg;
+  };
+  return merge([g, cap(rings[0], 1), cap(rings[rings.length - 1], -1)]);
 }
 
 export function buildFrame(M) {
@@ -50,12 +101,15 @@ export function buildFrame(M) {
       })
     );
     // pivot section: vertical member down past the swing-arm pivot
+    // (traced: ~16 cm deep at the top, from the engine back to -0.2)
     parts.push(
-      sweep([v3(-0.118, 0.665, s * 0.13), v3(-0.13, 0.55, s * 0.13), v3(-0.142, 0.44, s * 0.13), v3(-0.152, 0.345, s * 0.128)], (t) =>
-        rrect(THREE.MathUtils.lerp(0.11, 0.075, t), 0.044, 0.012, 3), { steps: 24, up: v3(1, 0, 0) })
+      sweep([v3(-0.112, 0.69, s * 0.13), v3(-0.122, 0.56, s * 0.13), v3(-0.133, 0.44, s * 0.13), v3(-0.142, 0.335, s * 0.128)], (t) =>
+        rrect(THREE.MathUtils.lerp(0.165, 0.1, t), 0.044, 0.014, 3), { steps: 24, up: v3(1, 0, 0) })
     );
-    // engine hanger down to the cylinder head / crankcase
-    parts.push(beam(v3(0.3, 0.725, s * 0.14), v3(0.27, 0.6, s * 0.15), 0.022, 0.04));
+    // sub-frame / shock mount boss at the top rear corner
+    parts.push(place(rbox(0.05, 0.045, 0.044, 0.01), { p: [-0.18, 0.705, s * 0.13], r: [0, 0, 0.3] }));
+    // front engine hanger: cast plate under the spar down to the head mount
+    parts.push(plate([[0.366, 0.702], [0.33, 0.738], [0.27, 0.722], [0.252, 0.64], [0.268, 0.566], [0.308, 0.546], [0.342, 0.578]], s * 0.142, 0.016, [], 0.003));
     parts.push(beam(v3(-0.13, 0.42, s * 0.13), v3(-0.03, 0.28, s * 0.14), 0.022, 0.035));
     // pivot bolt head
     parts.push(place(cyl(0.024, 0.024, 0.012, 6), { r: [Math.PI / 2, 0, 0], p: [PIVOT.x, PIVOT.y, s * 0.157] }));
@@ -71,8 +125,8 @@ export function buildFrame(M) {
     // upper rail runs inside the tail cowl
     sub.push(sweep([v3(-0.12, 0.66, s * 0.11), v3(-0.3, 0.77, s * 0.092), v3(-0.45, 0.8, s * 0.082), v3(-0.6, 0.866, s * 0.07), v3(-0.74, 0.93, s * 0.055)], (t) =>
       rrect(0.03, 0.022, 0.006, 2), { steps: 24, up: UP }));
-    sub.push(sweep([v3(-0.15, 0.52, s * 0.115), v3(-0.32, 0.62, s * 0.1), v3(-0.52, 0.765, s * 0.08)], (t) => rrect(0.024, 0.02, 0.006, 2), {
-      steps: 16,
+    sub.push(sweep([v3(-0.17, 0.668, s * 0.12), v3(-0.33, 0.68, s * 0.118), v3(-0.45, 0.745, s * 0.1), v3(-0.56, 0.808, s * 0.085)], (t) => rrect(0.026, 0.022, 0.006, 2), {
+      steps: 18,
       up: UP,
     }));
   }
@@ -82,16 +136,25 @@ export function buildFrame(M) {
 
   // pillion peg hangers (cast, black) with triangular openings
   const hangers = [];
+  // (traced: bolts at (-0.329, 0.678) and (-0.407, 0.732), peg at (-0.575, 0.59))
   for (const s of [-1, 1]) {
-    const outline = [[-0.3, 0.705], [-0.37, 0.71], [-0.49, 0.6], [-0.505, 0.575], [-0.48, 0.555], [-0.44, 0.575], [-0.34, 0.65], [-0.29, 0.675]];
-    const hole = [[-0.345, 0.675], [-0.44, 0.6], [-0.37, 0.64]];
-    hangers.push(plate(outline, s * 0.135, 0.012, [hole], 0.002));
+    const outline = [
+      [-0.314, 0.678], [-0.322, 0.694], [-0.395, 0.748], [-0.41, 0.751], [-0.423, 0.741], [-0.432, 0.727], [-0.578, 0.608],
+      [-0.594, 0.598], [-0.594, 0.578], [-0.576, 0.567], [-0.555, 0.573], [-0.34, 0.66], [-0.322, 0.664],
+    ];
+    const hole = [[-0.352, 0.684], [-0.528, 0.602], [-0.397, 0.715]];
+    hangers.push(plate(outline, s * 0.136, 0.012, [hole], 0.002));
   }
   grp.add(mesh(merge(hangers), M.frame, 'PillionHangers'));
-  // pillion pegs
+  // pillion pegs, folded up
   const ppegs = [];
-  for (const s of [-1, 1]) ppegs.push(rod(v3(-0.49, 0.572, s * 0.14), v3(-0.5, 0.572, s * 0.215), 0.011, 12));
+  const pegBase = [];
+  for (const s of [-1, 1]) {
+    ppegs.push(rod(v3(-0.574, 0.61, s * 0.152), v3(-0.591, 0.686, s * 0.156), 0.011, 12));
+    pegBase.push(place(rbox(0.03, 0.03, 0.022, 0.005), { p: [-0.578, 0.592, s * 0.15] }));
+  }
   grp.add(mesh(merge(ppegs), M.rubber, 'PillionPegs'));
+  grp.add(mesh(merge(pegBase), M.alu, 'PillionPegMounts'));
   return grp;
 }
 
@@ -99,21 +162,26 @@ export function buildSwingarm(M) {
   const grp = new THREE.Group();
   grp.name = 'Swingarm';
   const parts = [];
-  for (const s of [-1, 1]) {
-    const z0 = s * 0.115;
-    const z1 = s * 0.132;
-    const path = [v3(-0.115, 0.432, z0), v3(-0.3, 0.4, s * 0.126), v3(-0.5, 0.36, z1), v3(-0.735, 0.312, z1)];
-    parts.push(
-      sweep(path, (t) => {
-        const h = THREE.MathUtils.lerp(0.112, 0.064, Math.pow(t, 0.85));
-        return rrect(h, 0.044, 0.013, 3);
-      }, { steps: 40, up: UP })
-    );
-    // axle end (chain adjuster slot)
-    parts.push(place(rbox(0.07, 0.05, 0.05, 0.008), { p: [RA.x - 0.01, RA.y, s * 0.134] }));
-  }
+  // Cast arms, side profile traced from the 2019 studio side photo: tall at
+  // the front (about 20 cm) with a scooped outer face, tapering to the axle.
+  // They sit inside the frame at the pivot and step out behind it.
+  const arm = sectionArm(
+    Array.from({ length: 27 }, (_, i) => -0.115 - (0.64 * i) / 26),
+    {
+      top: kf([[-0.115, 0.462], [-0.15, 0.496], [-0.2, 0.536], [-0.26, 0.566], [-0.32, 0.58], [-0.38, 0.581], [-0.44, 0.566], [-0.5, 0.538], [-0.56, 0.5], [-0.625, 0.448], [-0.68, 0.4], [-0.725, 0.362], [-0.755, 0.338]]),
+      bot: kf([[-0.115, 0.398], [-0.16, 0.388], [-0.22, 0.377], [-0.32, 0.36], [-0.42, 0.344], [-0.52, 0.327], [-0.62, 0.307], [-0.7, 0.29], [-0.755, 0.288]]),
+      zIn: kf([[-0.115, 0.07], [-0.2, 0.078], [-0.27, 0.108], [-0.34, 0.112], [-0.755, 0.112]]),
+      zOut: kf([[-0.115, 0.104], [-0.2, 0.107], [-0.27, 0.146], [-0.34, 0.151], [-0.6, 0.15], [-0.755, 0.146]]),
+      r: 0.014,
+      dent: (x, y) => {
+        const e = ((x + 0.39) / 0.08) ** 2 + ((y - 0.462) / 0.048) ** 2;
+        return e < 1 ? 0.011 * Math.pow(1 - e, 0.6) : 0;
+      },
+    }
+  );
+  parts.push(arm, mirrorZ(arm));
   // pivot tube
-  parts.push(place(cyl(0.03, 0.03, 0.235, 24), { r: [Math.PI / 2, 0, 0], p: [PIVOT.x, PIVOT.y, 0] }));
+  parts.push(place(cyl(0.034, 0.034, 0.2, 24), { r: [Math.PI / 2, 0, 0], p: [PIVOT.x, PIVOT.y, 0] }));
   // cross member + linkage boss
   parts.push(place(rbox(0.08, 0.075, 0.25, 0.012), { p: [-0.215, 0.425, 0], r: [0, 0, -0.15] }));
   parts.push(place(rbox(0.06, 0.05, 0.08, 0.01), { p: [-0.23, 0.37, 0] }));
@@ -166,15 +234,18 @@ export function buildSwingarm(M) {
     for (const s of [-1, 1]) arms.push(sweep([v3(RA.x + 0.338 * Math.cos(1.05), RA.y + 0.338 * Math.sin(1.05), s * 0.1), v3(-0.5, 0.39, s * 0.115)], () => rrect(0.014, 0.008, 0.003, 1), { steps: 4, up: UP, spline: false }));
     grp.add(mesh(merge([hugger, ...arms]), M.plastic, 'RearHugger'));
   }
-  // chain guard over the upper run near the sprocket
+  // chain guard: a blade over the upper run as it reaches the sprocket (left),
+  // standing clear above the arm (traced from the side photo)
   {
+    const yt = kf([[-0.5, 0.51], [-0.6, 0.492], [-0.7, 0.468], [-0.79, 0.445]]);
     const rings = [];
-    for (let i = 0; i <= 6; i++) {
-      const x = -0.42 - (0.26 * i) / 6;
-      const y = THREE.MathUtils.lerp(0.452, 0.43, i / 6) + 0.012;
-      rings.push([[x, y - 0.03, -0.088], [x, y, -0.09], [x, y + 0.006, -0.1], [x, y, -0.112], [x, y - 0.02, -0.114]]);
+    for (let i = 0; i <= 10; i++) {
+      const x = -0.5 - (0.29 * i) / 10;
+      const y = yt(x);
+      const h = THREE.MathUtils.lerp(0.032, 0.022, i / 10);
+      rings.push([[x, y - 0.006, -0.088], [x, y, -0.096], [x, y + 0.002, -0.11], [x, y, -0.122], [x, y - h, -0.126]]);
     }
-    grp.add(mesh(loft(rings, { su: 2, sv: 1 }), M.plastic, 'ChainGuard'));
+    grp.add(mesh(loft(rings, { su: 2, sv: 2 }), M.plastic, 'ChainGuard'));
   }
   return { grp, huggerRings };
 }

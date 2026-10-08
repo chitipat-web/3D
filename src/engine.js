@@ -96,15 +96,15 @@ export function buildEngine(M) {
   cover(0.13, 0.4, 0.155, 0.056, 0.03, 1);
   cover(0.06, 0.465, 0.155, 0.03, 0.024, 1);
   // left side: alternator cover + starter clutch cover
-  cover(0.11, 0.41, -0.155, 0.068, 0.034, -1);
-  cover(0.02, 0.45, -0.155, 0.04, 0.028, -1);
+  cover(0.15, 0.43, -0.155, 0.07, 0.034, -1);
+  cover(0.05, 0.462, -0.155, 0.04, 0.028, -1);
   for (let k = 0; k < 11; k++) {
     const a = (k / 11) * Math.PI * 2 + 0.2;
     bolts.push(place(cyl(0.0055, 0.0055, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.0 + 0.094 * Math.cos(a), 0.425 + 0.094 * Math.sin(a), 0.184] }));
   }
   for (let k = 0; k < 8; k++) {
     const a = (k / 8) * Math.PI * 2;
-    bolts.push(place(cyl(0.005, 0.005, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.11 + 0.074 * Math.cos(a), 0.41 + 0.074 * Math.sin(a), -0.184] }));
+    bolts.push(place(cyl(0.005, 0.005, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.15 + 0.076 * Math.cos(a), 0.43 + 0.076 * Math.sin(a), -0.184] }));
   }
   // sprocket cover (left)
   black.push(extrude(shape(Y([[-0.115, 0.44], [-0.02, 0.445], [0.01, 0.4], [-0.005, 0.33], [-0.06, 0.31], [-0.115, 0.33]])), 0.025, 0.006, 2, 4).translate(0, 0, -0.17));
@@ -115,6 +115,11 @@ export function buildEngine(M) {
   for (const z of [-0.105, -0.035, 0.035, 0.105]) black.push(rod(at(0.26, -0.07, z), at(0.37, -0.12, z), 0.019, 14));
   // starter motor
   black.push(place(cyl(0.028, 0.028, 0.12, 18), { r: [Math.PI / 2, 0, 0], p: [0.02, 0.475 + dy, -0.06] }));
+  // air box under the tank, down over the throttle bodies behind the head
+  // (fills the dark space seen between the frame spars on the real bike)
+  black.push(
+    extrude(shape([[0.27, 0.7], [0.27, 0.8], [0.2, 0.843], [-0.07, 0.843], [-0.1, 0.78], [-0.08, 0.66], [-0.03, 0.572], [0.05, 0.522], [0.12, 0.532], [0.17, 0.585], [0.2, 0.632]]), 0.24, 0.012, 2, 6)
+  );
 
   grp.add(mesh(merge(dark), M.engineDark, 'Crankcase'));
   grp.add(mesh(merge(silver), M.engine, 'CylinderBlock'));
@@ -126,7 +131,7 @@ export function buildEngine(M) {
   // ---- radiator
   const rad = new THREE.Group();
   rad.name = 'Radiator';
-  const core = rbox(0.036, 0.32, 0.37, 0.006);
+  const core = rbox(0.036, 0.32, 0.33, 0.006);
   const coreMat = M.radiator.clone();
   const ft = finTexture();
   if (ft) coreMat.map = ft;
@@ -135,9 +140,10 @@ export function buildEngine(M) {
   coreMesh.position.set(0.352, 0.555, 0);
   rad.add(coreMesh);
   const tanks = [];
-  for (const s of [-1, 1]) tanks.push(place(rbox(0.05, 0.33, 0.035, 0.008), { p: [0.35, 0.555, s * 0.2], r: [0, 0, 8 * DEG] }));
-  tanks.push(place(rbox(0.05, 0.03, 0.42, 0.008), { p: [0.33, 0.725, 0], r: [0, 0, 8 * DEG] }));
-  tanks.push(place(rbox(0.05, 0.03, 0.42, 0.008), { p: [0.375, 0.39, 0], r: [0, 0, 8 * DEG] }));
+  // (side tanks kept inside the tucked-in lower edge of the mid panels)
+  for (const s of [-1, 1]) tanks.push(place(rbox(0.05, 0.33, 0.03, 0.008), { p: [0.35, 0.555, s * 0.176], r: [0, 0, 8 * DEG] }));
+  tanks.push(place(rbox(0.05, 0.03, 0.37, 0.008), { p: [0.33, 0.725, 0], r: [0, 0, 8 * DEG] }));
+  tanks.push(place(rbox(0.05, 0.03, 0.36, 0.008), { p: [0.375, 0.39, 0], r: [0, 0, 8 * DEG] }));
   rad.add(mesh(merge(tanks), M.plastic, 'RadiatorTanks'));
   // hoses
   const hoses = [
@@ -170,10 +176,10 @@ export function buildExhaust(M) {
       v3(0.336, 0.4, zi),
       v3(0.338, 0.33, zi * 0.92),
       v3(0.315, 0.255, zi * 0.82),
-      v3(0.265, 0.19, zi * 0.66),
-      v3(0.19, 0.158, zi * 0.45),
-      v3(0.11, 0.15, zi * 0.28),
-      v3(0.07, 0.152, zi * 0.2),
+      v3(0.265, 0.2, zi * 0.66),
+      v3(0.19, 0.178, zi * 0.45),
+      v3(0.11, 0.172, zi * 0.28),
+      v3(0.07, 0.174, zi * 0.2),
     ];
     headers.push(tube(pts, 0.0185, 60, 14));
   }
@@ -183,8 +189,8 @@ export function buildExhaust(M) {
     [-0.25, -0.2, -0.1, 0.0, 0.06, 0.09].map((x, i, arr) => {
       const t = i / (arr.length - 1);
       const w = 0.105 * (t < 0.1 ? 0.8 : 1) * (t > 0.85 ? 0.7 : 1);
-      const yb = 0.132;
-      const yt = 0.205 - (t > 0.85 ? 0.02 : 0);
+      const yb = 0.165;
+      const yt = 0.235 - (t > 0.85 ? 0.02 : 0);
       return [
         [x, yt, 0], [x, yt - 0.004, w * 0.7], [x, (yt + yb) / 2 + 0.01, w], [x, yb + 0.012, w * 0.8], [x, yb, 0],
         [x, yb + 0.012, -w * 0.8], [x, (yt + yb) / 2 + 0.01, -w], [x, yt - 0.004, -w * 0.7],
@@ -194,7 +200,7 @@ export function buildExhaust(M) {
   );
   grp.add(mesh(chamber, M.exhaustHot, 'PreChamber'));
   // link pipe from the pre-chamber up to the silencer
-  grp.add(mesh(tube([v3(-0.235, 0.18, 0.085), v3(-0.29, 0.235, 0.13), v3(-0.335, 0.3, 0.16), v3(-0.37, 0.345, 0.17)], 0.026, 30, 14), M.exhaustHot, 'LinkPipe'));
+  grp.add(mesh(tube([v3(-0.235, 0.198, 0.085), v3(-0.29, 0.245, 0.13), v3(-0.335, 0.302, 0.16), v3(-0.37, 0.345, 0.17)], 0.026, 30, 14), M.exhaustHot, 'LinkPipe'));
 
   // stock silencer: brushed stainless canister angled up towards the tail
   // (traced from the right-side studio photo)

@@ -17,7 +17,8 @@ const server = http.createServer((req, res) => {
     res.writeHead(404);
     return res.end();
   }
-  res.writeHead(200, { 'content-type': f.endsWith('.html') ? 'text/html' : 'text/javascript' });
+  const types = { '.html': 'text/html', '.woff2': 'font/woff2', '.hdr': 'application/octet-stream' };
+  res.writeHead(200, { 'content-type': types[path.extname(f)] || 'text/javascript' });
   fs.createReadStream(f).pipe(res);
 });
 await new Promise((r) => server.listen(0, r));
@@ -39,6 +40,6 @@ const out = path.join(root, 'models', `kawasaki-zx6r-2019${livery === 'krt' ? ''
 fs.mkdirSync(path.dirname(out), { recursive: true });
 fs.writeFileSync(out, Buffer.from(b64, 'base64'));
 console.log('saved', out, (fs.statSync(out).size / 1e6).toFixed(2), 'MB');
-console.log('bbox', JSON.stringify(bbox), 'stats', JSON.stringify(stats));
+console.log('bbox', JSON.stringify(bbox), 'stats', JSON.stringify(stats), 'fonts', await page.evaluate(() => window.__fontsOk));
 await browser.close();
 server.close();

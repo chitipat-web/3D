@@ -55,7 +55,7 @@ const P1_CREASE = [[0.745, 0.795], [0.34, 0.762]];
 const p1CreaseY = lineY(...P1_CREASE);
 const P1 = {
   outline: [
-    [0.738, 0.714, C], [0.68, 0.702], [0.6, 0.692], [0.5, 0.7], [0.4, 0.69], [0.32, 0.666], [0.245, 0.628, C],
+    [0.738, 0.714, C], [0.704, 0.678], [0.668, 0.646, C], [0.6, 0.642], [0.548, 0.638, C], [0.505, 0.662], [0.462, 0.69], [0.4, 0.69], [0.32, 0.666], [0.245, 0.628, C],
     [0.27, 0.68], [0.305, 0.74], [0.338, 0.796, C], [0.42, 0.815], [0.5, 0.838], [0.56, 0.868], [0.6, 0.905], [0.638, 0.942, C],
     [0.69, 0.928], [0.744, 0.908, C], [0.738, 0.866], [0.727, 0.838, C], [0.726, 0.79], [0.732, 0.75],
   ],
@@ -68,7 +68,7 @@ const p2CreaseY = lineY(...P2_CREASE);
 const P2 = {
   outline: [
     [0.722, 0.692, C], [0.6, 0.678], [0.5, 0.686], [0.4, 0.675], [0.32, 0.648], [0.272, 0.624, C], [0.252, 0.55], [0.246, 0.46], [0.262, 0.402, C],
-    [0.33, 0.386], [0.402, 0.376, C], [0.432, 0.44], [0.458, 0.5], [0.51, 0.57], [0.58, 0.632], [0.66, 0.668],
+    [0.33, 0.386], [0.41, 0.37, C], [0.446, 0.436], [0.474, 0.494], [0.524, 0.56], [0.592, 0.62], [0.666, 0.66],
   ],
   surface: (x, y) => sideW(x, y) - 0.019 - 0.22 * soft(p2CreaseY(x) - y),
   creases: [P2_CREASE],
@@ -81,13 +81,22 @@ const P3 = {
   ],
   surface: (x, y) => sideW(x, y) - 0.002 - 0.15 * soft(y - 0.79),
 };
+// P3B: satin black cover under the rider's seat, from the side cover back to
+// the tail (traced), tucked just inside P3's rear edge
+const P3B = {
+  outline: [
+    [-0.07, 0.83, C], [-0.105, 0.822], [-0.14, 0.802], [-0.2, 0.786], [-0.26, 0.776], [-0.312, 0.768, C], [-0.322, 0.725], [-0.306, 0.68, C],
+    [-0.25, 0.652], [-0.17, 0.638], [-0.1, 0.638], [-0.065, 0.64, C],
+  ],
+  surface: (x, y) => sideW(x, y) - 0.008 - 0.15 * soft(y - 0.79),
+};
 // P4: lower fairing, crease along its lower third tucks under towards the belly
 const P4_CREASE = [[0.4, 0.27], [-0.08, 0.262]];
 const p4CreaseY = lineY(...P4_CREASE);
 const P4 = {
   outline: [
     [0.426, 0.376, C], [0.35, 0.376], [0.27, 0.386], [0.2, 0.37], [0.12, 0.352], [0.03, 0.346], [-0.04, 0.35, C], [-0.078, 0.3], [-0.086, 0.24, C],
-    [-0.04, 0.196], [0.05, 0.179], [0.2, 0.173], [0.31, 0.181], [0.37, 0.206, C], [0.41, 0.26], [0.425, 0.32],
+    [-0.04, 0.196], [0.05, 0.179], [0.2, 0.172], [0.3, 0.172], [0.37, 0.178, C], [0.395, 0.22], [0.41, 0.28], [0.422, 0.33],
   ],
   surface: (x, y) => sideW(x, y) + 0.014 - 0.45 * soft(p4CreaseY(x) - y),
   creases: [P4_CREASE],
@@ -96,6 +105,12 @@ const P4 = {
 const INNER = {
   outline: [[0.66, 0.9, C], [0.56, 0.885], [0.46, 0.874], [0.38, 0.87], [0.33, 0.87, C], [0.325, 0.8], [0.33, 0.78, C], [0.45, 0.8], [0.56, 0.83], [0.66, 0.86]],
   surface: (x, y) => 0.12 + 0.11 * clamp((x - 0.33) / 0.35, 0, 1) - 0.25 * Math.max(0, y - 0.84),
+};
+
+// matte black liner behind the seams between the upper, mid and side panels
+const LINER = {
+  outline: [[0.72, 0.735, C], [0.71, 0.66], [0.62, 0.6], [0.56, 0.56, C], [0.47, 0.6], [0.36, 0.6], [0.3, 0.62, C], [0.3, 0.74, C]],
+  surface: (x, y) => sideW(x, y) - 0.034,
 };
 
 // green blade continuing the chin back along the side, under the "Ninja" panel
@@ -117,7 +132,7 @@ function sidePanel(def, mat, matL, name, opts = {}) {
 function bellyPan(M) {
   // joins the two lower fairings under the engine
   const xs = linspace(-0.08, 0.36, 14);
-  const yb = kf([[-0.08, 0.235], [-0.04, 0.198], [0.05, 0.181], [0.2, 0.175], [0.31, 0.183], [0.36, 0.2]]);
+  const yb = kf([[-0.08, 0.235], [-0.04, 0.198], [0.05, 0.181], [0.2, 0.174], [0.3, 0.174], [0.36, 0.18]]);
   const rings = xs.map((x) => {
     const y = yb(x);
     const z = sideW(x, y) + 0.014 - 0.45 * soft(p4CreaseY(x) - y) - 0.004;
@@ -420,7 +435,7 @@ const PILLION = {
   w: kf([[-0.515, 0.085], [-0.58, 0.094], [-0.66, 0.088], [-0.76, 0.072], [-0.876, 0.04]]),
 };
 const TAIL = {
-  low: kf([[-0.3, 0.748], [-0.4, 0.757], [-0.48, 0.777], [-0.55, 0.812], [-0.65, 0.866], [-0.73, 0.906], [-0.8, 0.936], [-0.85, 0.956], [-0.876, 0.967]]),
+  low: kf([[-0.3, 0.724], [-0.36, 0.724], [-0.42, 0.734], [-0.47, 0.752], [-0.51, 0.776], [-0.55, 0.8], [-0.6, 0.82], [-0.65, 0.843], [-0.7, 0.872], [-0.75, 0.905], [-0.8, 0.933], [-0.85, 0.956], [-0.876, 0.967]]),
   w: kf([[-0.28, 0.168], [-0.4, 0.161], [-0.5, 0.15], [-0.6, 0.13], [-0.7, 0.108], [-0.8, 0.084], [-0.876, 0.056]]),
 };
 
@@ -517,20 +532,20 @@ function buildTailEnd(M) {
     const xs2 = linspace(-0.7, -0.978, 10);
     const rr = xs2.map((x, i) => {
       const t = i / (xs2.length - 1);
-      const yt = lerp(0.885, 0.858, t);
-      const yb = lerp(0.858, 0.838, t);
+      const yt = lerp(0.878, 0.846, t);
+      const yb = lerp(0.85, 0.818, t);
       const w = lerp(0.062, 0.034, Math.pow(t, 1.2));
       return [[x, yt, -w * 0.8], [x, yt + 0.004, 0], [x, yt, w * 0.8], [x, (yt + yb) / 2, w], [x, yb, w * 0.75], [x, yb - 0.002, 0], [x, yb, -w * 0.75], [x, (yt + yb) / 2, -w]];
     });
     grp.add(mesh(loft(rr, { closed: true, su: 2, sv: 2 }), M.plastic, 'PlateHolderArm'));
     // vertical bracket down to the plate
     const blade = sweep(
-      [v3(-0.905, 0.85, 0), v3(-0.945, 0.78, 0), v3(-0.975, 0.71, 0), v3(-0.995, 0.655, 0)],
-      (t) => rrect(0.012, lerp(0.09, 0.075, t), 0.004, 2),
+      [v3(-0.884, 0.838, 0), v3(-0.903, 0.79, 0), v3(-0.92, 0.742, 0), v3(-0.936, 0.694, 0)],
+      (t) => rrect(0.012, lerp(0.09, 0.08, t), 0.004, 2),
       { steps: 16, up: v3(0, 1, 0) }
     );
     grp.add(mesh(blade, M.plastic, 'PlateBracket'));
-    grp.add(mesh(place(rbox(0.008, 0.045, 0.072, 0.004), { p: [-0.925, 0.76, 0], r: [0, 0, 0.36] }), M.reflector, 'RearReflector'));
+    grp.add(mesh(place(rbox(0.008, 0.045, 0.072, 0.004), { p: [-0.92, 0.758, 0], r: [0, 0, 0.32] }), M.reflector, 'RearReflector'));
     const stalks = [];
     const lensG = [];
     for (const s of [-1, 1]) {
@@ -669,28 +684,25 @@ function buildMirrors(M) {
 }
 
 function buildFrontSignals(M) {
-  // clear-lens triangular indicators set into the side cowl
+  // large clear-lens indicators under the "Ninja" panel, tapering down and
+  // back along the front edge of the mid panel (traced from the side photo)
   const lens = [];
+  const refl = [];
   const bulbs = [];
+  const pts = [[0.664, 0.636, 1], [0.594, 0.632, 1], [0.538, 0.552, 1], [0.551, 0.546, 1], [0.622, 0.598, 1]];
   for (const s of [-1, 1]) {
-    const pts = [[0.6, 0.655], [0.535, 0.668], [0.53, 0.632]];
-    const g = buildPanel({
-      outline: pts.map((p, i) => [p[0], p[1], 1]),
-      surface: (x, y) => sideW(x, y) + 0.004,
-      roll: 0.004,
-      flange: 0.008,
-      spacing: 0.006,
-      edgeStep: 0.003,
-    });
+    const g = buildPanel({ outline: pts, surface: (x, y) => sideW(x, y) + 0.004, roll: 0.004, flange: 0.012, spacing: 0.006, edgeStep: 0.003 });
     lens.push(s > 0 ? g : mirrorZ(g));
-    const b = place(rbox(0.03, 0.01, 0.01, 0.004), { p: [0.565, 0.65, s * (sideW(0.565, 0.65) - 0.004)], r: [0, 0, -0.2] });
-    bulbs.push(b);
+    const r = buildPanel({ outline: pts, surface: (x, y) => sideW(x, y) - 0.012, roll: 0.003, flange: 0, spacing: 0.006, edgeStep: 0.003, uv: (u, v) => [u / 0.03, v / 0.03] });
+    refl.push(s > 0 ? r : mirrorZ(r));
+    bulbs.push(place(rbox(0.026, 0.012, 0.012, 0.005), { p: [0.628, 0.618, s * (sideW(0.628, 0.618) - 0.008)], r: [0, 0, -0.5] }));
   }
   const grp = new THREE.Group();
   grp.name = 'FrontSignals';
   const lm = mesh(merge(lens), M.lens, 'FrontSignalLens');
   lm.renderOrder = 3;
   grp.add(lm);
+  grp.add(mesh(merge(refl), M.headlightInner, 'FrontSignalReflector'));
   grp.add(mesh(merge(bulbs), M.amber, 'FrontSignalBulb'));
   return grp;
 }
@@ -734,8 +746,10 @@ export function buildBodywork(M) {
   grp.add(sidePanel(P1, R, Lm, 'UpperSideCowl'));
   grp.add(sidePanel(P2, R, Lm, 'MidSideCowl'));
   grp.add(sidePanel(P3, R, Lm, 'SideCover'));
+  grp.add(sidePanel(P3B, M.plastic, M.plastic, 'SeatSideCover'));
   grp.add(sidePanel(P4, R, Lm, 'LowerFairing', { flange: 0.012 }));
   grp.add(sidePanel(INNER, M.plastic, M.plastic, 'InnerCover', { roll: 0.004, flange: 0.01 }));
+  grp.add(sidePanel(LINER, M.plastic, M.plastic, 'FairingLiner', { roll: 0, flange: 0, spacing: 0.02 }));
   grp.add(sidePanel(CHIN_SIDE, M.primary, M.primary, 'ChinSide', { roll: 0.004, flange: 0.01, spacing: 0.006, edgeStep: 0.003 }));
   grp.add(bellyPan(M));
   grp.add(buildTank(M, R, Lm));

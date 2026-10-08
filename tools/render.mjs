@@ -13,7 +13,7 @@ const outDir = path.resolve(process.argv[2] || path.join(root, 'screenshots'));
 const query = process.argv[3] || '';
 const page_ = process.env.PAGE || 'tools/studio.html';
 
-const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.glb': 'model/gltf-binary', '.css': 'text/css' };
+const types = { '.html': 'text/html', '.js': 'text/javascript', '.mjs': 'text/javascript', '.json': 'application/json', '.png': 'image/png', '.glb': 'model/gltf-binary', '.css': 'text/css', '.woff2': 'font/woff2' };
 const server = http.createServer((req, res) => {
   const u = decodeURIComponent(new URL(req.url, 'http://x').pathname);
   const f = path.join(root, u);

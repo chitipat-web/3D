@@ -30,6 +30,10 @@ const pick = (tag) => {
 const body = pick('body').replace(/<script type="importmap">[\s\S]*?<\/script>/, '').trim();
 // embed the studio HDRI so reflections work without any network
 const hdr = fs.readFileSync(path.join(root, 'assets/studio_small_08_1k.hdr')).toString('base64');
+// and the livery fonts, so the lettering matches without Google Fonts
+const fonts = Object.fromEntries(
+  fs.readdirSync(path.join(root, 'assets/fonts')).filter((f) => f.endsWith('.woff2')).map((f) => [f, fs.readFileSync(path.join(root, 'assets/fonts', f)).toString('base64')])
+);
 const page = `<!doctype html>
 <html lang="th">
 <head>
@@ -39,7 +43,7 @@ ${pick('head')}
 </head>
 <body>
 ${body}
-<script>window.__ZX6R_HDR = "${hdr}";</script>
+<script>window.__ZX6R_HDR = "${hdr}"; window.__ZX6R_FONTS = ${JSON.stringify(fonts)};</script>
 <script>
 ${js}</script>
 </body>
