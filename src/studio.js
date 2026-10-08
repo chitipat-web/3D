@@ -9,7 +9,10 @@ export const STUDIO_HDR = 'assets/studio_small_08_1k.hdr';
 
 // Load the HDRI and turn it into a prefiltered environment map. `source` is a
 // URL, or an ArrayBuffer with the .hdr file contents. Resolves null on failure.
-export async function loadStudioHDR(renderer, source = STUDIO_HDR) {
+// `overhead` adds a broad diffuser over the bike (radiance relative to the
+// white cyclorama, ~0.7): the HDRI's dark ceiling leaves up-facing gloss
+// black, while the official photos show a bright overhead light in it.
+export async function loadStudioHDR(renderer, source = STUDIO_HDR, { overhead = 0 } = {}) {
   try {
     const loader = new RGBELoader();
     let tex;
@@ -27,7 +30,21 @@ export async function loadStudioHDR(renderer, source = STUDIO_HDR) {
     }
     tex.mapping = THREE.EquirectangularReflectionMapping;
     const pm = new THREE.PMREMGenerator(renderer);
-    const env = pm.fromEquirectangular(tex).texture;
+    let env;
+    if (overhead > 0) {
+      const s = new THREE.Scene();
+      s.background = tex;
+      const card = new THREE.Mesh(
+        new THREE.PlaneGeometry(16, 12),
+        new THREE.MeshBasicMaterial({ color: new THREE.Color(overhead, overhead, overhead), side: THREE.DoubleSide })
+      );
+      card.position.set(0, 4, 0);
+      card.rotation.x = Math.PI / 2;
+      s.add(card);
+      env = pm.fromScene(s, 0, 0.1, 100).texture;
+    } else {
+      env = pm.fromEquirectangular(tex).texture;
+    }
     pm.dispose();
     tex.dispose();
     return env;

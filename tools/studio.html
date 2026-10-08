@@ -20,6 +20,8 @@ window.addEventListener('unhandledrejection', (e) => { window.__error = String(e
 
 try {
   if (new URLSearchParams(location.search).get('nonormals') === '1') globalThis.__noAnalyticNormals = true;
+  // backdbg=1 paints the inner faces of the painted panels magenta
+  if (new URLSearchParams(location.search).get('backdbg') === '1') globalThis.__backDebug = true;
   const { buildZX6R } = await import('../src/zx6r.js');
   const { loadLiveryFonts } = await import('../src/fonts.js');
   window.__fontsOk = await loadLiveryFonts('../assets/fonts/');
@@ -39,9 +41,21 @@ try {
   const scene = new THREE.Scene();
   scene.background = new THREE.Color(q.get('bg') || '#cfd2d4');
   const dark = q.get('dark') === '1';
-  const hdrEnv = q.get('hdr') === '0' ? null : await loadStudioHDR(renderer, '../assets/studio_small_08_1k.hdr');
+  const hdrEnv = q.get('hdr') === '0' || q.get('sky') ? null : await loadStudioHDR(renderer, '../assets/studio_small_08_1k.hdr', { overhead: +(q.get('over') ?? 0.7) });
   scene.environment = hdrEnv || createEnvironment(renderer, { dark });
-  scene.environmentIntensity = +(q.get('env') || 1.0);
+  if (q.get('sky')) {
+    // sky=1: open-air light (bright sky, pale walls, dark gravel) to compare
+    // panel forms with outdoor photos, where up-facing facets catch the sky
+    const env = new THREE.Scene();
+    env.add(new THREE.Mesh(new THREE.SphereGeometry(30, 48, 24), new THREE.ShaderMaterial({
+      side: THREE.BackSide, depthWrite: false,
+      vertexShader: 'varying vec3 vP; void main(){ vP = normalize(position); gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }',
+      fragmentShader: 'varying vec3 vP; void main(){ float h = vP.y; vec3 c = h > 0.0 ? mix(vec3(0.75,0.74,0.72), vec3(1.25,1.32,1.45), pow(h, 0.7)) : mix(vec3(0.5,0.49,0.47), vec3(0.16,0.155,0.15), pow(-h, 0.35)); gl_FragColor = vec4(c, 1.0); }',
+    })));
+    const pm = new THREE.PMREMGenerator(renderer);
+    scene.environment = pm.fromScene(env, 0.02).texture;
+  }
+  scene.environmentIntensity = +(q.get('env') || 1.15);
   scene.environmentRotation.set(0, (+(q.get('rot') ?? 135) * Math.PI) / 180, 0);
   const L = addStudioLights(scene, { dark });
   if (hdrEnv) {
@@ -57,6 +71,14 @@ try {
   }
   scene.add(createFloor(q.get('bg') || '#cfd2d4'));
 
+  // bodycol=rrggbb overrides the livery's body (black) paint, for tone tests
+  // (primcol=rrggbb likewise for the primary colour)
+  if (q.get('bodycol') || q.get('primcol')) {
+    const { LIVERIES } = await import('../src/materials.js');
+    const Lv = LIVERIES[q.get('livery') || 'krt'];
+    if (q.get('bodycol')) Lv.body.color = '#' + q.get('bodycol');
+    if (q.get('primcol')) Lv.primary.color = '#' + q.get('primcol');
+  }
   const bike = buildZX6R({ livery: q.get('livery') || 'krt' });
   bike.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   scene.add(bike);
@@ -73,6 +95,15 @@ try {
       if (q.get('paintmetal')) Mt[k].metalness = +q.get('paintmetal');
     }
     if (q.get('paintcol')) Mt.body.color.set('#' + q.get('paintcol'));
+  }
+  // paintall=rrggbb repaints every painted panel in one plain gloss colour,
+  // to compare the panel forms with photos of the single-colour bikes
+  if (q.get('paintall')) {
+    const Mt = bike.userData.materials;
+    const keys = ['primary', 'body', 'accent', 'decalSide', 'decalSideL', 'decalLower', 'decalLowerL', 'decalFront', 'plasticGloss'];
+    const plain = new THREE.MeshPhysicalMaterial({ color: new THREE.Color('#' + q.get('paintall')), roughness: 0.3, metalness: 0.2, clearcoat: 1, clearcoatRoughness: 0.08, side: THREE.DoubleSide });
+    const paint = new Set(keys.map((k) => Mt[k]).filter(Boolean));
+    bike.traverse((o) => { if (o.isMesh && paint.has(o.material)) o.material = plain; });
   }
   // dbg=Mesh1,Mesh2&dbgmode=noenv|nocc|nomap|normals: per-mesh material probes
   if (q.get('dbg')) {

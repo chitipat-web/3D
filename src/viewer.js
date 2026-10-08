@@ -126,6 +126,8 @@ applyQuality();
 // or if it cannot load, a procedural soft-box studio stands in.
 let hdrEnv = null;
 let proceduralEnv = null;
+// overhead diffuser added to the HDRI (see loadStudioHDR)
+const STUDIO_OVERHEAD = 0.7;
 function applyTheme() {
   const dark = isDark();
   const bg = new THREE.Color(css('--stage') || (dark ? '#15181c' : '#dcdfe3'));
@@ -137,7 +139,7 @@ function applyTheme() {
     // 135 deg puts the HDRI's soft boxes overhead and behind for the default
     // views, so black panels show soft gradients instead of a white glare
     scene.environmentRotation.set(0, (3 * Math.PI) / 4, 0);
-    scene.environmentIntensity = dark ? 0.8 : 1.0;
+    scene.environmentIntensity = dark ? 0.9 : 1.15;
     lights.key.intensity = dark ? 1.5 : 1.7;
     lights.fill.intensity = 0.25;
     lights.hemi.intensity = 0;
@@ -166,7 +168,7 @@ applyTheme();
     for (let i = 0; i < bin.length; i++) buf[i] = bin.charCodeAt(i);
     source = buf.buffer;
   }
-  hdrEnv = await loadStudioHDR(renderer, source);
+  hdrEnv = await loadStudioHDR(renderer, source, { overhead: STUDIO_OVERHEAD });
   if (hdrEnv) applyTheme();
 })();
 matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyTheme);

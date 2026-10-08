@@ -141,7 +141,7 @@ export function buildEngine(M) {
   grp.add(mesh(merge(dark), M.engineDark, 'Crankcase'));
   grp.add(mesh(merge(silver), M.engine, 'CylinderBlock'));
   grp.add(mesh(merge(covers), M.engineCover, 'EngineCovers'));
-  grp.add(mesh(merge(rims), M.alu, 'CoverRims'));
+  grp.add(mesh(merge(rims), M.engine, 'CoverRims'));
   grp.add(mesh(merge(black), M.engineBlack, 'EngineBlack'));
   grp.add(mesh(merge(bolts), M.bolt, 'EngineBolts'));
   grp.add(mesh(merge(engineHoses), M.rubber, 'EngineHoses'));

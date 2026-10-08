@@ -50,28 +50,56 @@ const soft = (t, k = 0.006) => (t > 8 * k ? t : k * Math.log1p(Math.exp(t / k)))
 // ===========================================================================
 // Side panels (right side; mirrored for the left)
 // ===========================================================================
-// P1: upper side cowl ("Ninja" panel). Facet above a crease line.
-const P1_CREASE = [[0.745, 0.795], [0.34, 0.762]];
-const p1CreaseY = lineY(...P1_CREASE);
+// The side lines below were traced from the black 2020 bike and the KRT
+// studio photos, each mapped onto the model through its solved camera.
+//
+// P1: upper side cowl. Its lower edge is the seam over the "Ninja" panel in
+// front and the top of the radiator vent behind; the two meet in a pointed
+// fin. Behind the fin a narrow chamfer (C1 to U) faces up and runs on back
+// over the side cover; in front of it the lip over the seam flares out a
+// little up to the character line U, above which the skin turns in.
+const FIN = [0.497, 0.729];
+const P1_C1 = [[0.12, 0.662], [0.25, 0.69], [0.33, 0.709], [0.42, 0.723], FIN];
+const P1_U = [[0.12, 0.692], [0.25, 0.721], [0.33, 0.741], [0.42, 0.747], [0.51, 0.755], [0.584, 0.767], [0.657, 0.775], [0.74, 0.781]];
+// P1's lower edge from just behind the fin forward (seam over the Ninja panel)
+const P1_SEAM = [[0.4, 0.712], [0.45, 0.722], FIN, [0.513, 0.734], [0.589, 0.746], [0.661, 0.756], [0.733, 0.762]];
+const c1Y = kf(P1_C1);
+const uY = kf(P1_U);
+const seamY = kf(P1_SEAM);
+const chamferA = kf([[0.0, 0], [0.22, 0.6], [0.44, 0.65], [FIN[0] + 0.012, 0]]);
+const flareA = kf([[0.47, 0], [0.53, 0.3]]);
+const topA = kf([[0.38, 0.16], [0.52, 0.45], [0.74, 0.34]]);
+// shared by the side cover, which carries the chamfer on towards the tank
+const chamfer = (x, y) => chamferA(x) * (soft(y - c1Y(x), 0.005) - soft(y - uY(x), 0.005));
+const p1Surface = (x, y) => {
+  const u = uY(x);
+  const lip = flareA(x) * (soft(u - y, 0.003) - soft(seamY(x) - y, 0.003));
+  const top = topA(x) * 0.07 * Math.tanh(soft(y - u, 0.003) / 0.07);
+  return sideW(x, y) + 0.004 - chamfer(x, y) - lip - top;
+};
 const P1 = {
   outline: [
-    [0.738, 0.714, C], [0.704, 0.678], [0.668, 0.646, C], [0.6, 0.642], [0.548, 0.638, C], [0.505, 0.662], [0.462, 0.69], [0.4, 0.69], [0.32, 0.666], [0.245, 0.628, C],
+    [0.744, 0.918, C], [0.738, 0.866], [0.727, 0.838, C], [0.726, 0.8], [0.729, 0.776], [0.733, 0.762, C],
+    [0.661, 0.756], [0.589, 0.746], [0.513, 0.734], [FIN[0], FIN[1], C],
+    [0.45, 0.722], [0.405, 0.712], [0.36, 0.698], [0.316, 0.68], [0.245, 0.636, C],
     [0.27, 0.68], [0.305, 0.74], [0.338, 0.796, C], [0.42, 0.815], [0.5, 0.84], [0.56, 0.874], [0.6, 0.922], [0.628, 0.962, C],
-    [0.69, 0.943], [0.744, 0.918, C], [0.738, 0.866], [0.727, 0.838, C], [0.726, 0.79], [0.732, 0.75],
+    [0.69, 0.943],
   ],
-  surface: (x, y) => sideW(x, y) + 0.004 - 0.32 * soft(y - p1CreaseY(x)),
-  creases: [P1_CREASE],
+  surface: p1Surface,
+  creases: [P1_C1.filter((p) => p[0] >= 0.25), P1_U.filter((p) => p[0] >= 0.25)],
 };
-// P2: mid side panel (graphite, slashes), sits just inside P1
-const P2_CREASE = [[0.7, 0.6], [0.3, 0.47]];
-const p2CreaseY = lineY(...P2_CREASE);
+// P2: the main side cowl under P1 (one moulding from the headlight down to
+// the lower fairing: the "Ninja" script on top, the stripes below). Its rear
+// edge runs down from the fin as the front of the vent; along the seam it
+// tucks in under P1's lip.
 const P2 = {
   outline: [
-    [0.722, 0.692, C], [0.6, 0.678], [0.5, 0.686], [0.4, 0.675], [0.32, 0.648], [0.272, 0.624, C], [0.252, 0.55], [0.246, 0.46], [0.262, 0.402, C],
-    [0.33, 0.386], [0.41, 0.37, C], [0.446, 0.436], [0.474, 0.494], [0.524, 0.56], [0.592, 0.62], [0.666, 0.66],
+    [0.736, 0.772, C], [0.733, 0.75], [0.738, 0.714, C], [0.704, 0.678], [0.666, 0.656],
+    [0.592, 0.62], [0.524, 0.56], [0.474, 0.494], [0.446, 0.436], [0.41, 0.37, C],
+    [0.33, 0.386], [0.27, 0.4, C], [0.275, 0.46], [0.283, 0.508], [0.309, 0.558], [0.36, 0.619], [0.405, 0.663], [0.444, 0.7], [0.475, 0.714], [0.492, 0.722, C],
+    [0.503, 0.737], [0.52, 0.745], [0.59, 0.757], [0.66, 0.767],
   ],
-  surface: (x, y) => sideW(x, y) - 0.019 - 0.22 * soft(p2CreaseY(x) - y),
-  creases: [P2_CREASE],
+  surface: (x, y) => sideW(x, y) - 0.004 - 0.6 * soft(y - (seamY(x) - 0.012), 0.003),
 };
 // P3: side cover under the tank
 // (traced: its lower edge runs from the bolt by the engine up along the
@@ -82,7 +110,8 @@ const P3 = {
     [-0.174, 0.744, C], [-0.12, 0.73], [-0.06, 0.714], [-0.04, 0.708, C], [0.0, 0.67], [0.03, 0.628], [0.048, 0.606, C],
     [0.1, 0.604], [0.16, 0.614], [0.24, 0.64], [0.298, 0.672, C], [0.322, 0.74], [0.336, 0.8],
   ],
-  surface: (x, y) => sideW(x, y) - 0.002 - 0.15 * soft(y - 0.79),
+  surface: (x, y) => sideW(x, y) - 0.002 - 0.15 * soft(y - 0.79) - chamfer(x, y),
+  creases: [P1_C1.filter((p) => p[0] <= 0.34), P1_U.filter((p) => p[0] <= 0.34)],
 };
 // P3B: satin black cover under the rider's seat, from the side cover back to
 // the tail (traced), tucked just inside P3's rear edge
@@ -104,16 +133,22 @@ const P4 = {
   surface: (x, y) => sideW(x, y) + 0.014 - 0.45 * soft(p4CreaseY(x) - y),
   creases: [P4_CREASE],
 };
-// inner cover around the steering head (matte black)
+// inner cover around the steering head (matte black), kept inside P1
+const innerZ = (x, y) => 0.12 + 0.11 * clamp((x - 0.33) / 0.35, 0, 1) - 0.25 * Math.max(0, y - 0.84);
 const INNER = {
   outline: [[0.66, 0.9, C], [0.56, 0.885], [0.46, 0.874], [0.38, 0.87], [0.33, 0.87, C], [0.325, 0.8], [0.33, 0.78, C], [0.45, 0.8], [0.56, 0.83], [0.66, 0.86]],
-  surface: (x, y) => 0.12 + 0.11 * clamp((x - 0.33) / 0.35, 0, 1) - 0.25 * Math.max(0, y - 0.84),
+  surface: (x, y) => {
+    const a = innerZ(x, y);
+    const b = p1Surface(x, y) - 0.01;
+    return b - soft(b - a, 0.004);
+  },
 };
 
-// matte black liner behind the seams between the upper, mid and side panels
+// matte black back wall of the vent between P1, P2 and the louvres (deeper
+// at the rear so it stays behind the louvre plate)
 const LINER = {
-  outline: [[0.72, 0.735, C], [0.71, 0.66], [0.62, 0.6], [0.56, 0.56, C], [0.47, 0.6], [0.36, 0.6], [0.3, 0.62, C], [0.3, 0.74, C]],
-  surface: (x, y) => sideW(x, y) - 0.034,
+  outline: [[0.525, 0.752, C], [0.5, 0.68], [0.42, 0.58], [0.34, 0.5], [0.3, 0.455], [0.215, 0.47, C], [0.205, 0.63, C], [0.3, 0.7], [0.4, 0.74]],
+  surface: (x, y) => sideW(x, y) - 0.034 - 0.03 * clamp((0.34 - x) / 0.06, 0, 1),
 };
 
 // green blade continuing the chin back along the side, under the "Ninja" panel
@@ -804,13 +839,13 @@ export function buildBodywork(M) {
   grp.add(buildNose(M));
   grp.add(buildWindscreen(M));
   grp.add(buildInstruments(M));
-  grp.add(sidePanel(P1, R, Lm, 'UpperSideCowl'));
+  grp.add(sidePanel(P1, R, Lm, 'UpperSideCowl', { spacing: 0.009 }));
   grp.add(sidePanel(P2, R, Lm, 'MidSideCowl'));
-  grp.add(sidePanel(P3, R, Lm, 'SideCover'));
+  grp.add(sidePanel(P3, R, Lm, 'SideCover', { spacing: 0.009 }));
   grp.add(sidePanel(P3B, M.plastic, M.plastic, 'SeatSideCover'));
   grp.add(sidePanel(P4, M.decalLower, M.decalLowerL, 'LowerFairing', { flange: 0.012 }));
   grp.add(sidePanel(INNER, M.plastic, M.plastic, 'InnerCover', { roll: 0.004, flange: 0.01 }));
-  grp.add(sidePanel(LINER, M.plastic, M.plastic, 'FairingLiner', { roll: 0, flange: 0, spacing: 0.02 }));
+  grp.add(sidePanel(LINER, M.ventDark, M.ventDark, 'FairingLiner', { roll: 0, flange: 0, spacing: 0.02 }));
   grp.add(sidePanel(CHIN_SIDE, M.primary, M.primary, 'ChinSide', { roll: 0.004, flange: 0.01, spacing: 0.006, edgeStep: 0.003 }));
   grp.add(bellyPan(M));
   grp.add(buildTank(M, R, Lm));

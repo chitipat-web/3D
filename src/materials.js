@@ -6,8 +6,8 @@ export const LIVERIES = {
     id: 'krt',
     name: 'KRT Edition',
     colors: 'Lime Green / Ebony / Metallic Graphite Gray',
-    primary: { color: '#58b81c', metalness: 0.08, roughness: 0.28 },
-    body: { color: '#0a0b0d', metalness: 0.2, roughness: 0.26 },
+    primary: { color: '#6cbb3c', metalness: 0.08, roughness: 0.28 },
+    body: { color: '#19191b', metalness: 0.2, roughness: 0.26 },
     accent: { color: '#4a4e53', metalness: 0.55, roughness: 0.35 },
     stripeA: '#63c124', // lime green
     stripeB: '#cfe03a', // yellow-green
@@ -119,6 +119,8 @@ export function createMaterials() {
     plastic: std({ color: '#121315', roughness: 0.62, metalness: 0.0, side: THREE.DoubleSide }),
     plasticGloss: phys({ color: '#0d0e10', roughness: 0.25, metalness: 0.1, clearcoat: 0.6, side: THREE.DoubleSide }),
     rubber: std({ color: '#141414', roughness: 0.9, metalness: 0 }),
+    // back wall of the fairing vents: reads as a shadowed cavity
+    ventDark: std({ color: '#060607', roughness: 0.9, metalness: 0, side: THREE.DoubleSide }),
     tire: std({ color: '#161616', roughness: 0.82, metalness: 0 }),
     seat: std({ color: '#2e2f33', roughness: 0.68, metalness: 0, side: THREE.DoubleSide }),
     seatStitch: std({ color: '#2a2b2d', roughness: 0.8 }),
@@ -135,7 +137,7 @@ export function createMaterials() {
     forkInner: std({ color: '#e8eaec', roughness: 0.05, metalness: 1 }),
     engine: std({ color: '#5b5f65', roughness: 0.5, metalness: 0.6 }),
     // cast side covers (alternator, clutch): warm satin metallic gray, as in the photos
-    engineCover: std({ color: '#b3b5b7', roughness: 0.34, metalness: 0.82 }),
+    engineCover: std({ color: '#8d8f91', roughness: 0.38, metalness: 0.8 }),
     engineDark: std({ color: '#383b40', roughness: 0.5, metalness: 0.5 }),
     engineBlack: std({ color: '#1a1b1e', roughness: 0.45, metalness: 0.35 }),
     caliper: std({ color: '#2b2d31', roughness: 0.42, metalness: 0.55 }),
@@ -170,8 +172,24 @@ export function createMaterials() {
   for (const k of ['body', 'accent', 'decalSide', 'decalSideL', 'plasticGloss']) M[k].clearcoatRoughness = 0.1;
   for (const k of ['primary', 'decalFront']) M[k].clearcoatRoughness = 0.08;
   M.wheel.clearcoatRoughness = 0.16;
+  for (const k of ['primary', 'body', 'accent', 'decalSide', 'decalSideL', 'decalLower', 'decalLowerL', 'decalFront', 'decalTank', 'decalTail']) bareBackFaces(M[k]);
   for (const [k, m] of Object.entries(M)) m.name = k;
   return M;
+}
+
+// Painted panels are double sided; their inner faces (seen through gaps in
+// the bodywork) show bare black plastic instead of the paint and artwork.
+function bareBackFaces(m) {
+  const back = typeof globalThis !== 'undefined' && globalThis.__backDebug ? 'vec3( 1.0, 0.0, 1.0 )' : 'vec3( 0.012 )';
+  m.onBeforeCompile = (sh) => {
+    sh.fragmentShader = sh.fragmentShader
+      .replace('#include <map_fragment>', `#include <map_fragment>\n\tif ( ! gl_FrontFacing ) diffuseColor.rgb = ${back};`)
+      .replace(
+        '#include <lights_physical_fragment>',
+        '#include <lights_physical_fragment>\n\tif ( ! gl_FrontFacing ) {\n\t\tmaterial.roughness = 0.75;\n\t\t#ifdef USE_CLEARCOAT\n\t\tmaterial.clearcoat = 0.0;\n\t\t#endif\n\t}'
+      );
+  };
+  m.customProgramCacheKey = () => 'bareBack' + back;
 }
 
 export function applyLivery(M, livery, textures) {
