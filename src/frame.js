@@ -85,17 +85,19 @@ export function buildFrame(M) {
   }
   for (const s of [-1, 1]) {
     // main spar: headstock -> around the cylinder head -> pivot casting
+    // (traced from the naked-chassis photo: top edge (0.34, 0.86) to
+    // (-0.1, 0.68), lower edge (0.3, 0.725) to (0.0, 0.625))
     const path = [
-      v3(0.445, 0.79, s * 0.03),
-      v3(0.39, 0.765, s * 0.085),
-      v3(0.3, 0.735, s * 0.135),
-      v3(0.16, 0.7, s * 0.152),
-      v3(0.02, 0.665, s * 0.152),
-      v3(-0.085, 0.632, s * 0.142),
-      v3(-0.13, 0.6, s * 0.132),
+      v3(0.445, 0.8, s * 0.03),
+      v3(0.39, 0.797, s * 0.085),
+      v3(0.3, 0.785, s * 0.135),
+      v3(0.16, 0.737, s * 0.152),
+      v3(0.02, 0.683, s * 0.152),
+      v3(-0.085, 0.642, s * 0.142),
+      v3(-0.13, 0.615, s * 0.132),
     ];
     parts.push(
-      sweep(path, (t) => rrect(THREE.MathUtils.lerp(0.13, 0.1, t), THREE.MathUtils.lerp(0.05, 0.042, t), 0.012, 3), {
+      sweep(path, (t) => rrect(THREE.MathUtils.lerp(0.135, 0.09, t), THREE.MathUtils.lerp(0.05, 0.042, t), 0.012, 3), {
         steps: 40,
         up: UP,
       })
@@ -155,6 +157,26 @@ export function buildFrame(M) {
   }
   grp.add(mesh(merge(ppegs), M.rubber, 'PillionPegs'));
   grp.add(mesh(merge(pegBase), M.alu, 'PillionPegMounts'));
+
+  // black inner fender / battery box under the seat, between the sub-frame
+  // rails and above the swing-arm (the real bike shows black here, not daylight)
+  grp.add(
+    mesh(
+      extrude(shape([[-0.165, 0.775], [-0.38, 0.792], [-0.408, 0.765], [-0.402, 0.675], [-0.36, 0.628], [-0.3, 0.6], [-0.21, 0.565], [-0.165, 0.565]]), 0.17, 0.01, 2, 4),
+      M.plastic,
+      'InnerFender'
+    )
+  );
+  // frame bolts seen in the side photos: pivot-section top boss, lower
+  // pivot boss and the sub-frame / hanger bolt
+  const bolts = [];
+  for (const s of [-1, 1]) {
+    for (const [x, y, z] of [[-0.18, 0.668, 0.155], [-0.198, 0.585, 0.153], [-0.31, 0.674, 0.144]]) {
+      bolts.push(place(cyl(0.0105, 0.0105, 0.008, 18), { r: [Math.PI / 2, 0, 0], p: [x, y, s * z] }));
+      bolts.push(place(cyl(0.006, 0.006, 0.01, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, s * (z + 0.002)] }));
+    }
+  }
+  grp.add(mesh(merge(bolts), M.bolt, 'FrameBolts'));
   return grp;
 }
 

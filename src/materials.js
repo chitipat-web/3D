@@ -16,7 +16,7 @@ export const LIVERIES = {
     tankLogo: '#16181b',
     rim: '#62c02c',
     script: '#ffffff',
-    screenTint: '#c3ccd2',
+    screenTint: '#a9b2b8',
   },
   gray: {
     id: 'gray',
@@ -92,7 +92,7 @@ export function createMaterials() {
     plasticGloss: phys({ color: '#0d0e10', roughness: 0.25, metalness: 0.1, clearcoat: 0.6, side: THREE.DoubleSide }),
     rubber: std({ color: '#141414', roughness: 0.9, metalness: 0 }),
     tire: std({ color: '#161616', roughness: 0.82, metalness: 0 }),
-    seat: std({ color: '#151516', roughness: 0.78, metalness: 0, side: THREE.DoubleSide }),
+    seat: std({ color: '#2e2f33', roughness: 0.68, metalness: 0, side: THREE.DoubleSide }),
     seatStitch: std({ color: '#2a2b2d', roughness: 0.8 }),
 
     // ---- metals
@@ -102,7 +102,7 @@ export function createMaterials() {
     disc: std({ color: '#b4b8bd', roughness: 0.26, metalness: 1 }),
     alu: std({ color: '#a3a9b0', roughness: 0.38, metalness: 1 }),
     aluDark: std({ color: '#202226', roughness: 0.38, metalness: 0.75 }),
-    frame: phys({ color: '#141518', roughness: 0.42, metalness: 0.45, clearcoat: 0.4, clearcoatRoughness: 0.25 }),
+    frame: phys({ color: '#1d1f23', roughness: 0.45, metalness: 0.45, clearcoat: 0.35, clearcoatRoughness: 0.3 }),
     forkOuter: std({ color: '#1b1c1f', roughness: 0.32, metalness: 0.7 }),
     forkInner: std({ color: '#e8eaec', roughness: 0.05, metalness: 1 }),
     engine: std({ color: '#5b5f65', roughness: 0.5, metalness: 0.6 }),
@@ -122,7 +122,7 @@ export function createMaterials() {
     gold: std({ color: '#c8a24a', roughness: 0.3, metalness: 1 }),
 
     // ---- glass and lights
-    screen: phys({ color: '#c3ccd2', roughness: 0.03, metalness: 0, transparent: true, opacity: 0.22, side: THREE.DoubleSide, depthWrite: false }),
+    screen: phys({ color: '#c3ccd2', roughness: 0.03, metalness: 0, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }),
     lens: phys({ color: '#ffffff', roughness: 0.02, metalness: 0, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
     lensRed: phys({ color: '#b3121b', roughness: 0.08, metalness: 0, transparent: true, opacity: 0.75, side: THREE.DoubleSide }),
     headlightInner: std({ color: '#d4d8de', roughness: 0.12, metalness: 1, map: facetTexture(), side: THREE.DoubleSide }),

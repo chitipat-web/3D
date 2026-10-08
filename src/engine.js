@@ -118,7 +118,7 @@ export function buildEngine(M) {
   // air box under the tank, down over the throttle bodies behind the head
   // (fills the dark space seen between the frame spars on the real bike)
   black.push(
-    extrude(shape([[0.27, 0.7], [0.27, 0.8], [0.2, 0.843], [-0.07, 0.843], [-0.1, 0.78], [-0.08, 0.66], [-0.03, 0.572], [0.05, 0.522], [0.12, 0.532], [0.17, 0.585], [0.2, 0.632]]), 0.24, 0.012, 2, 6)
+    extrude(shape([[0.27, 0.7], [0.27, 0.8], [0.2, 0.843], [-0.07, 0.843], [-0.1, 0.78], [-0.096, 0.62], [-0.07, 0.535], [-0.02, 0.505], [0.05, 0.5], [0.1, 0.52], [0.17, 0.585], [0.2, 0.632]]), 0.24, 0.012, 2, 6)
   );
 
   grp.add(mesh(merge(dark), M.engineDark, 'Crankcase'));

@@ -49,6 +49,12 @@ try {
     L.fill.intensity = 0.25;
     L.hemi.intensity = 0.0;
   }
+  // left=1 lights the bike's left side (for comparisons with left-side photos)
+  if (q.get('left') === '1') {
+    L.key.position.z *= -1;
+    L.fill.position.z *= -1;
+    scene.environmentRotation.y += Math.PI;
+  }
   scene.add(createFloor(q.get('bg') || '#cfd2d4'));
 
   const bike = buildZX6R({ livery: q.get('livery') || 'krt' });
@@ -56,10 +62,15 @@ try {
   scene.add(bike);
 
   // diagnostics: draw the named meshes solid black (e.g. the clear screen)
+  // (name or name:rrggbb; e.g. solid=ScreenGlass,MainFrame:ff0000)
   if (q.get('solid')) {
-    const names = q.get('solid').split(',');
-    const black = new THREE.MeshBasicMaterial({ color: 0x000000, side: THREE.DoubleSide });
-    bike.traverse((o) => { if (o.isMesh && names.includes(o.name)) o.material = black; });
+    const map = Object.fromEntries(q.get('solid').split(',').map((e) => { const [n, c] = e.split(':'); return [n, c || '000000']; }));
+    const mats = {};
+    bike.traverse((o) => {
+      if (!o.isMesh || !(o.name in map)) return;
+      const c = map[o.name];
+      o.material = mats[c] || (mats[c] = new THREE.MeshBasicMaterial({ color: new THREE.Color('#' + c), side: THREE.DoubleSide }));
+    });
   }
 
   if (q.get('ref')) {

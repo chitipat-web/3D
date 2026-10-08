@@ -104,7 +104,7 @@ export function sideLivery(L, mirror = false) {
 
   // ---- upper cowl (P1): primary colour along the top front, under the screen
   // green band from the headlight's rear corner up along the screen base
-  poly([[0.8, 0.837], [0.73, 0.837], [0.69, 0.857], [0.645, 0.884], [0.6, 0.91], [0.58, 1.0], [0.8, 1.0]], L.primary.color);
+  poly([[0.8, 0.858], [0.74, 0.886], [0.69, 0.912], [0.65, 0.934], [0.6, 0.955], [0.58, 1.0], [0.8, 1.0]], L.primary.color);
   // Graphics below are traced from the calibrated 2019 KRT side photo
   // (metres, same layout on both sides). quad(x0, y0, x1, y1, t) is a band
   // whose lower edge runs (x0, y0) -> (x1, y1) and whose height is t.
@@ -125,16 +125,24 @@ export function sideLivery(L, mirror = false) {
   quad(0.2, 0.662, -0.12, 0.676, 0.014, D);
   quad(0.115, 0.646, 0.05, 0.654, 0.01, A, 0.006);
   quad(0.02, 0.632, -0.04, 0.639, 0.009, A, 0.005);
+  // silver line along the rear lower edge of the side cover, up to the seat
+  poly([[0.06, 0.69], [-0.18, 0.742], [-0.18, 0.764], [0.06, 0.702]], C);
   // ---- lower fairing (P4): black with the team wordmark
   text(0.07, 0.276, 'Kawasaki', 0.042, { font: BOLD, weight: '900', style: 'italic', color: '#f2f3f4', rot: -0.07, sxk: 1.05 });
   if (L.id === 'krt') text(0.065, 0.246, 'Racing Team', 0.022, { font: BOLD, weight: '800', style: 'italic', color: '#d5d8db', rot: -0.07 });
   // ---- upper cowl script
   text(0.577, 0.697, 'Ninja', 0.058, { font: SCRIPT, weight: '700', style: 'italic', color: '#dfe2e5', rot: -0.13 });
   // ---- tail cowl: graphite side with a silver swoosh and colour insert
-  poly([[-0.25, 0.8], [-0.45, 0.83], [-0.58, 0.885], [-0.72, 0.95], [-0.9, 1.0], [-0.9, 1.1], [-0.25, 1.1]], D);
-  band([-0.3, 0.81], [-0.88, 1.008], 0, 0.005, C);
-  quad(-0.6, 0.942, -0.73, 0.968, 0.012, A, -0.02);
-  text(-0.5, 0.9, 'ZX-6R', 0.028, { font: BOLD, weight: '900', style: 'italic', color: C, rot: -0.32, sxk: 1.1 });
+  poly(
+    [
+      [-0.3, 0.74], [-0.4, 0.75], [-0.48, 0.778], [-0.56, 0.8], [-0.62, 0.832], [-0.68, 0.876], [-0.75, 0.918], [-0.82, 0.95], [-0.92, 0.975],
+      [-0.92, 1.022], [-0.82, 1.0], [-0.75, 0.979], [-0.7, 0.963], [-0.65, 0.936], [-0.6, 0.894], [-0.55, 0.86], [-0.5, 0.826], [-0.44, 0.796],
+      [-0.38, 0.775], [-0.3, 0.762],
+    ],
+    D
+  );
+  poly([[-0.62, 0.938], [-0.86, 1.0], [-0.86, 1.01], [-0.64, 0.962]], C);
+  quad(-0.59, 0.944, -0.66, 0.958, 0.008, B, -0.012);
   // ---- tank: primary colour wherever it is projected (wordmark is a decal)
   poly([[0.36, 0.84], [0.36, 1.05], [-0.16, 1.05], [-0.16, 0.84]], L.primary.color);
   return finish(c);
