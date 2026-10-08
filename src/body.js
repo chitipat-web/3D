@@ -156,10 +156,10 @@ const NT = [
   [0.89, 0.884, 0.868, 0.842, 0.808, 0.772, 0.737, 0.705], // y 0.70
   [0.893, 0.887, 0.869, 0.841, 0.806, 0.77, 0.735, 0.702], // 0.74
   [0.905, 0.893, 0.868, 0.838, 0.802, 0.765, 0.73, 0.698], // 0.77
-  [0.885, 0.876, 0.858, 0.83, 0.797, 0.762, 0.728, 0.695], // 0.80
-  [0.862, 0.855, 0.842, 0.82, 0.79, 0.758, 0.726, 0.692], // 0.83
-  [0.838, 0.832, 0.822, 0.805, 0.78, 0.754, 0.72, 0.687], // 0.86
-  [0.812, 0.807, 0.8, 0.788, 0.77, 0.75, 0.71, 0.678], // 0.89
+  [0.885, 0.876, 0.864, 0.838, 0.804, 0.766, 0.729, 0.695], // 0.80
+  [0.868, 0.864, 0.86, 0.842, 0.81, 0.77, 0.73, 0.693], // 0.83  (fuller upper nose:
+  [0.842, 0.84, 0.838, 0.824, 0.798, 0.764, 0.724, 0.688], // 0.86  side profile traced)
+  [0.812, 0.81, 0.806, 0.796, 0.778, 0.754, 0.711, 0.678], // 0.89
   [0.79, 0.785, 0.778, 0.768, 0.752, 0.738, 0.7, 0.668], // 0.92
   [0.77, 0.765, 0.758, 0.748, 0.734, 0.72, 0.688, 0.656], // 0.95
 ];
@@ -173,7 +173,7 @@ const frontSurface = (fn) => (u, v) => fn(-u, v);
 // an arm (pointed at the beak, ~9 cm tall at its outer end); a pointed green
 // chin runs under both lights.
 const LENS_R = [
-  [0.046, 0.733, C], [0.08, 0.731], [0.12, 0.73], [0.16, 0.731], [0.2, 0.734], [0.229, 0.739, C], [0.237, 0.79], [0.237, 0.835, C],
+  [0.046, 0.724, C], [0.08, 0.721], [0.12, 0.72], [0.16, 0.721], [0.188, 0.723, C], [0.212, 0.748], [0.229, 0.785], [0.239, 0.834, C],
   [0.215, 0.824], [0.18, 0.808], [0.14, 0.792], [0.1, 0.776], [0.07, 0.763], [0.046, 0.753, C],
 ];
 const mirrorZY = (pts) => pts.map((p) => [-p[0], p[1], p[2] || 0]).reverse();
@@ -188,29 +188,29 @@ const SCREEN_BASE = kf([[0, 0.894], [0.07, 0.896], [0.12, 0.9], [0.16, 0.906], [
 // green: V-arm band over the headlight, joined at the outer edge to a strip
 // along the screen base that carries the mirror mounts
 const ARM_R = [
-  [0.03, 0.727], [0.046, 0.733, C], [0.044, 0.753, C],
+  [0.03, 0.718], [0.046, 0.724, C], [0.044, 0.753, C],
   [0.07, 0.763], [0.1, 0.776], [0.14, 0.792], [0.18, 0.808], [0.215, 0.824], [0.239, 0.836, C],
   [0.247, 0.856], [0.245, 0.878], [0.238, 0.895], [0.215, 0.913, C],
-  [0.17, 0.906], [0.13, 0.9], [0.096, 0.897, C],
-  [0.104, 0.866, C], [0.15, 0.862], [0.19, 0.855, C],
-  [0.15, 0.84], [0.1, 0.822], [0.062, 0.806], [0.036, 0.794, C],
+  [0.19, 0.91], [0.165, 0.9065, C],
+  [0.153, 0.878], [0.132, 0.851], [0.1, 0.828], [0.062, 0.8085], [0.036, 0.794, C],
 ];
 // black wedge between the band and the upper cowl, opening into the deep
 // ram-air duct in the middle that runs up to the screen
+// (the intake reaches up to the screen base, its outer corner at z = 0.165)
 const MASK_R = [
-  [0.036, 0.794, C], [0.062, 0.806], [0.1, 0.822], [0.15, 0.84], [0.19, 0.855, C],
-  [0.15, 0.862], [0.104, 0.866, C], [0.096, 0.897, C], [0.05, 0.8958],
+  [0.036, 0.794, C], [0.062, 0.8085], [0.1, 0.828], [0.132, 0.851], [0.153, 0.878], [0.165, 0.9065, C],
+  [0.13, 0.9005], [0.1, 0.8985], [0.05, 0.8958],
 ];
 
 function buildNose(M) {
   const grp = new THREE.Group();
   grp.name = 'Nose';
   // ---- upper cowl: the two V arms joined at the beak
-  const n1 = [[0, 0.724, C], ...ARM_R, [0, 0.788, C], ...mirrorZY(ARM_R)];
+  const n1 = [[0, 0.715, C], ...ARM_R, [0, 0.788, C], ...mirrorZY(ARM_R)];
   const g1 = toFront(
     buildPanel({ outline: zy(n1), surface: frontSurface(noseF), uv: frontUV, roll: 0.006, flange: 0.014, spacing: 0.009, edgeStep: 0.0035 })
   );
-  grp.add(mesh(g1, M.primary, 'UpperCowl'));
+  grp.add(mesh(g1, M.decalFront, 'UpperCowl'));
   // ---- black mask above the arms: ram-air duct in the middle, trim at the sides
   {
     const outline = [[0, 0.8955], ...MASK_R.slice().reverse(), [0, 0.788, C], ...mirrorZY(MASK_R).reverse()];
@@ -222,6 +222,18 @@ function buildNose(M) {
       buildPanel({ outline: zy(shrinkOutline(outline, 0.985)), surface: frontSurface((z, y) => noseF(z, y) - 0.012), roll: 0, flange: 0.045, spacing: 0.5, edgeStep: 0.004, cap: false })
     );
     grp.add(mesh(walls, M.plastic, 'IntakeDuct'));
+  }
+  // ---- black panel round the outer end of each headlight, from the lens
+  // down to the chin and out to the side cowl
+  {
+    const NS = [
+      [0.188, 0.721, C], [0.212, 0.746], [0.229, 0.784], [0.239, 0.834, C], [0.249, 0.84, C], [0.254, 0.8], [0.253, 0.75], [0.247, 0.712, C],
+      [0.229, 0.724], [0.21, 0.72],
+    ];
+    for (const s of [1, -1]) {
+      const g = toFront(buildPanel({ outline: zy(s > 0 ? NS : mirrorZY(NS)), surface: frontSurface((z, y) => noseF(z, y) - 0.0015), roll: 0.004, flange: 0.012, spacing: 0.006, edgeStep: 0.003 }));
+      grp.add(mesh(g, M.body, s > 0 ? 'NoseSideRight' : 'NoseSideLeft'));
+    }
   }
   // ---- headlights: lens, housing and internals
   for (const s of [1, -1]) {
@@ -253,7 +265,7 @@ function buildNose(M) {
     // LED projector modules: low beam (outer, large) and high beam (inner)
     const mods = [];
     const leds = [];
-    for (const [zc, yc, r] of [[0.108, 0.752, 0.013], [0.176, 0.772, 0.019]]) {
+    for (const [zc, yc, r] of [[0.108, 0.746, 0.013], [0.176, 0.766, 0.019]]) {
       const z = s * zc;
       const x = noseF(zc, yc) - 0.034;
       const bowl = new THREE.SphereGeometry(r, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2);
@@ -287,11 +299,11 @@ function buildNose(M) {
   }
   // ---- pointed chin under both headlights
   const chinPlan = kf([[0, 0.896], [0.04, 0.89], [0.08, 0.877], [0.12, 0.857], [0.16, 0.829], [0.2, 0.794], [0.244, 0.752]]);
-  const chinSurf = (z, y) => chinPlan(Math.abs(z)) - 0.35 * Math.max(0, 0.722 - y) - 0.1 * Math.max(0, y - 0.726);
-  const chinTop = [[0.03, 0.726], [0.046, 0.732, C], [0.08, 0.73], [0.12, 0.729], [0.16, 0.73], [0.2, 0.733], [0.229, 0.738, C]];
+  const chinSurf = (z, y) => chinPlan(Math.abs(z)) - 0.35 * Math.max(0, 0.713 - y) - 0.1 * Math.max(0, y - 0.717);
+  const chinTop = [[0.03, 0.717], [0.046, 0.723, C], [0.08, 0.72], [0.12, 0.719], [0.16, 0.72], [0.2, 0.723], [0.229, 0.729, C]];
   const chin = [
-    [0, 0.69, C], [0.12, 0.693], [0.238, 0.7, C], [0.245, 0.716, C], ...chinTop.slice().reverse(), [0, 0.723, C],
-    ...chinTop.map((p) => [-p[0], p[1], p[2] || 0]), [-0.245, 0.716, C], [-0.238, 0.7, C], [-0.12, 0.693],
+    [0, 0.685, C], [0.12, 0.688], [0.238, 0.695, C], [0.245, 0.709, C], ...chinTop.slice().reverse(), [0, 0.714, C],
+    ...chinTop.map((p) => [-p[0], p[1], p[2] || 0]), [-0.245, 0.709, C], [-0.238, 0.695, C], [-0.12, 0.688],
   ];
   const gc = toFront(buildPanel({ outline: zy(chin), surface: frontSurface(chinSurf), roll: 0.006, flange: 0.02, spacing: 0.009, edgeStep: 0.0035 }));
   grp.add(mesh(gc, M.primary, 'ChinSpoiler'));

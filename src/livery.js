@@ -174,9 +174,18 @@ export function frontLivery(L) {
   const { g, poly } = painter(c, box);
   g.fillStyle = L.primary.color;
   g.fillRect(0, 0, c.width, c.height);
-  // dark brows over the outer half of each headlight
+  // Black wedge over the outer half of each headlight and down its outer end
+  // (traced from the 2019 studio photos): the green V arm follows the lens
+  // top edge only as far as z = 0.165, then rises to the mirror mount.
+  const seam = 'rgba(0,0,0,0.55)';
   for (const s of [-1, 1]) {
-    poly([[s * 0.1, 0.792], [s * 0.2, 0.828], [s * 0.26, 0.85], [s * 0.26, 0.9], [s * 0.2, 0.855], [s * 0.12, 0.81]], L.body.color);
+    const wedge = [[s * 0.165, 0.8], [s * 0.2, 0.839], [s * 0.235, 0.868], [s * 0.27, 0.893], [s * 0.27, 0.66], [s * 0.232, 0.66], [s * 0.232, 0.82]];
+    poly(wedge, L.body.color);
+    // thin shadow line along the edge of the green arm
+    for (let i = 0; i < 3; i++) {
+      const [a, b] = [wedge[i], wedge[i + 1]];
+      poly([a, b, [b[0], b[1] + 0.0016], [a[0], a[1] + 0.0016]], seam);
+    }
   }
   return finish(c);
 }

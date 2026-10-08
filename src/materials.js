@@ -56,7 +56,7 @@ function facetTexture() {
   const P = (i, j) => pts[j * (n + 1) + i];
   for (let j = 0; j < n; j++) for (let i = 0; i < n; i++) {
     for (const tri of [[P(i, j), P(i + 1, j), P(i + 1, j + 1)], [P(i, j), P(i + 1, j + 1), P(i, j + 1)]]) {
-      const v = 120 + Math.floor(rnd() * 135);
+      const v = 165 + Math.floor(rnd() * 90);
       g.fillStyle = `rgb(${v},${v},${Math.min(255, v + 6)})`;
       g.beginPath();
       g.moveTo(...tri[0]);
@@ -125,7 +125,9 @@ export function createMaterials() {
     screen: phys({ color: '#c3ccd2', roughness: 0.03, metalness: 0, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }),
     lens: phys({ color: '#ffffff', roughness: 0.02, metalness: 0, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
     lensRed: phys({ color: '#b3121b', roughness: 0.08, metalness: 0, transparent: true, opacity: 0.75, side: THREE.DoubleSide }),
-    headlightInner: std({ color: '#d4d8de', roughness: 0.12, metalness: 1, map: facetTexture(), side: THREE.DoubleSide }),
+    // faceted chrome reflector: semi-gloss so it reads bright silver in the
+    // studio light from any angle, as in the photos
+    headlightInner: std({ color: '#eef1f4', roughness: 0.26, metalness: 0.72, map: facetTexture(), side: THREE.DoubleSide }),
     led: std({ color: '#ffffff', emissive: '#e9f3ff', emissiveIntensity: 2.4, roughness: 0.3 }),
     ledRed: std({ color: '#ff2a2a', emissive: '#ff1010', emissiveIntensity: 1.6, roughness: 0.4 }),
     amber: std({ color: '#ffae2a', emissive: '#ff8c00', emissiveIntensity: 0.25, roughness: 0.3 }),
@@ -158,8 +160,10 @@ export function applyLivery(M, livery, textures) {
       if (t) {
         if (M[key].map) M[key].map.dispose();
         M[key].map = t;
-        M[key].metalness = L.body.metalness;
-        M[key].roughness = L.body.roughness;
+        // the nose texture is mostly the primary colour; keep its finish
+        const spec = key === 'decalFront' ? L.primary : L.body;
+        M[key].metalness = spec.metalness;
+        M[key].roughness = spec.roughness;
         M[key].needsUpdate = true;
       }
     }
