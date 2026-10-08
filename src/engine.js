@@ -29,10 +29,10 @@ function finTexture() {
 
 // Cast engine side cover facing +z (s = 1) or -z (s = -1): straight wall,
 // chamfered edge, flat face with a low central boss.
-function sideCover(cx, cy, z0, r, depth, s) {
+function sideCover(cx, cy, z0, r, depth, s, boss = 0.38) {
   const prof = [
-    [r, 0], [r, depth * 0.55], [r * 0.97, depth * 0.72], [r * 0.9, depth * 0.78], [r * 0.42, depth * 0.8], [r * 0.38, depth * 0.94], [r * 0.3, depth],
-    [0.0001, depth],
+    [r, 0], [r, depth * 0.55], [r * 0.97, depth * 0.72], [r * 0.9, depth * 0.78], [r * (boss + 0.04), depth * 0.8], [r * boss, depth * 0.9], [r * boss * 0.8, depth * 0.93],
+    [0.0001, depth * 0.93],
   ];
   const g = latheZ(prof, 48);
   if (s < 0) g.scale(1, 1, -1).index && flipIdx(g);
@@ -83,29 +83,46 @@ export function buildEngine(M) {
   // plug coils
   for (const z of [-0.105, -0.035, 0.035, 0.105]) black.push(tilt(cyl(0.012, 0.012, 0.03, 12), 0.34, -0.012).translate(0, 0, z));
 
-  // right side: clutch cover + crank-end cover (black cast, machined rims)
+  // Cast side covers, placed from the 2019 studio side photos: on the right
+  // the big ribbed clutch cover with the oil filler and, above and ahead of
+  // it, the crank-end cover with two inspection plugs; on the left the
+  // alternator cover. Satin cast finish, machined rims, bolt circles.
   const covers = [];
   const rims = [];
-  const cover = (cx, cy, z0, r, depth, sd) => {
-    covers.push(sideCover(cx, cy, z0, r, depth, sd));
+  const cover = (cx, cy, z0, r, depth, sd, nBolts = 0, boltR = r * 1.07, boss = 0.38) => {
+    covers.push(sideCover(cx, cy, z0, r, depth, sd, boss));
     const rim = new THREE.TorusGeometry(r * 0.93, 0.0028, 6, 48);
     rim.translate(cx, cy, z0 + sd * depth * 0.76);
     rims.push(rim);
+    const face = z0 + sd * depth * 0.55;
+    for (let k = 0; k < nBolts; k++) {
+      const a = (k / nBolts) * Math.PI * 2 + 0.2;
+      bolts.push(place(cyl(0.0052, 0.0052, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [cx + boltR * Math.cos(a), cy + boltR * Math.sin(a), face] }));
+    }
   };
-  cover(0.0, 0.425, 0.155, 0.088, 0.034, 1);
-  cover(0.13, 0.4, 0.155, 0.056, 0.03, 1);
-  cover(0.06, 0.465, 0.155, 0.03, 0.024, 1);
-  // left side: alternator cover + starter clutch cover
-  cover(0.15, 0.43, -0.155, 0.07, 0.034, -1);
-  cover(0.05, 0.462, -0.155, 0.04, 0.028, -1);
-  for (let k = 0; k < 11; k++) {
-    const a = (k / 11) * Math.PI * 2 + 0.2;
-    bolts.push(place(cyl(0.0055, 0.0055, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.0 + 0.094 * Math.cos(a), 0.425 + 0.094 * Math.sin(a), 0.184] }));
+  const CL = { x: -0.03, y: 0.41 };
+  cover(CL.x, CL.y, 0.155, 0.09, 0.036, 1, 12, 0.096, 0.2);
+  cover(0.092, 0.47, 0.155, 0.074, 0.03, 1, 9, 0.079, 0.26);
+  cover(0.13, 0.43, -0.155, 0.07, 0.034, -1, 8, 0.075, 0.3);
+  // clutch cover: six radial ribs on its face and the oil filler cap
+  for (let k = 0; k < 6; k++) {
+    const a = (k / 6) * Math.PI * 2 + 0.35;
+    const rib = rbox(0.05, 0.0065, 0.006, 0.002);
+    rib.rotateZ(a);
+    rib.translate(CL.x + 0.052 * Math.cos(a), CL.y + 0.052 * Math.sin(a), 0.155 + 0.036 * 0.79);
+    covers.push(rib);
   }
-  for (let k = 0; k < 8; k++) {
-    const a = (k / 8) * Math.PI * 2;
-    bolts.push(place(cyl(0.005, 0.005, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.15 + 0.076 * Math.cos(a), 0.43 + 0.076 * Math.sin(a), -0.184] }));
-  }
+  black.push(place(cyl(0.015, 0.015, 0.012, 20), { r: [Math.PI / 2, 0, 0], p: [CL.x + 0.004, CL.y + 0.052, 0.155 + 0.036 * 0.82] }));
+  rims.push(place(new THREE.TorusGeometry(0.0155, 0.0022, 6, 24), { p: [CL.x + 0.004, CL.y + 0.052, 0.155 + 0.036 * 0.82 + 0.006] }));
+  // crank-end cover: timing and crank-turning plugs
+  for (const [x, y] of [[0.081, 0.412], [0.106, 0.406]]) black.push(place(cyl(0.0105, 0.0105, 0.01, 18), { r: [Math.PI / 2, 0, 0], p: [x, y, 0.155 + 0.03 * 0.84] }));
+  // hoses and wiring round the engine (black rubber), as seen in the photos
+  const engineHoses = [
+    tube([v3(0.2, 0.545, 0.13), v3(0.12, 0.575, 0.15), v3(0.02, 0.565, 0.155), v3(-0.07, 0.53, 0.15), v3(-0.12, 0.49, 0.14)], 0.011, 32, 10),
+    tube([v3(0.24, 0.47, -0.15), v3(0.2, 0.53, -0.16), v3(0.12, 0.56, -0.162), v3(0.04, 0.55, -0.158)], 0.012, 28, 10),
+    tube([v3(-0.1, 0.56, 0.12), v3(-0.06, 0.52, 0.16), v3(0.0, 0.505, 0.172), v3(0.05, 0.53, 0.168)], 0.005, 24, 8),
+    tube([v3(-0.11, 0.57, -0.12), v3(-0.05, 0.53, -0.17), v3(0.03, 0.52, -0.175)], 0.005, 20, 8),
+  ];
   // sprocket cover (left)
   black.push(extrude(shape(Y([[-0.115, 0.44], [-0.02, 0.445], [0.01, 0.4], [-0.005, 0.33], [-0.06, 0.31], [-0.115, 0.33]])), 0.025, 0.006, 2, 4).translate(0, 0, -0.17));
   // oil filter + water pump
@@ -127,6 +144,7 @@ export function buildEngine(M) {
   grp.add(mesh(merge(rims), M.alu, 'CoverRims'));
   grp.add(mesh(merge(black), M.engineBlack, 'EngineBlack'));
   grp.add(mesh(merge(bolts), M.bolt, 'EngineBolts'));
+  grp.add(mesh(merge(engineHoses), M.rubber, 'EngineHoses'));
 
   // ---- radiator
   const rad = new THREE.Group();

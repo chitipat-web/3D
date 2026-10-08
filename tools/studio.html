@@ -62,6 +62,15 @@ try {
   scene.add(bike);
 
   // diagnostics: draw the named meshes solid black (e.g. the clear screen)
+  // paintenv=k scales the environment reflection of the painted panels,
+  // paintcc=r sets their clearcoat roughness (material experiments)
+  if (q.get('paintenv') || q.get('paintcc')) {
+    const Mt = bike.userData.materials;
+    for (const k of ['body', 'accent', 'decalSide', 'decalSideL', 'plasticGloss']) {
+      if (q.get('paintenv')) Mt[k].envMapIntensity = +q.get('paintenv');
+      if (q.get('paintcc')) Mt[k].clearcoatRoughness = +q.get('paintcc');
+    }
+  }
   // (name or name:rrggbb; e.g. solid=ScreenGlass,MainFrame:ff0000)
   if (q.get('solid')) {
     const map = Object.fromEntries(q.get('solid').split(',').map((e) => { const [n, c] = e.split(':'); return [n, c || '000000']; }));
@@ -116,6 +125,17 @@ try {
     scene.background = new THREE.Color(q.get('obg') ? '#' + q.get('obg') : '#ffffff');
     renderer.render(scene, oc);
     shots.push({ name: (q.get('prefix') || '') + 'ortho_side19', data: renderer.domElement.toDataURL('image/png') });
+    list.length = 0;
+  }
+  if (q.get('ortho') === 'right19') {
+    // matches the calibrated 2019 KRT studio right-side photo (1400 x 788)
+    renderer.setSize(1400, 788);
+    const oc = new THREE.OrthographicCamera(-1.1509, 1.1281, 1.188, -0.0948, 0.1, 30);
+    oc.position.set(0, 0, 10);
+    oc.lookAt(0, 0, 0);
+    scene.background = new THREE.Color(q.get('obg') ? '#' + q.get('obg') : '#ffffff');
+    renderer.render(scene, oc);
+    shots.push({ name: (q.get('prefix') || '') + 'ortho_right19', data: renderer.domElement.toDataURL('image/png') });
     list.length = 0;
   }
   for (const name of list) {

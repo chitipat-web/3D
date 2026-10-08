@@ -326,9 +326,18 @@ function buildNose(M) {
 function buildWindscreen(M) {
   const nT = 36;
   const nV = 16;
-  const ZT = 0.168;
-  const topY = kf([[0, 1.1], [0.06, 1.097], [0.1, 1.085], [0.13, 1.064], [0.15, 1.036], [0.162, 1.004], [ZT, 0.972]]);
-  const topX = kf([[0, 0.592], [0.06, 0.593], [0.1, 0.598], [0.13, 0.604], [0.15, 0.612], [0.162, 0.62], [ZT, 0.63]]);
+  // Traced from the 2019 side and 3/4 studio photos: the top edge arches
+  // from the tip on the centre line (0.597, 1.105) down and back to corners
+  // at (0.49, 1.02) that sit well behind the cowl tips, so the screen wraps
+  // round the instruments; its rear edges stand free above the cowl tips.
+  const ZT = 0.125;
+  const topAt = (s) => {
+    const z = ZT * Math.pow(Math.sin((s * Math.PI) / 2), 0.85);
+    return { x: 0.597 - 0.107 * s * s, y: 1.105 - 0.085 * Math.pow(s, 2.2), z };
+  };
+  // u in [-1, 1] round the screen: |u| <= 0.62 front base on the nose, then
+  // back along the upper side cowls to their tips
+  const sOf = (a) => (a <= 0.62 ? (0.72 * a) / 0.62 : 0.72 + (0.28 * (a - 0.62)) / 0.38);
   const base = (u) => {
     const s = Math.abs(u);
     const sg = Math.sign(u) || 1;
@@ -343,8 +352,8 @@ function buildWindscreen(M) {
     return v3(x, y, sg * (P1.surface(x, y) + 0.003));
   };
   const topPt = (u) => {
-    const z = ZT * Math.abs(u);
-    return v3(topX(z), topY(z), (Math.sign(u) || 1) * z);
+    const q = topAt(sOf(Math.abs(u)));
+    return v3(q.x, q.y, (Math.sign(u) || 1) * q.z);
   };
   const rings = [];
   for (let j = 0; j <= nV; j++) {
@@ -356,10 +365,10 @@ function buildWindscreen(M) {
       const T = topPt(u);
       const p = B.clone().lerp(T, v);
       // bubble: bulge out of the screen plane in the middle
-      const amt = 0.034 * Math.sin(Math.PI * v) * (1 - 0.7 * u * u);
+      const amt = 0.016 * Math.sin(Math.PI * v) * (1 - 0.8 * u * u);
       p.x += amt * 0.48;
       p.y += amt * 0.82;
-      p.z += amt * 0.3 * u;
+      p.z += amt * 0.6 * u;
       ring.push([p.x, p.y, p.z]);
     }
     rings.push(ring);

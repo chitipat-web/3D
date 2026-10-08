@@ -13,10 +13,11 @@ export const LIVERIES = {
     stripeB: '#cfe03a', // yellow-green
     stripeC: '#c9ced3', // silver line
     stripeD: '#77797d', // graphite panel
+    lower: '#2c2e32', // lower fairing (dark graphite)
     tankLogo: '#16181b',
     rim: '#62c02c',
     script: '#ffffff',
-    screenTint: '#a9b2b8',
+    screenTint: '#7d878e',
   },
   gray: {
     id: 'gray',
@@ -99,7 +100,7 @@ export function createMaterials() {
     wheel: phys({ color: '#0c0c0d', roughness: 0.28, metalness: 0.35, clearcoat: 0.8, clearcoatRoughness: 0.08 }),
     chrome: std({ color: '#f2f4f6', roughness: 0.06, metalness: 1, side: THREE.DoubleSide }),
     steel: std({ color: '#c3c7cc', roughness: 0.3, metalness: 1 }),
-    disc: std({ color: '#b4b8bd', roughness: 0.26, metalness: 1 }),
+    disc: std({ color: '#74787c', roughness: 0.42, metalness: 1 }),
     alu: std({ color: '#a3a9b0', roughness: 0.38, metalness: 1 }),
     aluDark: std({ color: '#202226', roughness: 0.38, metalness: 0.75 }),
     frame: phys({ color: '#1d1f23', roughness: 0.45, metalness: 0.45, clearcoat: 0.35, clearcoatRoughness: 0.3 }),
@@ -108,7 +109,7 @@ export function createMaterials() {
     engine: std({ color: '#5b5f65', roughness: 0.5, metalness: 0.6 }),
     // cast side covers (alternator, clutch): warm satin metallic gray, as in the photos
     engineCover: std({ color: '#8d877d', roughness: 0.42, metalness: 0.75 }),
-    engineDark: std({ color: '#2b2d31', roughness: 0.55, metalness: 0.45 }),
+    engineDark: std({ color: '#383b40', roughness: 0.5, metalness: 0.5 }),
     engineBlack: std({ color: '#1a1b1e', roughness: 0.45, metalness: 0.35 }),
     caliper: std({ color: '#2b2d31', roughness: 0.42, metalness: 0.55 }),
     chain: std({ color: '#3d3e41', roughness: 0.4, metalness: 0.95 }),
@@ -122,7 +123,7 @@ export function createMaterials() {
     gold: std({ color: '#c8a24a', roughness: 0.3, metalness: 1 }),
 
     // ---- glass and lights
-    screen: phys({ color: '#c3ccd2', roughness: 0.03, metalness: 0, transparent: true, opacity: 0.3, side: THREE.DoubleSide, depthWrite: false }),
+    screen: phys({ color: '#c3ccd2', roughness: 0.03, metalness: 0, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false }),
     lens: phys({ color: '#ffffff', roughness: 0.02, metalness: 0, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
     lensRed: phys({ color: '#b3121b', roughness: 0.08, metalness: 0, transparent: true, opacity: 0.75, side: THREE.DoubleSide }),
     // faceted chrome reflector: semi-gloss so it reads bright silver in the
@@ -135,7 +136,20 @@ export function createMaterials() {
     gauge: std({ color: '#ffffff', roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 0.25 }),
     mesh: std({ color: '#0a0a0b', roughness: 0.8, metalness: 0.2, side: THREE.DoubleSide }),
   };
-  for (const k of ['body', 'accent', 'decalSide', 'decalSideL', 'plasticGloss']) M[k].envMapIntensity = 0.7;
+  // painted panels: dimmer, slightly softer reflections so large flat panels
+  // read dark with crisp highlights (as in the studio photos), not as mirrors
+  for (const k of ['body', 'accent', 'decalSide', 'decalSideL', 'plasticGloss']) {
+    M[k].envMapIntensity = 0.32;
+    M[k].clearcoatRoughness = 0.1;
+  }
+  // black wheels: keep the clearcoat highlight, drop the grey sheen
+  M.wheel.envMapIntensity = 0.22;
+  M.wheel.clearcoatRoughness = 0.16;
+  M.disc.envMapIntensity = 0.75;
+  for (const k of ['primary', 'decalFront']) {
+    M[k].envMapIntensity = 0.8;
+    M[k].clearcoatRoughness = 0.08;
+  }
   for (const [k, m] of Object.entries(M)) m.name = k;
   return M;
 }

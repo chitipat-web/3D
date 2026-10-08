@@ -16,16 +16,19 @@ const mesh = (g, m, name) => {
 // ---------------------------------------------------------------------------
 // Tyre tread / sidewall texture (bump map) drawn on a canvas.
 // ---------------------------------------------------------------------------
-function tyreBump(front) {
+// Tyre texture: tread grooves and sidewall lettering. kind 'bump' gives a
+// height map (grey = surface), 'color' a multiply map (white = rubber).
+function tyreBump(front, kind = 'bump') {
   if (typeof document === 'undefined') return null;
   const c = document.createElement('canvas');
   c.width = 2048;
   c.height = 256;
   const g = c.getContext('2d');
-  g.fillStyle = '#808080';
+  const color = kind === 'color';
+  g.fillStyle = color ? '#ffffff' : '#808080';
   g.fillRect(0, 0, c.width, c.height);
   // grooves: sweeping S22-style cuts, repeated around the circumference (u) on the tread band (v 0.3..0.7)
-  g.strokeStyle = '#303030';
+  g.strokeStyle = color ? '#3a3a3a' : '#303030';
   g.lineCap = 'round';
   const reps = front ? 18 : 20;
   for (let k = 0; k < reps; k++) {
@@ -45,12 +48,25 @@ function tyreBump(front) {
       g.stroke();
     }
   }
-  // sidewall rib lines
-  g.fillStyle = '#9a9a9a';
+  // sidewall rib lines and moulded lettering (both sidewalls)
+  g.fillStyle = color ? '#c4c4c4' : '#9a9a9a';
   for (const v of [0.07, 0.93]) g.fillRect(0, c.height * v - 2, c.width, 4);
+  g.fillStyle = color ? '#d8d8d8' : '#a8a8a8';
+  g.font = 'italic 900 15px Arial, sans-serif';
+  g.textBaseline = 'middle';
+  for (const [v, flip] of [[0.035, 1], [0.965, -1]]) {
+    for (const [u, word] of [[0.05, 'BRIDGESTONE'], [0.3, 'BATTLAX'], [0.55, 'BRIDGESTONE'], [0.8, 'BATTLAX']]) {
+      g.save();
+      g.translate(u * c.width, v * c.height);
+      g.scale(flip, flip);
+      g.fillText(word, 0, 0);
+      g.restore();
+    }
+  }
   const t = new THREE.CanvasTexture(c);
   t.wrapS = THREE.RepeatWrapping;
-  t.colorSpace = THREE.NoColorSpace;
+  t.colorSpace = color ? THREE.SRGBColorSpace : THREE.NoColorSpace;
+  t.anisotropy = 8;
   return t;
 }
 
@@ -128,6 +144,8 @@ export function buildWheel(M, front) {
     tyreMat.bumpMap = bump;
     tyreMat.bumpScale = 1.2;
     bump.repeat.set(1, 1);
+    tyreMat.map = tyreBump(front, 'color');
+    tyreMat.color.set('#2a2a2b');
   }
   grp.add(mesh(tyreG, tyreMat, 'Tyre'));
 
