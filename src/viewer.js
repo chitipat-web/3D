@@ -86,6 +86,7 @@ function setLights(on) {
   lightsOn = on;
   M.led.emissiveIntensity = on ? 7 : 0;
   M.ledRed.emissiveIntensity = on ? 5 : 0.12;
+  M.lampFacets.emissiveIntensity = on ? 0.3 : 0;
   beam.intensity = on ? 10 : 0;
   $('#toggle-lights').setAttribute('aria-pressed', String(on));
 }

@@ -130,7 +130,9 @@ export function sideLivery(L, mirror = false) {
 
   // ---- upper cowl (P1): primary colour along the top front, under the screen
   // green band from the headlight's rear corner up along the screen base
-  poly([[0.8, 0.858], [0.74, 0.886], [0.69, 0.912], [0.65, 0.934], [0.6, 0.955], [0.58, 1.0], [0.8, 1.0]], L.primary.color);
+  // (as wide as in the side photos: the nose cowl's green wraps back along
+  // the screen)
+  poly([[0.8, 0.83], [0.74, 0.851], [0.69, 0.869], [0.65, 0.884], [0.6, 0.903], [0.58, 1.0], [0.8, 1.0]], L.primary.color);
   // Graphics below are traced from the calibrated 2019 KRT side photo
   // (metres, same layout on both sides). quad(x0, y0, x1, y1, t) is a band
   // whose lower edge runs (x0, y0) -> (x1, y1) and whose height is t.

@@ -79,7 +79,7 @@ const p1Surface = (x, y) => {
 };
 const P1 = {
   outline: [
-    [0.744, 0.918, C], [0.738, 0.866], [0.727, 0.838, C], [0.726, 0.8], [0.729, 0.776], [0.733, 0.762, C],
+    [0.73, 0.918, C], [0.73, 0.866], [0.725, 0.838, C], [0.726, 0.8], [0.729, 0.776], [0.733, 0.762, C],
     [0.661, 0.756], [0.589, 0.746], [0.513, 0.734], [FIN[0], FIN[1], C],
     [0.45, 0.722], [0.405, 0.712], [0.36, 0.698], [0.316, 0.68], [0.245, 0.636, C],
     [0.27, 0.68], [0.305, 0.74], [0.338, 0.796, C], [0.42, 0.815], [0.5, 0.84], [0.56, 0.874], [0.6, 0.922], [0.628, 0.962, C],
@@ -185,21 +185,36 @@ function bellyPan(M) {
 const NZ = [0, 0.04, 0.08, 0.12, 0.16, 0.2, 0.24, 0.27];
 const NY = [0.7, 0.74, 0.77, 0.8, 0.83, 0.86, 0.89, 0.92, 0.95];
 // traced from the calibrated side photo: beak tip (0.905, 0.77), screen base
-// front (0.80, 0.895), lens from x 0.88 (inner) back to 0.735 (outer)
+// front (0.80, 0.895), lens from x 0.88 (inner) back to 0.73 (outer). In plan
+// the nose is a wedge: the 3/4 studio photos show it sweeping back from the
+// beak at about 30 deg, without the full, rounded cheeks of a blunt nose.
 const NT = [
   //  z: 0     0.04   0.08   0.12   0.16   0.20   0.24   0.27
-  [0.89, 0.884, 0.868, 0.842, 0.808, 0.772, 0.737, 0.705], // y 0.70
-  [0.893, 0.887, 0.869, 0.841, 0.806, 0.77, 0.735, 0.702], // 0.74
-  [0.905, 0.893, 0.868, 0.838, 0.802, 0.765, 0.73, 0.698], // 0.77
-  [0.885, 0.876, 0.864, 0.838, 0.804, 0.766, 0.729, 0.695], // 0.80
-  [0.868, 0.864, 0.86, 0.842, 0.81, 0.77, 0.73, 0.693], // 0.83  (fuller upper nose:
-  [0.842, 0.84, 0.838, 0.824, 0.798, 0.764, 0.724, 0.688], // 0.86  side profile traced)
-  [0.812, 0.81, 0.806, 0.796, 0.778, 0.754, 0.711, 0.678], // 0.89
-  [0.79, 0.785, 0.778, 0.768, 0.752, 0.738, 0.7, 0.668], // 0.92
-  [0.77, 0.765, 0.758, 0.748, 0.734, 0.72, 0.688, 0.656], // 0.95
+  [0.89, 0.882, 0.864, 0.84, 0.807, 0.772, 0.737, 0.705], // y 0.70
+  [0.893, 0.882, 0.862, 0.836, 0.804, 0.77, 0.735, 0.702], // 0.74
+  [0.905, 0.881, 0.857, 0.833, 0.802, 0.765, 0.73, 0.698], // 0.77
+  [0.885, 0.861, 0.837, 0.813, 0.789, 0.764, 0.729, 0.695], // 0.80
+  [0.868, 0.846, 0.822, 0.798, 0.774, 0.75, 0.725, 0.69], // 0.83
+  [0.842, 0.826, 0.808, 0.788, 0.763, 0.735, 0.709, 0.684], // 0.86
+  [0.812, 0.802, 0.788, 0.77, 0.746, 0.724, 0.701, 0.676], // 0.89
+  [0.79, 0.782, 0.77, 0.752, 0.73, 0.71, 0.69, 0.665], // 0.92
+  [0.77, 0.762, 0.75, 0.734, 0.714, 0.696, 0.678, 0.652], // 0.95
 ];
 const noseT = tableSurface(NZ, NY, NT);
-export const noseF = (z, y) => noseT(Math.abs(z), y);
+// ridge along the V arm, from the beak up and out to the cowl's outer edge:
+// below it the arm's lower face (and the headlight under it) turns back
+const RIDGE = [[0.03, 0.758], [0.24, 0.852]];
+const ridgeD = (z, y) => {
+  const [a, b] = RIDGE;
+  const dz = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dz, dy);
+  return ((z - a[0]) * dy - (y - a[1]) * dz) / l; // > 0 below the ridge
+};
+export const noseF = (z, y) => {
+  const az = Math.abs(z);
+  const d = ridgeD(az, y);
+  // the face below turns back over ~2.5 cm, then runs parallel to the hull
+  return noseT(az, y) - 0.22 * (soft(d, 0.004) - soft(d - 0.025, 0.01)) * smooth(0.0, 0.03, az);
+};
 const frontSurface = (fn) => (u, v) => fn(-u, v);
 
 // Face of the 2019 nose, front view (z outward, y up), right half. Traced
@@ -208,8 +223,8 @@ const frontSurface = (fn) => (u, v) => fn(-u, v);
 // an arm (pointed at the beak, ~9 cm tall at its outer end); a pointed green
 // chin runs under both lights.
 const LENS_R = [
-  [0.046, 0.724, C], [0.08, 0.721], [0.12, 0.72], [0.16, 0.721], [0.188, 0.723, C], [0.212, 0.748], [0.229, 0.785], [0.239, 0.834, C],
-  [0.215, 0.824], [0.18, 0.808], [0.14, 0.792], [0.1, 0.776], [0.07, 0.763], [0.046, 0.753, C],
+  [0.046, 0.724, C], [0.08, 0.721], [0.12, 0.72], [0.16, 0.722], [0.2, 0.727], [0.222, 0.733, C], [0.231, 0.765], [0.236, 0.809, C],
+  [0.215, 0.806], [0.18, 0.801], [0.14, 0.792], [0.1, 0.776], [0.07, 0.763], [0.046, 0.753, C],
 ];
 const mirrorZY = (pts) => pts.map((p) => [-p[0], p[1], p[2] || 0]).reverse();
 // pull an outline slightly towards its centre so walls built on it do not
@@ -218,38 +233,41 @@ const shrinkOutline = (pts, k) => {
   const c = pts.reduce((a, p) => [a[0] + p[0] / pts.length, a[1] + p[1] / pts.length], [0, 0]);
   return pts.map((p) => [c[0] + (p[0] - c[0]) * k, c[1] + (p[1] - c[1]) * k, p[2] || 0]);
 };
-const SCREEN_BASE = kf([[0, 0.894], [0.07, 0.896], [0.12, 0.9], [0.16, 0.906], [0.19, 0.914], [0.205, 0.92]]);
+const SCREEN_BASE = kf([[0, 0.882], [0.07, 0.885], [0.12, 0.893], [0.16, 0.904], [0.19, 0.914], [0.205, 0.92]]);
 // right V arm, from the beak bottom round to the intake bottom centre
 // green: V-arm band over the headlight, joined at the outer edge to a strip
 // along the screen base that carries the mirror mounts
 const ARM_R = [
   [0.03, 0.718], [0.046, 0.724, C], [0.044, 0.753, C],
-  [0.07, 0.763], [0.1, 0.776], [0.14, 0.792], [0.18, 0.808], [0.215, 0.824], [0.239, 0.836, C],
+  [0.07, 0.763], [0.1, 0.776], [0.14, 0.792], [0.18, 0.801], [0.215, 0.806], [0.237, 0.811, C],
   [0.247, 0.856], [0.245, 0.878], [0.238, 0.895], [0.215, 0.913, C],
-  [0.19, 0.91], [0.165, 0.9065, C],
-  [0.153, 0.878], [0.132, 0.851], [0.1, 0.828], [0.062, 0.8085], [0.036, 0.794, C],
+  [0.19, 0.911], [0.16, 0.903], [0.135, 0.8975, C],
+  [0.125, 0.87], [0.11, 0.84], [0.09, 0.814], [0.066, 0.795], [0.04, 0.782, C],
 ];
 // black wedge between the band and the upper cowl, opening into the deep
 // ram-air duct in the middle that runs up to the screen
-// (the intake reaches up to the screen base, its outer corner at z = 0.165)
+// (the intake reaches up to the screen base, its outer corner at z = 0.135;
+// in the studio close-ups the arm is a narrow band near the beak that widens
+// into a broad face round the mirror mounts, and the intake reaches down
+// close to the headlights)
 const MASK_R = [
-  [0.036, 0.794, C], [0.062, 0.8085], [0.1, 0.828], [0.132, 0.851], [0.153, 0.878], [0.165, 0.9065, C],
-  [0.13, 0.9005], [0.1, 0.8985], [0.05, 0.8958],
+  [0.04, 0.782, C], [0.066, 0.795], [0.09, 0.814], [0.11, 0.84], [0.125, 0.87], [0.135, 0.8975, C],
+  [0.11, 0.8915], [0.08, 0.887], [0.04, 0.8838],
 ];
 
 function buildNose(M) {
   const grp = new THREE.Group();
   grp.name = 'Nose';
   // ---- upper cowl: the two V arms joined at the beak
-  const n1 = [[0, 0.715, C], ...ARM_R, [0, 0.788, C], ...mirrorZY(ARM_R)];
+  const n1 = [[0, 0.715, C], ...ARM_R, [0, 0.777, C], ...mirrorZY(ARM_R)];
   const g1 = toFront(
     buildPanel({ outline: zy(n1), surface: frontSurface(noseF), uv: frontUV, roll: 0.006, flange: 0.014, spacing: 0.009, edgeStep: 0.0035 })
   );
   grp.add(mesh(g1, M.decalFront, 'UpperCowl'));
   // ---- black mask above the arms: ram-air duct in the middle, trim at the sides
   {
-    const outline = [[0, 0.8955], ...MASK_R.slice().reverse(), [0, 0.788, C], ...mirrorZY(MASK_R).reverse()];
-    const depth = (z, y) => noseF(z, y) - lerp(0.024, 0.05, smooth(0.13, 0.07, Math.abs(z))) - 0.015 * smooth(0.83, 0.89, y) * smooth(0.13, 0.07, Math.abs(z));
+    const outline = [[0, 0.8835], ...MASK_R.slice().reverse(), [0, 0.777, C], ...mirrorZY(MASK_R).reverse()];
+    const depth = (z, y) => noseF(z, y) - lerp(0.024, 0.05, smooth(0.13, 0.07, Math.abs(z))) - 0.015 * smooth(0.82, 0.88, y) * smooth(0.13, 0.07, Math.abs(z));
     const floor = toFront(buildPanel({ outline: zy(outline), surface: frontSurface(depth), roll: 0, flange: 0, spacing: 0.01, edgeStep: 0.004 }));
     grp.add(mesh(floor, M.mesh, 'RamAirIntake'));
     // side walls from the cowl edge back to the floor
@@ -262,80 +280,81 @@ function buildNose(M) {
   // down to the chin and out to the side cowl
   {
     const NS = [
-      [0.188, 0.721, C], [0.212, 0.746], [0.229, 0.784], [0.239, 0.834, C], [0.249, 0.84, C], [0.254, 0.8], [0.253, 0.75], [0.247, 0.712, C],
-      [0.229, 0.724], [0.21, 0.72],
+      [0.222, 0.731, C], [0.231, 0.764], [0.236, 0.809, C], [0.249, 0.817, C], [0.254, 0.8], [0.253, 0.75], [0.247, 0.712, C],
+      [0.236, 0.722],
     ];
     for (const s of [1, -1]) {
       const g = toFront(buildPanel({ outline: zy(s > 0 ? NS : mirrorZY(NS)), surface: frontSurface((z, y) => noseF(z, y) - 0.0015), roll: 0.004, flange: 0.012, spacing: 0.006, edgeStep: 0.003 }));
       grp.add(mesh(g, M.body, s > 0 ? 'NoseSideRight' : 'NoseSideLeft'));
     }
   }
-  // ---- headlights: lens, housing and internals
+  // ---- headlights. In the studio close-ups no round projector lenses show:
+  // behind the clear cover a black housing frames a faceted chrome reflector
+  // (two reflector cups), with a broad black brow over the outer half and an
+  // LED strip along the bottom edge.
+  const lensTop = kf([[0.046, 0.753], [0.07, 0.763], [0.1, 0.776], [0.14, 0.792], [0.18, 0.801], [0.215, 0.806]]);
+  const REFL_R = [
+    [0.056, 0.737, C], [0.08, 0.7285], [0.12, 0.727], [0.16, 0.729], [0.2, 0.734], [0.216, 0.74, C], [0.222, 0.762], [0.225, 0.784, C],
+    ...[0.205, 0.17, 0.14, 0.1, 0.07].map((z) => [z, lensTop(z) - 0.006 - 0.06 * (z - 0.046)]),
+  ];
+  const cups = [[0.105, 0.745, 0.034], [0.172, 0.768, 0.036]];
+  const reflSurf = (z, y) => {
+    let d = 0.03;
+    for (const [cz, cy, r] of cups) {
+      const q = ((Math.abs(z) - cz) ** 2 + (y - cy) ** 2) / (r * r);
+      if (q < 1) d += 0.02 * (1 - q);
+    }
+    return noseF(z, y) - d;
+  };
   for (const s of [1, -1]) {
-    const outline = s > 0 ? LENS_R : mirrorZY(LENS_R);
+    const mz = (pts) => (s > 0 ? pts : mirrorZY(pts));
+    const outline = mz(LENS_R);
     const lens = toFront(buildPanel({ outline: zy(outline), surface: frontSurface((z, y) => noseF(z, y) - 0.006), roll: 0, flange: 0, spacing: 0.009, edgeStep: 0.0035 }));
     const lm = mesh(lens, M.lens, 'HeadlightLens');
     lm.renderOrder = 3;
     grp.add(lm);
-    // chrome reflector field recessed behind the lens
-    const back = toFront(
-      buildPanel({
-        outline: zy(outline),
-        surface: frontSurface((z, y) => noseF(z, y) - 0.05),
-        roll: 0.004,
-        flange: 0,
-        spacing: 0.006,
-        edgeStep: 0.0035,
-        uv: (u, v) => [u / 0.04, v / 0.04],
-      })
+    // black housing face just behind the cover: bezel round the reflector
+    // and the brow over its outer half
+    const bezel = toFront(
+      buildPanel({ outline: zy(outline), holes: [zy(mz(REFL_R))], surface: frontSurface((z, y) => noseF(z, y) - 0.014), roll: 0, flange: 0, spacing: 0.008, edgeStep: 0.003 })
     );
-    grp.add(mesh(back, M.headlightInner, 'HeadlightReflector'));
-    // dark shell behind the reflector, so from the saddle the back of the
-    // light reads as housing rather than chrome
-    grp.add(mesh(back.clone().translate(-0.003, 0, 0), M.plastic, 'HeadlightBack'));
+    grp.add(mesh(bezel, M.plastic, 'HeadlightBezel'));
+    // faceted reflector: coarse triangles shaded flat, so each facet catches
+    // the studio light on its own like the real crystal-cut reflector
+    const reflIdx = toFront(buildPanel({ outline: zy(mz(REFL_R)), surface: frontSurface(reflSurf), roll: 0, flange: 0, spacing: 0.0085, edgeStep: 0.005 }));
+    const refl = reflIdx.toNonIndexed();
+    refl.computeVertexNormals();
+    grp.add(mesh(refl, M.lampFacets, 'HeadlightReflector'));
+    // chrome walls from the bezel opening back to the reflector
+    const rwall = toFront(
+      buildPanel({ outline: zy(shrinkOutline(mz(REFL_R), 0.995)), surface: frontSurface((z, y) => noseF(z, y) - 0.014), roll: 0, flange: 0.04, spacing: 0.5, edgeStep: 0.004, cap: false })
+    );
+    grp.add(mesh(rwall, M.lampFacets, 'HeadlightReflectorWall'));
+    // dark shell behind everything, so from the saddle the back of the light
+    // reads as housing rather than chrome
+    grp.add(mesh(reflIdx.clone().translate(-0.004, 0, 0), M.plastic, 'HeadlightBack'));
     const walls = toFront(
-      buildPanel({ outline: zy(shrinkOutline(outline, 0.988)), surface: frontSurface((z, y) => noseF(z, y) - 0.006), roll: 0, flange: 0.044, spacing: 0.5, edgeStep: 0.0035, cap: false })
+      buildPanel({ outline: zy(shrinkOutline(outline, 0.988)), surface: frontSurface((z, y) => noseF(z, y) - 0.006), roll: 0, flange: 0.056, spacing: 0.5, edgeStep: 0.0035, cap: false })
     );
     grp.add(mesh(walls, M.plastic, 'HeadlightHousing'));
-    // LED projector modules: low beam (outer, large) and high beam (inner)
-    const mods = [];
-    const leds = [];
-    for (const [zc, yc, r] of [[0.108, 0.746, 0.013], [0.176, 0.766, 0.019]]) {
-      const z = s * zc;
-      const x = noseF(zc, yc) - 0.034;
-      const bowl = new THREE.SphereGeometry(r, 28, 12, 0, Math.PI * 2, 0, Math.PI / 2);
-      bowl.rotateZ(-Math.PI / 2);
-      bowl.translate(x - 0.006, yc, z);
-      mods.push(bowl);
-      const ring = new THREE.TorusGeometry(r * 0.86, r * 0.1, 8, 28);
-      ring.rotateY(Math.PI / 2);
-      ring.translate(x + 0.001, yc, z);
-      mods.push(ring);
-      const lensG = new THREE.CircleGeometry(r * 0.68, 28);
-      lensG.rotateY(Math.PI / 2);
-      lensG.translate(x + 0.002, yc, z);
-      leds.push(lensG);
-    }
-    grp.add(mesh(merge(mods), M.chrome, 'LEDProjectors'));
-    grp.add(mesh(merge(leds), M.led, 'LEDLowBeam'));
-    // LED position light just under the top edge of the lens
-    const drl = [];
-    const n = 14;
+    // LED position-light strip along the bottom edge of the reflector
+    const strip = [];
+    const n = 12;
     for (let i = 0; i < n; i++) {
-      const t0 = i / n;
-      const t1 = (i + 1) / n;
-      const za = lerp(0.06, 0.226, t0);
-      const zb = lerp(0.06, 0.226, t1);
-      const ya = lerp(0.756, 0.826, t0) - 0.006;
-      const yb = lerp(0.756, 0.826, t1) - 0.006;
-      drl.push(rod(v3(noseF(za, ya) - 0.016, ya, s * za), v3(noseF(zb, yb) - 0.016, yb, s * zb), 0.0026, 6));
+      const za = lerp(0.07, 0.178, i / n);
+      const zb = lerp(0.07, 0.178, (i + 1) / n);
+      const ya = 0.7335 - 0.004 * Math.sin(Math.PI * (i / n));
+      const yb = 0.7335 - 0.004 * Math.sin(Math.PI * ((i + 1) / n));
+      strip.push(rod(v3(noseF(za, ya) - 0.017, ya, s * za), v3(noseF(zb, yb) - 0.017, yb, s * zb), 0.0016, 6));
     }
-    grp.add(mesh(merge(drl), M.led, 'PositionLight'));
+    grp.add(mesh(merge(strip), M.led, 'PositionLight'));
   }
   // ---- pointed chin under both headlights
-  const chinPlan = kf([[0, 0.896], [0.04, 0.89], [0.08, 0.877], [0.12, 0.857], [0.16, 0.829], [0.2, 0.794], [0.244, 0.752]]);
-  const chinSurf = (z, y) => chinPlan(Math.abs(z)) - 0.35 * Math.max(0, 0.713 - y) - 0.1 * Math.max(0, y - 0.717);
-  const chinTop = [[0.03, 0.717], [0.046, 0.723, C], [0.08, 0.72], [0.12, 0.719], [0.16, 0.72], [0.2, 0.723], [0.229, 0.729, C]];
+  // pointed in plan, with a sharp leading edge: the top face slopes back to
+  // the headlights and the underside back to the duct
+  const chinPlan = kf([[0, 0.9], [0.04, 0.887], [0.08, 0.872], [0.12, 0.853], [0.16, 0.827], [0.2, 0.794], [0.244, 0.752]]);
+  const chinSurf = (z, y) => chinPlan(Math.abs(z)) - 0.5 * soft(0.712 - y, 0.003) - 0.45 * soft(y - 0.716, 0.003);
+  const chinTop = [[0.03, 0.717], [0.046, 0.723, C], [0.08, 0.72], [0.12, 0.719], [0.16, 0.721], [0.2, 0.726], [0.229, 0.731, C]];
   const chin = [
     [0, 0.685, C], [0.12, 0.688], [0.238, 0.695, C], [0.245, 0.709, C], ...chinTop.slice().reverse(), [0, 0.714, C],
     ...chinTop.map((p) => [-p[0], p[1], p[2] || 0]), [-0.245, 0.709, C], [-0.238, 0.695, C], [-0.12, 0.688],
@@ -382,7 +401,7 @@ function buildWindscreen(M) {
       return v3(noseF(z, y) + 0.003, y, sg * z);
     }
     const t = (s - 0.62) / 0.38;
-    const x = lerp(0.744, 0.628, t);
+    const x = lerp(0.73, 0.628, t);
     const y = lerp(0.922, 0.964, t) + 0.002;
     return v3(x, y, sg * (P1.surface(x, y) + 0.003));
   };
@@ -627,35 +646,52 @@ function buildTailEnd(M) {
 function buildFender(M) {
   const grp = new THREE.Group();
   grp.name = 'FrontFender';
-  const angs = linspace(40, 124, 18).map((a) => a * DEG);
+  // Traced from the side and close-up studio photos: a short, faceted shell
+  // over the tyre (pointed front tip at x 0.855, y 0.585; crest ~0.62 just
+  // ahead of the fork) whose sides flare out into broad flanks that run down
+  // in front of the fork sliders and carry the reflectors.
+  const angs = linspace(61, 112, 22).map((a) => a * DEG);
   const rings = angs.map((a, i) => {
-    const t = i / (angs.length - 1);
-    const k = 0.55 + 0.45 * smooth(0, 0.3, t) - 0.08 * smooth(0.85, 1, t);
-    const lift = 0.01 * (1 - smooth(0, 0.25, t));
-    const half = [[0, 0.322 + lift], [0.026 * k, 0.32 + lift * 0.8], [0.046 * k, 0.315], [0.06 * k, 0.304], [0.066 * k, 0.29]];
+    const t = i / (angs.length - 1); // 0 front tip -> 1 rear
+    const k = 0.3 + 0.7 * smooth(0, 0.3, t) - 0.08 * smooth(0.85, 1, t);
+    const f = smooth(0.52, 0.78, t); // flare towards the flanks
+    const r0 = 0.317 + 0.009 * (1 - smooth(0, 0.2, t)); // front lip kicks up
+    const half = [
+      [0, r0 + 0.004], [0.028 * k, r0 + 0.002], [0.05 * k, r0 - 0.004], [0.066 * k, r0 - 0.017],
+      [0.072 * k + 0.03 * f, r0 - 0.03 - 0.008 * f], [0.074 * k + 0.044 * f, r0 - 0.036 - 0.026 * f],
+    ];
     return mirrorRing(half.map(([z, r]) => [FA.x + r * Math.cos(a), FA.y + r * Math.sin(a), z]));
   });
-  grp.add(mesh(loft(rings, { su: 3, sv: 2, creaseCols: [2, 6] }), M.primary, 'Fender'));
-  // black side stays down the front of the fork legs, carrying the reflectors
+  grp.add(mesh(loft(rings, { su: 3, sv: 2, creaseCols: [3, 7] }), M.primary, 'Fender'));
+  // green flanks in front of the fork sliders, from the shell down to just
+  // above the axle, each with a round amber reflector
   const fins = [];
   const refl = [];
+  const slots = [];
   for (const s of [-1, 1]) {
     const path = [];
     for (let i = 0; i <= 8; i++) {
-      const sAx = lerp(0.33, 0.12, i / 8);
-      const p = forkAt(sAx).addScaledVector(PF, 0.03 + 0.004 * Math.sin((Math.PI * i) / 8));
-      p.z = s * 0.106;
+      const sAx = lerp(0.3, 0.125, i / 8);
+      const p = forkAt(sAx).addScaledVector(PF, 0.064 - 0.006 * (i / 8));
+      p.z = s * 0.113;
       path.push(p);
     }
-    fins.push(sweep(path, (t) => rrect(0.006, lerp(0.05, 0.03, t), 0.0025, 2), { steps: 16, up: PF.clone() }));
-    const rp = forkAt(0.215).addScaledVector(PF, 0.05);
-    const r = new THREE.CylinderGeometry(0.0115, 0.0115, 0.006, 24);
+    fins.push(sweep(path, (t) => rrect(lerp(0.066, 0.05, t), 0.008, 0.003, 2), { steps: 16, up: PF.clone() }));
+    const rp = forkAt(0.18).addScaledVector(PF, 0.068);
+    const r = new THREE.CylinderGeometry(0.0125, 0.0125, 0.005, 28);
     r.rotateX(Math.PI / 2);
-    r.translate(rp.x, rp.y, s * 0.112);
+    r.translate(rp.x, rp.y, s * 0.1185);
     refl.push(r);
+    // dark louvre slot in the shell's flank, just ahead of the fork
+    const a = 94 * DEG;
+    const sl = rbox(0.03, 0.009, 0.004, 0.002);
+    sl.rotateZ(a - Math.PI / 2 - 0.25);
+    sl.translate(FA.x + 0.3 * Math.cos(a), FA.y + 0.3 * Math.sin(a), s * 0.093);
+    slots.push(sl);
   }
-  grp.add(mesh(merge(fins), M.plastic, 'FenderStays'));
+  grp.add(mesh(merge(fins), M.primary, 'FenderStays'));
   grp.add(mesh(merge(refl), M.amber, 'ForkReflectors'));
+  grp.add(mesh(merge(slots), M.plastic, 'FenderVents'));
   return grp;
 }
 
@@ -683,7 +719,7 @@ function buildMirrors(M) {
   const stalks = [];
   const shells = [];
   const glass = [];
-  const c = { x: 0.668, y: 0.987, z: 0.212 };
+  const c = { x: 0.645, y: 0.985, z: 0.21 };
   const ring = chamfered(MIRROR_OUTLINE, 0.005);
   const cz = 0.09;
   const cy = 0.01;
@@ -730,11 +766,11 @@ function buildMirrors(M) {
     gl.computeVertexNormals();
   }
   const housing = merge([shell, cap, back]);
-  const stalk = sweep([v3(0.728, 0.9, 0.2), v3(0.73, 0.93, 0.232), v3(0.722, 0.962, 0.262)], (t) => rrect(0.016, lerp(0.026, 0.02, t), 0.006, 2), {
+  const stalk = sweep([v3(0.705, 0.902, 0.175), v3(0.708, 0.93, 0.215), v3(0.699, 0.96, 0.258)], (t) => rrect(0.016, lerp(0.026, 0.02, t), 0.006, 2), {
     steps: 10,
     up: v3(1, 0, 0),
   });
-  const foot = place(rbox(0.034, 0.012, 0.032, 0.004), { p: [0.728, 0.897, 0.2] });
+  const foot = place(rbox(0.034, 0.012, 0.032, 0.004), { p: [0.705, 0.898, 0.175] });
   for (const s of [1, -1]) {
     shells.push(s > 0 ? housing.clone() : mirrorZ(housing));
     glass.push(s > 0 ? gl.clone() : mirrorZ(gl));

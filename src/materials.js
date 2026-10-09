@@ -158,6 +158,8 @@ export function createMaterials() {
     // faceted chrome reflector: semi-gloss so it reads bright silver in the
     // studio light from any angle, as in the photos
     headlightInner: std({ color: '#eef1f4', roughness: 0.26, metalness: 0.72, map: facetTexture(), side: THREE.DoubleSide }),
+    // headlight reflector: polished, flat-shaded facets; faintly lit with the lights on
+    lampFacets: std({ color: '#e9edf2', roughness: 0.12, metalness: 1, emissive: '#dfe9ff', emissiveIntensity: 0.18, side: THREE.DoubleSide }),
     led: std({ color: '#ffffff', emissive: '#e9f3ff', emissiveIntensity: 2.4, roughness: 0.3 }),
     ledRed: std({ color: '#ff2a2a', emissive: '#ff1010', emissiveIntensity: 1.6, roughness: 0.4 }),
     amber: std({ color: '#ffae2a', emissive: '#ff8c00', emissiveIntensity: 0.25, roughness: 0.3 }),
