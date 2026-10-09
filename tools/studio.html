@@ -80,6 +80,8 @@ try {
     if (q.get('primcol')) Lv.primary.color = '#' + q.get('primcol');
   }
   const bike = buildZX6R({ livery: q.get('livery') || 'krt' });
+  // naked=1 hides the bodywork (to compare with photos of the bare chassis)
+  if (q.get('naked') === '1') bike.traverse((o) => { if (o.name === 'Bodywork') o.visible = false; });
   bike.traverse((o) => { if (o.isMesh) { o.castShadow = true; o.receiveShadow = true; } });
   scene.add(bike);
 
@@ -173,6 +175,17 @@ try {
     scene.background = new THREE.Color(q.get('obg') ? '#' + q.get('obg') : '#ffffff');
     renderer.render(scene, oc);
     shots.push({ name: (q.get('prefix') || '') + 'ortho_side19', data: renderer.domElement.toDataURL('image/png') });
+    list.length = 0;
+  }
+  if (q.get('ortho') === 'naked19') {
+    // matches the 2019 studio photo of the bike without bodywork (1257 x 689, left side)
+    renderer.setSize(1257, 689);
+    const oc = new THREE.OrthographicCamera(-1.1027, 1.152, 1.1318, -0.104, 0.1, 30);
+    oc.position.set(0, 0, -10);
+    oc.lookAt(0, 0, 0);
+    scene.background = new THREE.Color(q.get('obg') ? '#' + q.get('obg') : '#ffffff');
+    renderer.render(scene, oc);
+    shots.push({ name: (q.get('prefix') || '') + 'ortho_naked19', data: renderer.domElement.toDataURL('image/png') });
     list.length = 0;
   }
   if (q.get('ortho') === 'right19') {

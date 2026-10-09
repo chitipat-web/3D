@@ -513,7 +513,9 @@ const PILLION = {
   w: kf([[-0.515, 0.085], [-0.58, 0.094], [-0.66, 0.088], [-0.76, 0.072], [-0.876, 0.04]]),
 };
 const TAIL = {
-  low: kf([[-0.3, 0.724], [-0.36, 0.724], [-0.42, 0.734], [-0.47, 0.752], [-0.51, 0.776], [-0.55, 0.8], [-0.6, 0.82], [-0.65, 0.843], [-0.7, 0.872], [-0.75, 0.905], [-0.8, 0.933], [-0.85, 0.956], [-0.876, 0.967]]),
+  // (the end rises steeply: the tail light lens faces down and back under
+  // the pointed tip, traced from both side photos)
+  low: kf([[-0.3, 0.724], [-0.36, 0.724], [-0.42, 0.734], [-0.47, 0.752], [-0.51, 0.776], [-0.55, 0.8], [-0.6, 0.82], [-0.65, 0.843], [-0.7, 0.872], [-0.75, 0.903], [-0.8, 0.929], [-0.82, 0.936], [-0.85, 0.972], [-0.876, 1.004]]),
   w: kf([[-0.28, 0.168], [-0.4, 0.161], [-0.5, 0.15], [-0.6, 0.13], [-0.7, 0.108], [-0.8, 0.084], [-0.876, 0.056]]),
 };
 
@@ -586,56 +588,67 @@ function buildTailEnd(M) {
     });
     grp.add(mesh(loft(rings, { su: 3, sv: 2 }), M.plastic, 'Undertray'));
   }
-  // tail light: a wide red lens tucked under the tail tip, its rear face
-  // sloping forward-down (traced: x -0.80..-0.885, y 0.925..0.97)
-  const xs = linspace(-0.795, -0.886, 7);
+  // tail light: a wide red lens on the steep underside of the tail tip,
+  // facing down and back (traced: from x -0.815, y 0.935 up to the tip)
+  const xs = linspace(-0.812, -0.874, 9);
   const rings = xs.map((x) => {
-    const t = (x + 0.795) / -0.091;
-    const yU = TAIL.low(Math.max(-0.876, x)) + 0.004;
-    const yL = yU - lerp(0.016, 0.044, Math.sqrt(t));
-    const w = TAIL.w(Math.max(-0.876, x)) * 0.94;
-    return [[x, yL, -w * 0.82], [x, yL - 0.004, 0], [x, yL, w * 0.82], [x, yU, w * 0.9], [x, yU + 0.002, 0], [x, yU, -w * 0.9]];
+    const yU = TAIL.low(x) + 0.002;
+    const yL = yU - 0.012;
+    const w = TAIL.w(x) * 0.93;
+    return [[x, yL, -w * 0.9], [x, yL - 0.002, 0], [x, yL, w * 0.9], [x, yU, w], [x, yU + 0.002, 0], [x, yU, -w]];
   });
   grp.add(mesh(loft(rings, { closed: true, su: 2, sv: 2 }), M.lensRed, 'TailLightLens'));
   const leds = [];
   for (let i = 0; i < 3; i++) {
-    const x = -0.845 - i * 0.016;
-    const y = TAIL.low(Math.max(-0.876, x)) - 0.01 - i * 0.008;
-    const w = TAIL.w(Math.max(-0.876, x)) * 0.72;
-    leds.push(rod(v3(x - 0.004, y, -w), v3(x - 0.004, y, w), 0.0028, 6));
+    const x = -0.828 - i * 0.016;
+    const y = TAIL.low(x) - 0.006;
+    const w = TAIL.w(x) * 0.7;
+    leds.push(rod(v3(x + 0.004, y, -w), v3(x + 0.004, y, w), 0.0026, 6));
   }
   grp.add(mesh(merge(leds), M.ledRed, 'TailLightLED'));
-  // undertray / licence-plate holder extending rearwards
+  // licence-plate holder: a tapering arm from under the tail back to a
+  // rounded end, a short bracket down to the plate, red reflectors (rear and
+  // both sides) and clear-lens indicators on stalks (traced from the side and
+  // rear 3/4 studio photos)
   {
-    // short arm from under the tail light back to the plate
-    const xs2 = linspace(-0.72, -0.935, 10);
+    const xs2 = linspace(-0.735, -0.99, 12);
     const rr = xs2.map((x, i) => {
       const t = i / (xs2.length - 1);
-      const yt = lerp(0.872, 0.842, t);
-      const yb = lerp(0.852, 0.826, t);
-      const w = lerp(0.062, 0.034, Math.pow(t, 1.2));
+      const end = t > 0.85 ? Math.sqrt(Math.max(0, 1 - ((t - 0.85) / 0.15) ** 2)) * 0.55 + 0.45 : 1;
+      const ym = lerp(0.882, 0.843, t);
+      const hh = lerp(0.016, 0.014, t) * end;
+      const yt = ym + hh;
+      const yb = ym - hh;
+      const w = lerp(0.06, 0.032, Math.pow(t, 1.1)) * end;
       return [[x, yt, -w * 0.8], [x, yt + 0.004, 0], [x, yt, w * 0.8], [x, (yt + yb) / 2, w], [x, yb, w * 0.75], [x, yb - 0.002, 0], [x, yb, -w * 0.75], [x, (yt + yb) / 2, -w]];
     });
     grp.add(mesh(loft(rr, { closed: true, su: 2, sv: 2 }), M.plastic, 'PlateHolderArm'));
-    // vertical bracket down to the plate
-    const blade = sweep(
-      [v3(-0.908, 0.838, 0), v3(-0.922, 0.812, 0), v3(-0.936, 0.79, 0)],
-      (t) => rrect(0.012, lerp(0.09, 0.08, t), 0.004, 2),
-      { steps: 16, up: v3(0, 1, 0) }
-    );
+    // bracket from the arm's end down to the plate
+    const blade = merge([
+      place(rbox(0.03, 0.05, 0.07, 0.006), { p: [-0.979, 0.812, 0], r: [0, 0, -0.12] }),
+      place(rbox(0.018, 0.06, 0.2, 0.004), { p: [-0.97, 0.745, 0] }),
+    ]);
     grp.add(mesh(blade, M.plastic, 'PlateBracket'));
     // licence plate (black dealer plate with the wordmark), leaning back
-    const plate = place(rbox(0.004, 0.11, 0.17, 0.006), { p: [-0.964, 0.748, 0], r: [0, 0, -0.55] });
+    const tilt = -0.38;
+    const plate = place(rbox(0.004, 0.125, 0.18, 0.006), { p: [-1.006, 0.735, 0], r: [0, 0, tilt] });
     grp.add(mesh(plate, M.plate || M.plastic, 'LicencePlate'));
-    grp.add(mesh(place(rbox(0.008, 0.026, 0.07, 0.004), { p: [-0.93, 0.808, 0], r: [0, 0, -0.55] }), M.reflector, 'RearReflector'));
+    const refl = [place(rbox(0.008, 0.024, 0.064, 0.004), { p: [-0.99, 0.81, 0], r: [0, 0, tilt] })];
+    for (const s of [-1, 1]) refl.push(place(rbox(0.064, 0.046, 0.006, 0.004), { p: [-0.99, 0.745, s * 0.103] }));
+    grp.add(mesh(merge(refl), M.reflector, 'RearReflector'));
     const stalks = [];
     const lensG = [];
+    const bulbs = [];
     for (const s of [-1, 1]) {
-      stalks.push(rod(v3(-0.84, 0.857, s * 0.035), v3(-0.845, 0.852, s * 0.115), 0.0055, 10));
-      lensG.push(place(rbox(0.046, 0.022, 0.028, 0.009), { p: [-0.852, 0.851, s * 0.128] }));
+      stalks.push(rod(v3(-0.885, 0.852, s * 0.02), v3(-0.9, 0.846, s * 0.098), 0.005, 10));
+      lensG.push(place(rbox(0.04, 0.024, 0.032, 0.01), { p: [-0.905, 0.845, s * 0.118] }));
+      bulbs.push(place(rbox(0.018, 0.01, 0.016, 0.004), { p: [-0.905, 0.845, s * 0.118] }));
     }
     grp.add(mesh(merge(stalks), M.plastic, 'RearSignalStalks'));
-    grp.add(mesh(merge(lensG), M.amber, 'RearSignals'));
+    const ls = mesh(merge(lensG), M.lens, 'RearSignals');
+    ls.renderOrder = 3;
+    grp.add(ls);
+    grp.add(mesh(merge(bulbs), M.amber, 'RearSignalBulbs'));
   }
   return grp;
 }

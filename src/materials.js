@@ -147,6 +147,8 @@ export function createMaterials() {
     exhaustTip: std({ color: '#d7dade', roughness: 0.14, metalness: 1 }),
     brushed: phys({ color: '#c9cdd1', roughness: 0.3, metalness: 1, clearcoat: 0.3, clearcoatRoughness: 0.2 }),
     exhaustHot: std({ color: '#4a4540', roughness: 0.5, metalness: 0.85 }),
+    chamber: std({ color: '#a4a8ad', roughness: 0.38, metalness: 1 }),
+    heatGuard: std({ color: '#26282c', roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide }),
     radiator: std({ color: '#1a1b1d', roughness: 0.7, metalness: 0.3 }),
     bolt: std({ color: '#c9ccd0', roughness: 0.25, metalness: 1 }),
     gold: std({ color: '#c8a24a', roughness: 0.3, metalness: 1 }),
@@ -163,7 +165,7 @@ export function createMaterials() {
     led: std({ color: '#ffffff', emissive: '#e9f3ff', emissiveIntensity: 2.4, roughness: 0.3 }),
     ledRed: std({ color: '#ff2a2a', emissive: '#ff1010', emissiveIntensity: 1.6, roughness: 0.4 }),
     amber: std({ color: '#ffae2a', emissive: '#ff8c00', emissiveIntensity: 0.25, roughness: 0.3 }),
-    reflector: std({ color: '#c0121c', roughness: 0.35, metalness: 0.2 }),
+    reflector: std({ color: '#6e0a10', roughness: 0.3, metalness: 0.3 }),
     gauge: std({ color: '#ffffff', roughness: 0.4, emissive: '#ffffff', emissiveIntensity: 0.25 }),
     mesh: std({ color: '#0a0a0b', roughness: 0.8, metalness: 0.2, side: THREE.DoubleSide }),
   };

@@ -1,6 +1,7 @@
 // 636 cc inline-four, radiator and exhaust system.
 import * as THREE from 'three';
-import { DEG, sweep, rrect, shape, circlePts, extrude, rbox, cyl, rod, tube, place, merge, latheZ, loft } from './geom.js';
+import { DEG, sweep, rrect, shape, circlePts, extrude, rbox, cyl, rod, tube, place, merge, latheZ, loft, mirrorZ, clamp } from './geom.js';
+import { buildPanel } from './panel.js';
 import { CRANK, CYL_DIR, CYL_FWD, SPROCKET_F } from './layout.js';
 import { mesh } from './chassis.js';
 
@@ -202,13 +203,18 @@ export function buildExhaust(M) {
     headers.push(tube(pts, 0.0185, 60, 14));
   }
   grp.add(mesh(merge(headers), M.exhaustHot, 'Headers'));
-  // pre-chamber (catalyser box) under the engine
+  // pre-chamber (catalyser box) under the engine and swingarm pivot: its
+  // stainless rear end shows below the heat guards in the side photos
+  // (box below the swingarm pivot hanging lowest, then a slimmer duct up
+  // behind the guards to the collector under the engine)
+  const pcx = [-0.37, -0.355, -0.3, -0.27, -0.24, -0.1, -0.05, 0.0, 0.06, 0.09];
+  const pyb = [0.15, 0.14, 0.14, 0.145, 0.2, 0.2, 0.18, 0.165, 0.165, 0.175];
+  const pw = [0.075, 0.098, 0.105, 0.105, 0.085, 0.085, 0.1, 0.105, 0.1, 0.075];
   const chamber = loft(
-    [-0.25, -0.2, -0.1, 0.0, 0.06, 0.09].map((x, i, arr) => {
-      const t = i / (arr.length - 1);
-      const w = 0.105 * (t < 0.1 ? 0.8 : 1) * (t > 0.85 ? 0.7 : 1);
-      const yb = 0.165;
-      const yt = 0.235 - (t > 0.85 ? 0.02 : 0);
+    pcx.map((x, i) => {
+      const w = pw[i];
+      const yb = pyb[i];
+      const yt = i === 0 || i === pcx.length - 1 ? 0.215 : 0.235;
       return [
         [x, yt, 0], [x, yt - 0.004, w * 0.7], [x, (yt + yb) / 2 + 0.01, w], [x, yb + 0.012, w * 0.8], [x, yb, 0],
         [x, yb + 0.012, -w * 0.8], [x, (yt + yb) / 2 + 0.01, -w], [x, yt - 0.004, -w * 0.7],
@@ -216,9 +222,38 @@ export function buildExhaust(M) {
     }),
     { closed: true, su: 4, sv: 3 }
   );
-  grp.add(mesh(chamber, M.exhaustHot, 'PreChamber'));
-  // link pipe from the pre-chamber up to the silencer
-  grp.add(mesh(tube([v3(-0.235, 0.198, 0.085), v3(-0.29, 0.245, 0.13), v3(-0.335, 0.302, 0.16), v3(-0.37, 0.345, 0.17)], 0.026, 30, 14), M.exhaustHot, 'LinkPipe'));
+  grp.add(mesh(chamber, M.chamber, 'PreChamber'));
+  // link pipe from the pre-chamber up to the silencer (behind the guard)
+  grp.add(mesh(tube([v3(-0.235, 0.215, 0.07), v3(-0.29, 0.255, 0.12), v3(-0.345, 0.312, 0.158), v3(-0.405, 0.368, 0.172)], 0.026, 30, 14), M.engineBlack, 'LinkPipe'));
+  // Heat guards (black plastic, traced from the side photos): on the right a
+  // long shield runs from the lower fairing back over the pre-chamber and
+  // the link pipe up to the silencer's front cover; a lower one covers the
+  // left side of the pre-chamber.
+  const guards = [];
+  guards.push(
+    buildPanel({
+      outline: [[-0.055, 0.3, 1], [-0.17, 0.314], [-0.3, 0.34], [-0.37, 0.36], [-0.43, 0.364, 1], [-0.455, 0.33], [-0.44, 0.284, 1], [-0.4, 0.252], [-0.33, 0.213], [-0.25, 0.198], [-0.15, 0.19], [-0.055, 0.19, 1]],
+      surface: (x, y) => 0.13 + 0.1 * clamp((-0.08 - x) / 0.34, 0, 1) - 0.5 * (y - 0.265) ** 2,
+      roll: 0.006, flange: 0.014, spacing: 0.012,
+    })
+  );
+  guards.push(
+    mirrorZ(
+      buildPanel({
+        outline: [[-0.05, 0.29, 1], [-0.2, 0.295], [-0.31, 0.292, 1], [-0.326, 0.25], [-0.31, 0.205, 1], [-0.2, 0.198], [-0.05, 0.195, 1]],
+        surface: (x, y) => 0.118 - 0.4 * (y - 0.245) ** 2,
+        roll: 0.005, flange: 0.012, spacing: 0.012,
+      })
+    )
+  );
+  grp.add(mesh(merge(guards), M.heatGuard, 'HeatGuards'));
+  const gb = [];
+  for (const [x, y] of [[-0.4, 0.272], [-0.23, 0.206], [-0.335, 0.322]]) {
+    const z = 0.13 + 0.1 * clamp((-0.08 - x) / 0.34, 0, 1) - 0.5 * (y - 0.265) ** 2;
+    gb.push(place(cyl(0.0075, 0.0075, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, z + 0.002] }));
+  }
+  for (const [x, y] of [[-0.29, 0.25], [-0.09, 0.245]]) gb.push(place(cyl(0.0065, 0.0065, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, -(0.118 - 0.4 * (y - 0.245) ** 2) - 0.002] }));
+  grp.add(mesh(merge(gb), M.bolt, 'HeatGuardBolts'));
 
   // stock silencer: brushed stainless canister angled up towards the tail
   // (traced from the right-side studio photo)
@@ -239,10 +274,10 @@ export function buildExhaust(M) {
   outlet.translate(op.x, op.y, op.z);
   grp.add(mesh(outlet, M.exhaustTip, 'SilencerOutlet'));
   // black front cone/heat shield tapering into the link pipe
-  const F0 = v3(-0.36, 0.337, 0.17);
+  const F0 = v3(-0.405, 0.37, 0.172);
   const F1 = A.clone().addScaledVector(dir, 0.03);
   const cone = sweep(segPts(F0, F1, 10), (t) => {
-    const k = 0.3 + 0.72 * Math.pow(t, 0.7);
+    const k = 0.6 + 0.42 * Math.pow(t, 0.8);
     return sec(k);
   }, { steps: 10, up: v3(0, 1, 0), spline: false });
   grp.add(mesh(cone, M.engineBlack, 'SilencerCone'));
