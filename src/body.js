@@ -897,7 +897,9 @@ export function buildBodywork(M) {
   grp.add(sidePanel(LINER, M.ventDark, M.ventDark, 'FairingLiner', { roll: 0, flange: 0, spacing: 0.02 }));
   grp.add(sidePanel(CHIN_SIDE, M.primary, M.primary, 'ChinSide', { roll: 0.004, flange: 0.01, spacing: 0.006, edgeStep: 0.003 }));
   grp.add(bellyPan(M));
-  grp.add(buildTank(M, R, Lm));
+  // the tank is plain primary paint down to its lower edge (the wordmark is
+  // a decal); it no longer samples the side artwork, which left a black band
+  grp.add(buildTank(M, M.primary, M.primary));
   grp.add(buildSeats(M));
   grp.add(buildTail(M, R, Lm));
   grp.add(buildTailEnd(M));

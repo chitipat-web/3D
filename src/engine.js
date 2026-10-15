@@ -1,6 +1,6 @@
 // 636 cc inline-four, radiator and exhaust system.
 import * as THREE from 'three';
-import { DEG, sweep, rrect, shape, circlePts, extrude, rbox, cyl, rod, tube, place, merge, latheZ, loft, mirrorZ, clamp } from './geom.js';
+import { DEG, sweep, rrect, shape, circlePts, extrude, rbox, cyl, rod, tube, place, merge, latheZ, loft, mirrorZ, clamp, kf, lerp, flipGeometry } from './geom.js';
 import { buildPanel } from './panel.js';
 import { CRANK, CYL_DIR, CYL_FWD, SPROCKET_F } from './layout.js';
 import { mesh } from './chassis.js';
@@ -256,23 +256,74 @@ export function buildExhaust(M) {
   grp.add(mesh(merge(gb), M.bolt, 'HeatGuardBolts'));
 
   // stock silencer: brushed stainless canister angled up towards the tail
-  // (traced from the right-side studio photo)
+  // (traced from the right-side studio photo). Its rear end is cut back
+  // underneath into a chamfered "beak" and finished with a polished rim
+  // round a dark face and a rounded-triangle outlet (side, rear and rear 3/4
+  // photos).
   const A = v3(-0.548, 0.42, 0.176);
   const B = v3(-0.88, 0.558, 0.176);
   const dir = B.clone().sub(A).normalize();
+  const secA = new THREE.Vector3(0, 1, 0).addScaledVector(dir, -dir.y).normalize(); // section height axis
+  const secB = new THREE.Vector3().crossVectors(dir, secA).normalize();
   const sec = (k = 1) => rrect(0.172 * k, 0.122 * k, 0.034 * k, 4);
-  const body = sweep(segPts(A, B, 12), () => sec(1), { steps: 12, up: v3(0, 1, 0), spline: false });
-  grp.add(mesh(body, M.brushed, 'Silencer'));
-  // rear end cap with an angled face and outlet
-  const capA = B.clone().addScaledVector(dir, -0.004);
-  const capB = B.clone().addScaledVector(dir, 0.026);
-  const cap = sweep(segPts(capA, capB, 3), (t) => sec(1.012 - 0.06 * t), { steps: 3, up: v3(0, 1, 0), spline: false });
-  grp.add(mesh(cap, M.engineBlack, 'SilencerEndCap'));
-  const outlet = cyl(0.026, 0.026, 0.012, 24);
-  outlet.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(v3(0, 1, 0), dir));
-  const op = capB.clone().addScaledVector(dir, 0.002).add(v3(0, -0.02, 0));
-  outlet.translate(op.x, op.y, op.z);
-  grp.add(mesh(outlet, M.exhaustTip, 'SilencerOutlet'));
+  const S0 = 0.26;
+  const C0 = A.clone().addScaledVector(dir, S0);
+  const body = sweep(segPts(A, C0, 10), () => sec(1), { steps: 10, up: v3(0, 1, 0), spline: false, caps: false });
+  // end: each section point runs on to the cut, longest at the top
+  const sEnd = kf([[-0.086, 0.3], [-0.062, 0.33], [-0.034, 0.37], [0.0, 0.384], [0.04, 0.383], [0.086, 0.376]]);
+  const at3 = (s, a, b) => A.clone().addScaledVector(dir, s).addScaledVector(secA, a).addScaledVector(secB, b);
+  const prof = sec(1);
+  const endRings = [];
+  for (let i = 0; i <= 8; i++) {
+    const t = i / 8;
+    endRings.push(prof.map(([a, b]) => at3(lerp(S0, sEnd(a), t), a, b).toArray()));
+  }
+  // orient a loft so its faces point away from (or, for the recess, towards)
+  // the silencer axis: probe one vertex's normal against its offset
+  const facing = (g, outward) => {
+    const pos = g.attributes.position;
+    const nrm = g.attributes.normal;
+    const i = Math.floor(pos.count / 2);
+    const p = new THREE.Vector3().fromBufferAttribute(pos, i);
+    const c = A.clone().addScaledVector(dir, p.clone().sub(A).dot(dir));
+    const d = new THREE.Vector3().fromBufferAttribute(nrm, i).dot(p.sub(c));
+    return (d < 0) === outward ? flipGeometry(g) : g;
+  };
+  const endSeg = facing(loft(endRings, { closed: true, su: 1, sv: 1 }), true);
+  grp.add(mesh(merge([body, endSeg]), M.brushed, 'Silencer'));
+  // polished rim, then the recessed dark face
+  const inner = (k, rec) => prof.map(([a, b]) => at3(sEnd(a) - rec, a * k, b * k).toArray());
+  const rimG = loft([endRings[8], inner(0.97, 0.002), inner(0.84, 0.008)], { closed: true, su: 1, sv: 1 });
+  rimG.computeVertexNormals();
+  if (rimG.attributes.normal.getX(0) * dir.x + rimG.attributes.normal.getY(0) * dir.y < 0) flipGeometry(rimG); // faces rearwards
+  const wallG = facing(loft([inner(0.84, 0.008), inner(0.84, 0.03)], { closed: true, su: 1, sv: 1 }), false);
+  const face = inner(0.84, 0.03);
+  const fc = face.reduce((acc, p) => [acc[0] + p[0] / face.length, acc[1] + p[1] / face.length, acc[2] + p[2] / face.length], [0, 0, 0]);
+  const fpos = [...fc];
+  face.forEach((p) => fpos.push(...p));
+  const fidx = [];
+  for (let i = 0; i < face.length; i++) fidx.push(0, 1 + i, 1 + ((i + 1) % face.length));
+  const faceG = new THREE.BufferGeometry();
+  faceG.setAttribute('position', new THREE.Float32BufferAttribute(fpos, 3));
+  faceG.setIndex(fidx);
+  faceG.computeVertexNormals();
+  if (new THREE.Vector3().fromBufferAttribute(faceG.attributes.normal, 0).dot(dir) < 0) flipGeometry(faceG);
+  grp.add(mesh(rimG, M.exhaustTip, 'SilencerEndCap'));
+  grp.add(mesh(merge([wallG, faceG]), M.engineBlack, 'SilencerFace'));
+  // rounded-triangle outlet (point down) with a polished lip
+  const tri = [];
+  const corners = [[0.05, 0.04], [0.05, -0.04], [-0.05, 0.0]];
+  for (let c = 0; c < 3; c++) {
+    const [a0, b0] = corners[c];
+    const [a1, b1] = corners[(c + 1) % 3];
+    for (let k = 0; k < 6; k++) {
+      const t = k / 6;
+      tri.push([lerp(a0, a1, t), lerp(b0, b1, t)]);
+    }
+  }
+  const lipPts = tri.map(([a, b]) => at3(sEnd(a) - 0.028, a * 0.86, b * 0.86));
+  lipPts.push(lipPts[0].clone());
+  grp.add(mesh(tube(lipPts, 0.0035, 60, 6), M.exhaustTip, 'SilencerOutlet'));
   // black front cone/heat shield tapering into the link pipe
   const F0 = v3(-0.405, 0.37, 0.172);
   const F1 = A.clone().addScaledVector(dir, 0.03);
