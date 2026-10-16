@@ -469,6 +469,8 @@ export function buildControls(M) {
   const grips = [];
   const black = [];
   const levers = [];
+  const ends = [];
+  const cups = [];
   for (const s of [-1, 1]) {
     // clip-ons clamp the fork tubes above the top yoke (traced from the
     // 2019 side photos, where the grips stand clear of the fairing)
@@ -493,7 +495,7 @@ export function buildControls(M) {
     grips.push(rod(g0.clone().addScaledVector(dir, -0.004), g0.clone().addScaledVector(dir, 0.004), 0.021, 20));
     const be0 = new THREE.Vector3(c.x, c.y, cz).addScaledVector(dir, 0.23);
     const be1 = new THREE.Vector3(c.x, c.y, cz).addScaledVector(dir, 0.252);
-    levers.push(rod(be0, be1, 0.0175, 20));
+    ends.push(rod(be0, be1, 0.0175, 20));
     // switch housing
     const sw = new THREE.Vector3(c.x, c.y, cz).addScaledVector(dir, 0.08);
     const swG = rbox(0.06, 0.05, 0.045, 0.012);
@@ -520,7 +522,7 @@ export function buildControls(M) {
       // (it shows over the tank line in both side photos): pale cup, black cap
       const res = new THREE.Vector3(0.5, 0.956, 0.128);
       black.push(tube([mc.clone().add(new THREE.Vector3(0, 0.012, 0)), mc.clone().lerp(res, 0.5).add(new THREE.Vector3(0, 0.03, 0)), res], 0.0045, 16, 8));
-      levers.push(place(cyl(0.019, 0.017, 0.036, 20), { p: [res.x, res.y + 0.018, res.z] }));
+      cups.push(place(cyl(0.019, 0.017, 0.036, 20), { p: [res.x, res.y + 0.018, res.z] }));
       black.push(place(cyl(0.0205, 0.0205, 0.009, 20), { p: [res.x, res.y + 0.04, res.z] }));
       black.push(sweep([v3c(res.x - 0.012, res.y + 0.006, res.z - 0.018), v3c(0.47, 0.9, 0.11)], () => rrect(0.01, 0.006, 0.002, 1), { steps: 3, up: new THREE.Vector3(1, 0, 0), spline: false }));
     } else {
@@ -532,7 +534,11 @@ export function buildControls(M) {
   grp.add(mesh(merge(bars), M.aluDark, 'ClipOns'));
   grp.add(mesh(merge(grips), M.rubber, 'Grips'));
   grp.add(mesh(merge(black), M.plastic, 'Switchgear'));
-  grp.add(mesh(merge(levers), M.alu, 'Levers'));
+  // levers and bar-end weights are black in the 2019 photos; the brake fluid
+  // cup is pale translucent plastic under a black cap
+  grp.add(mesh(merge(levers), M.aluDark, 'Levers'));
+  grp.add(mesh(merge(ends), M.engineBlack, 'BarEnds'));
+  grp.add(mesh(merge(cups), M.fluidCup, 'ReservoirCup'));
   return grp;
 }
 

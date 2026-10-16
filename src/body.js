@@ -66,17 +66,27 @@ const P1_SEAM = [[0.4, 0.712], [0.45, 0.722], FIN, [0.513, 0.734], [0.589, 0.746
 const c1Y = kf(P1_C1);
 const uY = kf(P1_U);
 const seamY = kf(P1_SEAM);
-const chamferA = kf([[0.0, 0], [0.22, 0.6], [0.44, 0.65], [FIN[0] + 0.012, 0]]);
-const flareA = kf([[0.47, 0], [0.53, 0.3]]);
-const topA = kf([[0.38, 0.16], [0.52, 0.45], [0.74, 0.34]]);
+// (weights blend with smoothsteps so the surface stays C1: a clamped spline
+// end leaves a kink that shows as a jagged shading line)
+const chamferA = (x) => (x < 0.22 ? 0.6 * smooth(0.0, 0.22, x) : x < 0.44 ? 0.6 + 0.05 * smooth(0.22, 0.44, x) : 0.65 * (1 - smooth(0.44, FIN[0] + 0.012, x)));
+const flareA = (x) => 0.3 * smooth(0.47, 0.53, x);
+const topA = (x) => (x < 0.52 ? 0.16 + 0.29 * smooth(0.38, 0.52, x) : 0.45 - 0.11 * smooth(0.52, 0.74, x));
 // shared by the side cover, which carries the chamfer on towards the tank
 const chamfer = (x, y) => chamferA(x) * (soft(y - c1Y(x), 0.005) - soft(y - uY(x), 0.005));
+// shoulder: above this line P1's upper part turns in steeply, into the broad
+// upward-facing shoulder that catches the overhead light in the side and 3/4
+// photos (it fades out before the screen base, which sits on P1 further on)
+const shoulderY = kf([[0.33, 0.786], [0.45, 0.79], [0.55, 0.797], [0.62, 0.81]]);
+const shoulderA = (x) => (x < 0.4 ? 1.2 + 0.5 * smooth(0.34, 0.4, x) : 1.7 * (1 - smooth(0.5, 0.62, x)));
 const p1Surface = (x, y) => {
   const u = uY(x);
   const lip = flareA(x) * (soft(u - y, 0.003) - soft(seamY(x) - y, 0.003));
   const top = topA(x) * 0.07 * Math.tanh(soft(y - u, 0.003) / 0.07);
-  return sideW(x, y) + 0.004 - chamfer(x, y) - lip - top;
+  const sh = 0.07 * Math.tanh((shoulderA(x) * soft(y - shoulderY(x), 0.006)) / 0.07);
+  return sideW(x, y) + 0.004 - chamfer(x, y) - lip - top - sh;
 };
+// P1's upper edge, where it meets the inner deck (same points as its outline)
+const p1TopY = kf([[0.338, 0.796], [0.42, 0.815], [0.5, 0.84], [0.56, 0.874], [0.6, 0.922], [0.628, 0.962]]);
 const P1 = {
   outline: [
     [0.73, 0.918, C], [0.73, 0.866], [0.725, 0.838, C], [0.726, 0.8], [0.729, 0.776], [0.733, 0.762, C],
@@ -86,17 +96,22 @@ const P1 = {
     [0.69, 0.943],
   ],
   surface: p1Surface,
-  creases: [P1_C1.filter((p) => p[0] >= 0.25), P1_U.filter((p) => p[0] >= 0.25)],
+  creases: [P1_C1.filter((p) => p[0] >= 0.25), P1_U.filter((p) => p[0] >= 0.25), [0.35, 0.4, 0.45, 0.5, 0.55, 0.6].map((x) => [x, shoulderY(x)])],
 };
 // P2: the main side cowl under P1 (one moulding from the headlight down to
 // the lower fairing: the "Ninja" script on top, the stripes below). Its rear
 // edge runs down from the fin as the front of the vent; along the seam it
 // tucks in under P1's lip.
+// (v14, re-traced from the right-side photo, whose wheels match the model
+// to a few mm: the lower rear corner sweeps back over the engine to the seam
+// with the lower fairing at x 0.15, and the rear edge steps round the
+// see-through vent outlet behind the radiator)
 const P2 = {
   outline: [
     [0.736, 0.772, C], [0.733, 0.75], [0.738, 0.714, C], [0.704, 0.678], [0.666, 0.656],
-    [0.592, 0.62], [0.524, 0.56], [0.474, 0.494], [0.446, 0.436], [0.41, 0.37, C],
-    [0.33, 0.386], [0.27, 0.4, C], [0.275, 0.46], [0.283, 0.508], [0.309, 0.558], [0.36, 0.619], [0.405, 0.663], [0.444, 0.7], [0.475, 0.714], [0.492, 0.722, C],
+    [0.592, 0.62], [0.524, 0.56], [0.474, 0.494], [0.428, 0.44], [0.412, 0.42], [0.4, 0.4], [0.388, 0.38], [0.379, 0.364], [0.374, 0.348, C],
+    [0.3, 0.362], [0.22, 0.377], [0.148, 0.39, C], [0.17, 0.406], [0.2, 0.424], [0.228, 0.443], [0.25, 0.471], [0.263, 0.505], [0.268, 0.535], [0.272, 0.562, C],
+    [0.318, 0.57, C], [0.334, 0.61], [0.35, 0.65, C], [0.372, 0.668], [0.404, 0.688], [0.443, 0.705], [0.475, 0.716], [0.492, 0.722, C],
     [0.503, 0.737], [0.52, 0.745], [0.59, 0.757], [0.66, 0.767],
   ],
   surface: (x, y) => sideW(x, y) - 0.004 - 0.6 * soft(y - (seamY(x) - 0.012), 0.003),
@@ -113,6 +128,7 @@ const P3 = {
   surface: (x, y) => sideW(x, y) - 0.002 - 0.15 * soft(y - 0.79) - chamfer(x, y),
   creases: [P1_C1.filter((p) => p[0] <= 0.34), P1_U.filter((p) => p[0] <= 0.34)],
 };
+const p3Z = P3.surface;
 // P3B: satin black cover under the rider's seat, from the side cover back to
 // the tail (traced), tucked just inside P3's rear edge
 const P3B = {
@@ -123,26 +139,84 @@ const P3B = {
   surface: (x, y) => sideW(x, y) - 0.008 - 0.15 * soft(y - 0.79),
 };
 // P4: lower fairing, crease along its lower third tucks under towards the belly
+// (v14, re-traced from both side photos; the left photo reads 2.5 cm forward
+// against the wheels, corrected here). Front, seam with P2 and bottom are
+// common; behind, the two sides differ: on the right the panel runs back to
+// a notch at x -0.07..-0.11 and a tail under the exhaust guard, on the left
+// it is cut back to x -0.03 and a slim tail runs on under the side stand.
 const P4_CREASE = [[0.4, 0.27], [-0.08, 0.262]];
 const p4CreaseY = lineY(...P4_CREASE);
-const P4 = {
+const p4Surface = (x, y) => sideW(x, y) + 0.014 - 0.45 * soft(p4CreaseY(x) - y);
+const P4_FRONT = [
+  [0.375, 0.358, C], [0.38, 0.33], [0.386, 0.3], [0.39, 0.25], [0.396, 0.2], [0.401, 0.152, C],
+  [0.36, 0.157], [0.3, 0.165], [0.24, 0.173], [0.2, 0.181], [0.15, 0.189], [0.1, 0.194],
+];
+const P4_SEAM = [[0.151, 0.4, C], [0.22, 0.386], [0.29, 0.372], [0.34, 0.362]];
+// wedge-shaped slot through the lower fairing (both side photos: near black,
+// its upper lip catching the light), with a matte black pocket behind
+const SLIT = [[0.118, 0.334, C], [0.165, 0.316], [0.205, 0.283], [0.245, 0.247], [0.27, 0.222], [0.29, 0.197, C], [0.262, 0.214], [0.22, 0.241], [0.18, 0.268], [0.158, 0.282, C], [0.152, 0.302], [0.137, 0.32]];
+const SLIT_BACK = [[0.104, 0.346], [0.166, 0.327], [0.212, 0.29], [0.253, 0.253], [0.279, 0.226], [0.305, 0.19], [0.26, 0.203], [0.214, 0.232], [0.174, 0.258], [0.147, 0.273], [0.141, 0.303], [0.124, 0.326]];
+const P4R = {
   outline: [
-    [0.426, 0.376, C], [0.35, 0.376], [0.27, 0.386], [0.2, 0.37], [0.12, 0.352], [0.03, 0.346], [-0.04, 0.35, C], [-0.078, 0.3], [-0.086, 0.24, C],
-    [-0.04, 0.196], [0.05, 0.179], [0.2, 0.172], [0.3, 0.172], [0.37, 0.178, C], [0.395, 0.22], [0.41, 0.28], [0.422, 0.33],
+    ...P4_FRONT,
+    [0.05, 0.198], [0.0, 0.199], [-0.05, 0.2], [-0.1, 0.197], [-0.17, 0.19], [-0.23, 0.187], [-0.255, 0.188, C],
+    [-0.262, 0.205], [-0.262, 0.226, C], [-0.2, 0.233], [-0.15, 0.236], [-0.126, 0.24, C],
+    [-0.1, 0.27], [-0.068, 0.306, C], [-0.03, 0.322], [0.03, 0.348], [0.09, 0.374],
+    ...P4_SEAM,
   ],
-  surface: (x, y) => sideW(x, y) + 0.014 - 0.45 * soft(p4CreaseY(x) - y),
+  holes: [SLIT],
+  surface: p4Surface,
   creases: [P4_CREASE],
 };
-// inner cover around the steering head (matte black), kept inside P1
+const P4L = {
+  outline: [
+    ...P4_FRONT,
+    [0.05, 0.195], [0.0, 0.19], [-0.05, 0.186], [-0.1, 0.184], [-0.18, 0.183], [-0.24, 0.181], [-0.274, 0.18, C],
+    [-0.3, 0.206], [-0.322, 0.231, C], [-0.24, 0.226], [-0.17, 0.217], [-0.11, 0.215], [-0.07, 0.216, C],
+    [-0.05, 0.248], [-0.04, 0.275], [-0.028, 0.308, C], [0.02, 0.333], [0.08, 0.364], [0.12, 0.385],
+    ...P4_SEAM,
+  ],
+  holes: [SLIT],
+  surface: p4Surface,
+  creases: [[[0.4, 0.27], [-0.035, 0.2625]]],
+};
+// lower fairing bottom edge (both sides), followed by the belly pan
+const p4BottomY = kf([[0.1, 0.194], [0.15, 0.189], [0.2, 0.181], [0.24, 0.173], [0.3, 0.165], [0.36, 0.157], [0.401, 0.152]]);
+// inner deck: from P1's upper edge in towards the steering head the photos
+// show a broad sloping surface facing up (from the tank front forward under
+// the clip-ons); its inner edge stays at z 0.14, clear of the fork tubes at
+// full lock, and in front it stands up as the side of the meter cover
+const deckTopY = kf([[0.335, 0.864], [0.42, 0.862], [0.5, 0.866], [0.55, 0.88], [0.59, 0.91]]);
+const deckZin = kf([[0.335, 0.14], [0.5, 0.14], [0.6, 0.15]]);
+const deckZ = (x, y) => {
+  const yb = p1TopY(x) - 0.012;
+  const yt = deckTopY(x);
+  const zo = p1Surface(x, p1TopY(x)) - 0.008;
+  const zi = deckZin(x);
+  const t = clamp((y - yb) / Math.max(0.01, yt - yb), 0, 1.25);
+  return zo - (zo - zi) * Math.pow(t, 0.85);
+};
+const DECK = {
+  outline: [
+    [0.335, 0.784, C], [0.42, 0.803], [0.5, 0.828], [0.56, 0.862], [0.594, 0.903, C],
+    [0.55, 0.88], [0.5, 0.866], [0.42, 0.862], [0.335, 0.864, C],
+  ],
+  surface: deckZ,
+};
+// inner cover round the steering head (matte black): a wall just inside the
+// deck's inner edge, standing up to the top clamp
 const innerZ = (x, y) => 0.12 + 0.11 * clamp((x - 0.33) / 0.35, 0, 1) - 0.25 * Math.max(0, y - 0.84);
 const INNER = {
   outline: [[0.66, 0.9, C], [0.56, 0.885], [0.46, 0.874], [0.38, 0.87], [0.33, 0.87, C], [0.325, 0.8], [0.33, 0.78, C], [0.45, 0.8], [0.56, 0.83], [0.66, 0.86]],
   surface: (x, y) => {
     const a = innerZ(x, y);
-    const b = p1Surface(x, y) - 0.01;
+    const b = Math.min(p1Surface(x, y) - 0.01, x < 0.6 ? deckZ(x, y) - 0.006 : 1);
     return b - soft(b - a, 0.004);
   },
 };
+// under the tank front: a recessed black panel with an oval plug (both side
+// photos), cut out of the side cover
+const POCKET = [[0.188, 0.842, C], [0.25, 0.849], [0.304, 0.856, C], [0.318, 0.848], [0.29, 0.818], [0.262, 0.801, C], [0.2, 0.795], [0.184, 0.803, C]];
 
 // matte black back wall of the vent between P1, P2 and the louvres (deeper
 // at the rear so it stays behind the louvre plate)
@@ -157,6 +231,16 @@ const CHIN_SIDE = {
   surface: (x, y) => sideW(x, y) + 0.012,
 };
 
+// right and left mouldings traced separately (the left one is built on the
+// right side and mirrored)
+function sidePanelLR(defR, defL, mat, matL, name, opts = {}) {
+  const build = (def) => buildPanel({ outline: def.outline, holes: def.holes || [], surface: def.surface, creases: def.creases || [], uv: sideUV, roll: 0.006, flange: 0.006, spacing: 0.012, ...opts });
+  const grp = new THREE.Group();
+  grp.name = name;
+  grp.add(mesh(build(defR), mat, name + 'Right'), mesh(mirrorZ(build(defL)), matL || mat, name + 'Left'));
+  return grp;
+}
+
 function sidePanel(def, mat, matL, name, opts = {}) {
   const g = buildPanel({ outline: def.outline, holes: def.holes || [], surface: def.surface, creases: def.creases || [], uv: sideUV, roll: 0.006, flange: 0.006, spacing: 0.012, ...opts });
   const grp = new THREE.Group();
@@ -168,13 +252,15 @@ function sidePanel(def, mat, matL, name, opts = {}) {
 }
 
 function bellyPan(M) {
-  // joins the two lower fairings under the engine
-  const xs = linspace(-0.08, 0.36, 14);
-  const yb = kf([[-0.08, 0.235], [-0.04, 0.198], [0.05, 0.181], [0.2, 0.174], [0.3, 0.174], [0.36, 0.18]]);
+  // joins the two lower fairings under the radiator and the headers; behind
+  // x 0.12 the bottom is open and the exhaust collector shows below the
+  // fairing edge (side photos)
+  const xs = linspace(0.12, 0.392, 10);
   const rings = xs.map((x) => {
-    const y = yb(x);
-    const z = sideW(x, y) + 0.014 - 0.45 * soft(p4CreaseY(x) - y) - 0.004;
-    return mirrorRing([[x, y - 0.03, 0], [x, y - 0.029, z * 0.5], [x, y - 0.02, z * 0.85], [x, y - 0.006, z * 0.98], [x, y + 0.004, z]]);
+    const y = p4BottomY(x) + 0.004;
+    const z = p4Surface(x, y) - 0.004;
+    const d = 0.003;
+    return mirrorRing([[x, y - d, 0], [x, y - d * 0.97, z * 0.5], [x, y - d * 0.66, z * 0.85], [x, y - d * 0.2, z * 0.98], [x, y + 0.004, z]]);
   });
   return mesh(loft(rings, { su: 3, sv: 2 }), M.plastic, 'BellyPan');
 }
@@ -879,6 +965,51 @@ function buildInstruments(M) {
   return grp;
 }
 
+// recessed panel under the tank front with its oval plug (see POCKET)
+function buildFairingSlots(M) {
+  const g = buildPanel({ outline: SLIT_BACK, surface: (x, y) => p4Surface(x, y) - 0.012, roll: 0, flange: 0, spacing: 0.008, edgeStep: 0.004 });
+  const grp = new THREE.Group();
+  grp.name = 'FairingSlots';
+  grp.add(mesh(g, M.ventDark, 'FairingSlotRight'), mesh(mirrorZ(g), M.ventDark, 'FairingSlotLeft'));
+  return grp;
+}
+
+function buildTankPocket(M) {
+  const grp = new THREE.Group();
+  grp.name = 'TankPocket';
+  const grow = (pts, k) => {
+    const c = pts.reduce((a, p) => [a[0] + p[0] / pts.length, a[1] + p[1] / pts.length], [0, 0]);
+    return pts.map((p) => [c[0] + (p[0] - c[0]) * k, c[1] + (p[1] - c[1]) * k, p[2] || 0]);
+  };
+  const floor = buildPanel({ outline: grow(POCKET, 1.06), surface: (x, y) => p3Z(x, y) - 0.008, roll: 0, flange: 0, spacing: 0.006, edgeStep: 0.003 });
+  // oval plug: rounded rectangle along the tank's lower edge
+  const cx = 0.237, cy = 0.829, hw = 0.031, hh = 0.0115, rr = 0.0105, ang = 0.1;
+  const plugPts = (k) => {
+    const pts = [];
+    for (const [qx, qy, a0] of [[hw - rr, hh - rr, 0], [-hw + rr, hh - rr, Math.PI / 2], [-hw + rr, -hh + rr, Math.PI], [hw - rr, -hh + rr, 1.5 * Math.PI]]) {
+      for (let i = 0; i <= 5; i++) {
+        const a = a0 + (i / 5) * (Math.PI / 2);
+        const px = (qx + rr * Math.cos(a)) * k;
+        const py = (qy + rr * Math.sin(a)) * k;
+        pts.push([cx + px * Math.cos(ang) - py * Math.sin(ang), cy + px * Math.sin(ang) + py * Math.cos(ang)]);
+      }
+    }
+    return pts;
+  };
+  const ring = buildPanel({ outline: plugPts(1), holes: [plugPts(0.62)], surface: (x, y) => p3Z(x, y) - 0.004, roll: 0.0015, flange: 0.004, spacing: 0.004, edgeStep: 0.002 });
+  const disc = buildPanel({ outline: plugPts(0.64), surface: (x, y) => p3Z(x, y) - 0.006, roll: 0, flange: 0, spacing: 0.004, edgeStep: 0.002 });
+  // one child per side so the exploded view can part them like the covers
+  for (const [side, f] of [['Right', (g) => g], ['Left', mirrorZ]]) {
+    const sg = new THREE.Group();
+    sg.name = 'TankPocket' + side;
+    sg.add(mesh(f(floor), M.ventDark, 'TankPocketFloor' + side));
+    sg.add(mesh(f(ring), M.alu, 'TankPocketPlug' + side));
+    sg.add(mesh(f(disc), M.engineDark, 'TankPocketPlugFace' + side));
+    grp.add(sg);
+  }
+  return grp;
+}
+
 // ===========================================================================
 export function buildBodywork(M) {
   const grp = new THREE.Group();
@@ -890,9 +1021,12 @@ export function buildBodywork(M) {
   grp.add(buildInstruments(M));
   grp.add(sidePanel(P1, R, Lm, 'UpperSideCowl', { spacing: 0.009 }));
   grp.add(sidePanel(P2, R, Lm, 'MidSideCowl'));
-  grp.add(sidePanel(P3, R, Lm, 'SideCover', { spacing: 0.009 }));
+  grp.add(sidePanel(P3, R, Lm, 'SideCover', { spacing: 0.009, holes: [POCKET] }));
+  grp.add(buildTankPocket(M));
   grp.add(sidePanel(P3B, M.plastic, M.plastic, 'SeatSideCover'));
-  grp.add(sidePanel(P4, M.decalLower, M.decalLowerL, 'LowerFairing', { flange: 0.012 }));
+  grp.add(sidePanelLR(P4R, P4L, M.decalLower, M.decalLowerL, 'LowerFairing', { flange: 0.012 }));
+  grp.add(buildFairingSlots(M));
+  grp.add(sidePanel(DECK, M.plasticGloss, M.plasticGloss, 'InnerDeck', { roll: 0.004, flange: 0.008, spacing: 0.008 }));
   grp.add(sidePanel(INNER, M.plastic, M.plastic, 'InnerCover', { roll: 0.004, flange: 0.01 }));
   grp.add(sidePanel(LINER, M.ventDark, M.ventDark, 'FairingLiner', { roll: 0, flange: 0, spacing: 0.02 }));
   grp.add(sidePanel(CHIN_SIDE, M.primary, M.primary, 'ChinSide', { roll: 0.004, flange: 0.01, spacing: 0.006, edgeStep: 0.003 }));

@@ -159,10 +159,17 @@ export function sideLivery(L, mirror = false) {
   if (!mirror) poly([[0.034, 0.711], [0.045, 0.709], [0.135, 0.708], [0.14, 0.712], [0.042, 0.726], [0.031, 0.722]], base);
   // silver line along the rear lower edge of the side cover, up to the seat
   poly([[0.027, 0.7], [-0.195, 0.748], [-0.178, 0.762], [0.022, 0.712]], C);
-  // ---- lower fairing (P4): dark graphite with the team wordmark
-  poly([[0.44, 0.39], [0.44, 0.14], [-0.11, 0.14], [-0.11, 0.37], [0.25, 0.392], [0.33, 0.383]], L.lower || L.body.color);
-  text(0.07, 0.276, 'Kawasaki', 0.042, { font: BOLD, weight: '900', style: 'italic', color: '#f2f3f4', rot: -0.07, sxk: 1.05 });
-  if (L.id === 'krt') text(0.065, 0.246, 'Racing Team', 0.022, { font: BOLD, weight: '800', style: 'italic', color: '#d5d8db', rot: -0.07 });
+  // ---- lower fairing (P4): dark graphite with the team wordmark (its top
+  // follows the seam with P2, a hair above it, and it runs back over both
+  // sides' tails)
+  poly([[0.46, 0.362], [0.46, 0.13], [-0.34, 0.13], [-0.34, 0.25], [-0.13, 0.252], [-0.04, 0.33], [0.06, 0.37], [0.151, 0.403], [0.375, 0.361]], L.lower || L.body.color);
+  // (both lines slope down towards the front, as in both side photos)
+  // shadow line running back from the slot's upper lip
+  poly([[0.06, 0.29], [0.156, 0.279], [0.152, 0.303], [0.1, 0.304], [0.06, 0.298]], '#0b0c0d');
+  // (the mirrored canvas flips the turn as well, hence the sign)
+  const slope = mirror ? -0.2 : 0.2;
+  text(mirror ? 0.08 : 0.069, mirror ? 0.257 : 0.254, 'Kawasaki', 0.042, { font: BOLD, weight: '900', style: 'italic', color: '#f2f3f4', rot: slope, sxk: mirror ? 1.0 : 1.15 });
+  if (L.id === 'krt') text(mirror ? 0.062 : 0.057, mirror ? 0.23 : 0.228, 'Racing Team', 0.023, { font: BOLD, weight: '800', style: 'italic', color: '#d5d8db', rot: slope, sxk: 1.18 });
   // ---- upper cowl script
   text(0.577, 0.697, 'Ninja', 0.058, { font: SCRIPT, weight: '700', style: 'italic', color: '#dfe2e5', rot: -0.13 });
   // ---- tank: primary colour wherever it is projected (wordmark is a decal)

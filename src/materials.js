@@ -119,6 +119,7 @@ export function createMaterials() {
     plastic: std({ color: '#121315', roughness: 0.62, metalness: 0.0, side: THREE.DoubleSide }),
     plasticGloss: phys({ color: '#0d0e10', roughness: 0.25, metalness: 0.1, clearcoat: 0.6, side: THREE.DoubleSide }),
     rubber: std({ color: '#141414', roughness: 0.9, metalness: 0 }),
+    fluidCup: std({ color: '#e4dfcf', roughness: 0.35, metalness: 0 }),
     // back wall of the fairing vents: reads as a shadowed cavity
     ventDark: std({ color: '#060607', roughness: 0.9, metalness: 0, side: THREE.DoubleSide }),
     tire: std({ color: '#161616', roughness: 0.82, metalness: 0 }),
@@ -146,7 +147,8 @@ export function createMaterials() {
     exhaust: phys({ color: '#141517', roughness: 0.28, metalness: 0.65, clearcoat: 0.6 }),
     exhaustTip: std({ color: '#d7dade', roughness: 0.14, metalness: 1 }),
     brushed: phys({ color: '#c9cdd1', roughness: 0.3, metalness: 1, clearcoat: 0.3, clearcoatRoughness: 0.2 }),
-    exhaustHot: std({ color: '#4a4540', roughness: 0.5, metalness: 0.85 }),
+    // stainless headers, faintly heat-tinted (pale bronze-grey in the 3/4 photo)
+    exhaustHot: std({ color: '#76716a', roughness: 0.36, metalness: 0.9 }),
     chamber: std({ color: '#a4a8ad', roughness: 0.38, metalness: 1 }),
     heatGuard: std({ color: '#26282c', roughness: 0.55, metalness: 0.15, side: THREE.DoubleSide }),
     radiator: std({ color: '#1a1b1d', roughness: 0.7, metalness: 0.3 }),

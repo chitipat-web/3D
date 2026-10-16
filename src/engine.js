@@ -66,7 +66,16 @@ export function buildEngine(M) {
     [0.225, 0.2], [0.247, 0.255], [0.248, 0.33], [0.232, 0.395], [0.2, 0.432], [0.12, 0.452], [0.02, 0.47], [-0.06, 0.468],
     [-0.105, 0.44], [-0.115, 0.37], [-0.105, 0.27], [-0.07, 0.205], [-0.02, 0.19], [0.18, 0.19],
   ];
-  dark.push(extrude(shape(Y(caseProfile)), 0.31, 0.014, 3, 8));
+  // (its lower edge is chamfered in, as on the real cases, so the lower
+  // fairing's tucked-under skin clears it)
+  const caseG = extrude(shape(Y(caseProfile)), 0.31, 0.014, 3, 8);
+  const cp = caseG.attributes.position;
+  for (let i = 0; i < cp.count; i++) {
+    const t = clamp((cp.getY(i) - 0.21) / 0.08, 0, 1);
+    cp.setZ(i, cp.getZ(i) * lerp(0.82, 1, t * t * (3 - 2 * t)));
+  }
+  caseG.computeVertexNormals();
+  dark.push(caseG);
   // sump
   dark.push(extrude(shape(Y([[0.19, 0.2], [0.19, 0.19], [0.165, 0.172], [0.01, 0.172], [-0.02, 0.19], [-0.02, 0.2]])), 0.2, 0.006, 2, 4));
   // cylinder block, head and cam cover, tilted forward 30 deg
@@ -128,7 +137,7 @@ export function buildEngine(M) {
   black.push(extrude(shape(Y([[-0.115, 0.44], [-0.02, 0.445], [0.01, 0.4], [-0.005, 0.33], [-0.06, 0.31], [-0.115, 0.33]])), 0.025, 0.006, 2, 4).translate(0, 0, -0.17));
   // oil filter + water pump
   black.push(place(cyl(0.034, 0.034, 0.07, 24), { r: [0, 0, -1.1], p: [0.25, 0.235 + dy, 0.05] }));
-  silver.push(place(cyl(0.04, 0.04, 0.03, 24), { r: [Math.PI / 2, 0, 0], p: [0.19, 0.25 + dy, -0.17] }));
+  silver.push(place(cyl(0.04, 0.04, 0.03, 24), { r: [Math.PI / 2, 0, 0], p: [0.19, 0.25 + dy, -0.15] }));
   // throttle bodies / intake (behind the head, mostly hidden)
   for (const z of [-0.105, -0.035, 0.035, 0.105]) black.push(rod(at(0.26, -0.07, z), at(0.37, -0.12, z), 0.019, 14));
   // starter motor
@@ -196,9 +205,9 @@ export function buildExhaust(M) {
       v3(0.338, 0.33, zi * 0.92),
       v3(0.315, 0.255, zi * 0.82),
       v3(0.265, 0.2, zi * 0.66),
-      v3(0.19, 0.178, zi * 0.45),
-      v3(0.11, 0.172, zi * 0.28),
-      v3(0.07, 0.174, zi * 0.2),
+      v3(0.19, 0.198, zi * 0.45),
+      v3(0.11, 0.197, zi * 0.28),
+      v3(0.07, 0.198, zi * 0.2),
     ];
     headers.push(tube(pts, 0.0185, 60, 14));
   }
@@ -207,14 +216,17 @@ export function buildExhaust(M) {
   // stainless rear end shows below the heat guards in the side photos
   // (box below the swingarm pivot hanging lowest, then a slimmer duct up
   // behind the guards to the collector under the engine)
-  const pcx = [-0.37, -0.355, -0.3, -0.27, -0.24, -0.1, -0.05, 0.0, 0.06, 0.09];
-  const pyb = [0.15, 0.14, 0.14, 0.145, 0.2, 0.2, 0.18, 0.165, 0.165, 0.175];
-  const pw = [0.075, 0.098, 0.105, 0.105, 0.085, 0.085, 0.1, 0.105, 0.1, 0.075];
+  // (v14: the collector runs on forward to x 0.17 under the headers; the
+  // side photos show it below the lower fairing's edge from x -0.1 to 0.17)
+  const pcx = [-0.37, -0.355, -0.3, -0.27, -0.24, -0.15, -0.1, -0.05, 0.0, 0.06, 0.11, 0.15, 0.175];
+  const pyb = [0.15, 0.14, 0.14, 0.145, 0.19, 0.19, 0.175, 0.16, 0.158, 0.16, 0.164, 0.167, 0.174];
+  const pw = [0.075, 0.098, 0.105, 0.105, 0.085, 0.085, 0.09, 0.1, 0.105, 0.1, 0.09, 0.08, 0.066];
+  const pyt = [0.215, 0.235, 0.235, 0.235, 0.235, 0.235, 0.235, 0.235, 0.235, 0.23, 0.217, 0.207, 0.197];
   const chamber = loft(
     pcx.map((x, i) => {
       const w = pw[i];
       const yb = pyb[i];
-      const yt = i === 0 || i === pcx.length - 1 ? 0.215 : 0.235;
+      const yt = pyt[i];
       return [
         [x, yt, 0], [x, yt - 0.004, w * 0.7], [x, (yt + yb) / 2 + 0.01, w], [x, yb + 0.012, w * 0.8], [x, yb, 0],
         [x, yb + 0.012, -w * 0.8], [x, (yt + yb) / 2 + 0.01, -w], [x, yt - 0.004, -w * 0.7],
@@ -232,7 +244,9 @@ export function buildExhaust(M) {
   const guards = [];
   guards.push(
     buildPanel({
-      outline: [[-0.055, 0.3, 1], [-0.17, 0.314], [-0.3, 0.34], [-0.37, 0.36], [-0.43, 0.364, 1], [-0.455, 0.33], [-0.44, 0.284, 1], [-0.4, 0.252], [-0.33, 0.213], [-0.25, 0.198], [-0.15, 0.19], [-0.055, 0.19, 1]],
+      // (v14: re-traced lower at the back, where it stays level down to
+      // y 0.21 in front of the tyre; a lower step in front over the collector)
+      outline: [[-0.06, 0.302, 1], [-0.15, 0.298], [-0.205, 0.295, 1], [-0.228, 0.306], [-0.248, 0.322, 1], [-0.3, 0.33], [-0.37, 0.328], [-0.42, 0.319], [-0.445, 0.303, 1], [-0.455, 0.27], [-0.449, 0.235], [-0.432, 0.214, 1], [-0.36, 0.205], [-0.25, 0.198], [-0.15, 0.193], [-0.06, 0.193, 1]],
       surface: (x, y) => 0.13 + 0.1 * clamp((-0.08 - x) / 0.34, 0, 1) - 0.5 * (y - 0.265) ** 2,
       roll: 0.006, flange: 0.014, spacing: 0.012,
     })
@@ -240,7 +254,7 @@ export function buildExhaust(M) {
   guards.push(
     mirrorZ(
       buildPanel({
-        outline: [[-0.05, 0.29, 1], [-0.2, 0.295], [-0.31, 0.292, 1], [-0.326, 0.25], [-0.31, 0.205, 1], [-0.2, 0.198], [-0.05, 0.195, 1]],
+        outline: [[-0.07, 0.258, 1], [-0.2, 0.262], [-0.31, 0.262, 1], [-0.326, 0.24], [-0.31, 0.205, 1], [-0.2, 0.198], [-0.07, 0.195, 1]],
         surface: (x, y) => 0.118 - 0.4 * (y - 0.245) ** 2,
         roll: 0.005, flange: 0.012, spacing: 0.012,
       })
@@ -248,11 +262,11 @@ export function buildExhaust(M) {
   );
   grp.add(mesh(merge(guards), M.heatGuard, 'HeatGuards'));
   const gb = [];
-  for (const [x, y] of [[-0.4, 0.272], [-0.23, 0.206], [-0.335, 0.322]]) {
+  for (const [x, y] of [[-0.39, 0.247], [-0.193, 0.203], [-0.289, 0.312]]) {
     const z = 0.13 + 0.1 * clamp((-0.08 - x) / 0.34, 0, 1) - 0.5 * (y - 0.265) ** 2;
     gb.push(place(cyl(0.0075, 0.0075, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, z + 0.002] }));
   }
-  for (const [x, y] of [[-0.29, 0.25], [-0.09, 0.245]]) gb.push(place(cyl(0.0065, 0.0065, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, -(0.118 - 0.4 * (y - 0.245) ** 2) - 0.002] }));
+  for (const [x, y] of [[-0.23, 0.243], [-0.3, 0.245]]) gb.push(place(cyl(0.0065, 0.0065, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, -(0.118 - 0.4 * (y - 0.245) ** 2) - 0.002] }));
   grp.add(mesh(merge(gb), M.bolt, 'HeatGuardBolts'));
 
   // stock silencer: brushed stainless canister angled up towards the tail

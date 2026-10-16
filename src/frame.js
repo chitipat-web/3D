@@ -411,34 +411,48 @@ export function buildFootControls(M) {
   const alu = [];
   const black = [];
   const rub = [];
+  const hang = [];
+  // (v14, re-traced from both side photos and checked through the 3/4
+  // photos: the slanted heel plate sits higher and further back than
+  // before, and the peg pivots 4.5 cm further back under its lower tip)
   for (const s of [-1, 1]) {
     const z = s * 0.158;
-    // rider peg bracket with heel guard (machined aluminium)
-    const sh = (pts) => pts.map(([x, y]) => [x - 0.055, y + 0.02]);
-    const outline = sh([[-0.128, 0.505], [-0.165, 0.515], [-0.315, 0.47], [-0.33, 0.44], [-0.3, 0.41], [-0.215, 0.36], [-0.17, 0.35], [-0.135, 0.39]]);
-    const holes = [
-      sh([[-0.2, 0.455], [-0.255, 0.44], [-0.21, 0.42]]),
-      sh([[-0.27, 0.452], [-0.3, 0.442], [-0.275, 0.428]]),
-      sh([[-0.16, 0.47], [-0.19, 0.462], [-0.165, 0.44]]),
-    ];
+    // machined heel plate with three slots
+    const outline = [[-0.375, 0.548], [-0.335, 0.551], [-0.31, 0.536], [-0.27, 0.501], [-0.236, 0.471], [-0.222, 0.452], [-0.234, 0.434], [-0.258, 0.418], [-0.281, 0.424], [-0.302, 0.441], [-0.33, 0.47], [-0.356, 0.5], [-0.378, 0.528]];
+    const slot = (x0, y0, x1, y1, w) => {
+      const dx = x1 - x0;
+      const dy = y1 - y0;
+      const l = Math.hypot(dx, dy);
+      const nx = (-dy / l) * w;
+      const ny = (dx / l) * w;
+      return [[x0 + nx, y0 + ny], [x1 + nx, y1 + ny], [x1 - nx, y1 - ny], [x0 - nx, y0 - ny]];
+    };
+    const holes = [slot(-0.362, 0.528, -0.338, 0.516, 0.0035), slot(-0.334, 0.505, -0.312, 0.494, 0.0035), slot(-0.321, 0.522, -0.302, 0.512, 0.0035)];
     alu.push(plate(outline, z, 0.01, holes, 0.0015));
-    // footpeg
-    const pegA = v3(-0.245, 0.39, z + s * 0.005);
-    const pegB = v3(-0.255, 0.388, z + s * 0.085);
+    // dark cast hanger from the plate's lower tip down to the peg pivot
+    hang.push(plate([[-0.247, 0.432], [-0.27, 0.426], [-0.309, 0.398], [-0.309, 0.378], [-0.288, 0.376], [-0.25, 0.408]], z - s * 0.004, 0.012, [], 0.002));
+    // footpeg (straight out, a touch swept back)
+    const pegA = v3(-0.296, 0.389, z + s * 0.005);
+    const pegB = v3(-0.312, 0.387, z + s * 0.085);
     alu.push(rod(pegA, pegB, 0.011, 14));
     rub.push(rod(pegA.clone().lerp(pegB, 0.35), pegB, 0.0125, 14));
-    // lever: brake pedal (right) / gear lever (left), pivot at the peg
-    const tip = v3(-0.13, s > 0 ? 0.355 : 0.42, z + s * 0.03);
-    alu.push(sweep([v3(-0.245, 0.39, z + s * 0.012), v3(-0.195, 0.375, z + s * 0.018), tip], () => rrect(0.012, 0.01, 0.003, 2), { steps: 12, up: v3(0, 0, 1) }));
+    // brake pedal (right) / gear lever (left), pivoting at the peg and
+    // reaching forward and down to the toe pad
+    const tip = v3(s > 0 ? -0.19 : -0.176, s > 0 ? 0.305 : 0.322, z + s * 0.03);
+    alu.push(sweep([v3(-0.296, 0.389, z + s * 0.012), v3(-0.245, 0.356, z + s * 0.018), tip], () => rrect(0.012, 0.01, 0.003, 2), { steps: 12, up: v3(0, 0, 1) }));
     alu.push(rod(tip, tip.clone().add(v3(0, 0, s * 0.045)), 0.008, 10));
   }
-  // gear-change linkage rod (left)
-  black.push(rod(v3(-0.15, 0.42, -0.172), v3(-0.08, 0.47, -0.175), 0.004, 8));
-  // side stand (left, folded)
-  black.push(sweep([v3(-0.06, 0.22, -0.145), v3(-0.2, 0.235, -0.165), v3(-0.34, 0.255, -0.17)], (t) => rrect(0.02, 0.016, 0.005, 2), { steps: 10, up: UP }));
-  black.push(place(rbox(0.05, 0.012, 0.035, 0.004), { p: [-0.35, 0.252, -0.17] }));
+  // gear-change linkage rod (left): from the lever up to the shift arm
+  black.push(rod(v3(-0.232, 0.348, -0.182), v3(-0.095, 0.418, -0.178), 0.004, 8));
+  black.push(place(cyl(0.008, 0.008, 0.012, 12), { r: [Math.PI / 2, 0, 0], p: [-0.095, 0.418, -0.176] }));
+  // side stand (left, folded): pivot bolt under the engine at x -0.14, the
+  // leg tucked up level with the chain's lower run (left photo)
+  black.push(sweep([v3(-0.143, 0.266, -0.15), v3(-0.27, 0.274, -0.165), v3(-0.385, 0.281, -0.17)], (t) => rrect(0.02, 0.016, 0.005, 2), { steps: 10, up: UP }));
+  black.push(place(rbox(0.05, 0.012, 0.035, 0.004), { p: [-0.395, 0.279, -0.17] }));
+  black.push(place(cyl(0.017, 0.017, 0.03, 16), { r: [Math.PI / 2, 0, 0], p: [-0.143, 0.268, -0.145] }));
   grp.add(mesh(merge(alu), M.alu, 'Rearsets'));
   grp.add(mesh(merge(rub), M.rubber, 'PegRubbers'));
+  grp.add(mesh(merge(hang), M.aluDark, 'RearsetHangers'));
   grp.add(mesh(merge(black), M.frame, 'SideStand'));
   return grp;
 }
