@@ -173,7 +173,7 @@ export function sideLivery(L, mirror = false) {
   // ---- upper cowl script
   text(0.577, 0.697, 'Ninja', 0.058, { font: SCRIPT, weight: '700', style: 'italic', color: '#dfe2e5', rot: -0.13 });
   // ---- tank: primary colour wherever it is projected (wordmark is a decal)
-  poly([[0.36, 0.84], [0.36, 1.05], [-0.16, 1.05], [-0.16, 0.84]], L.primary.color);
+  poly([[0.36, 0.84], [0.36, 1.05], [-0.185, 1.05], [-0.185, 0.84]], L.primary.color);
   return finish(c);
 }
 
@@ -203,15 +203,18 @@ export function frontLivery(L) {
   const { g, poly } = painter(c, box);
   g.fillStyle = L.primary.color;
   g.fillRect(0, 0, c.width, c.height);
-  // Black wedge over the outer half of each headlight and down its outer end
-  // (traced from the 2019 studio photos): the green V arm follows the lens
-  // top edge only as far as z = 0.165, then rises to the mirror mount.
+  // Black brow over the outer half of each headlight and down its outer end
+  // (v15: traced from both side photos and the nose close-up): the green V
+  // arm follows the lens top edge only as far as z = 0.152, then rises
+  // steeply and runs on up to the mirror mount; everything outboard of that
+  // line, down to the lens, is black.
   const seam = 'rgba(0,0,0,0.55)';
   for (const s of [-1, 1]) {
-    const wedge = [[s * 0.165, 0.8], [s * 0.2, 0.839], [s * 0.235, 0.868], [s * 0.27, 0.893], [s * 0.27, 0.66], [s * 0.232, 0.66], [s * 0.232, 0.82]];
+    const edge = [[0.145, 0.78], [0.152, 0.797], [0.161, 0.812], [0.173, 0.824], [0.185, 0.834], [0.197, 0.845], [0.21, 0.856], [0.222, 0.866], [0.235, 0.877], [0.27, 0.9]];
+    const wedge = [...edge.map(([z, y]) => [s * z, y]), [s * 0.27, 0.66], [s * 0.145, 0.66]];
     poly(wedge, L.body.color);
     // thin shadow line along the edge of the green arm
-    for (let i = 0; i < 3; i++) {
+    for (let i = 1; i < edge.length - 1; i++) {
       const [a, b] = [wedge[i], wedge[i + 1]];
       poly([a, b, [b[0], b[1] + 0.0016], [a[0], a[1] + 0.0016]], seam);
     }

@@ -226,8 +226,9 @@ const LINER = {
 };
 
 // green blade continuing the chin back along the side, under the "Ninja" panel
+// (it starts at the chin's outer tip, so seen from the front no end shows)
 const CHIN_SIDE = {
-  outline: [[0.79, 0.722, C], [0.74, 0.716], [0.7, 0.705], [0.672, 0.694, C], [0.69, 0.684], [0.74, 0.684], [0.79, 0.688, C]],
+  outline: [[0.758, 0.716, C], [0.74, 0.714], [0.7, 0.705], [0.672, 0.694, C], [0.69, 0.684], [0.74, 0.684], [0.758, 0.69, C]],
   surface: (x, y) => sideW(x, y) + 0.012,
 };
 
@@ -270,16 +271,16 @@ function bellyPan(M) {
 // ===========================================================================
 const NZ = [0, 0.04, 0.08, 0.12, 0.16, 0.2, 0.24, 0.27];
 const NY = [0.7, 0.74, 0.77, 0.8, 0.83, 0.86, 0.89, 0.92, 0.95];
-// traced from the calibrated side photo: beak tip (0.905, 0.77), screen base
+// traced from the calibrated side photo: beak tip (0.898, 0.757), screen base
 // front (0.80, 0.895), lens from x 0.88 (inner) back to 0.73 (outer). In plan
 // the nose is a wedge: the 3/4 studio photos show it sweeping back from the
 // beak at about 30 deg, without the full, rounded cheeks of a blunt nose.
 const NT = [
   //  z: 0     0.04   0.08   0.12   0.16   0.20   0.24   0.27
-  [0.89, 0.882, 0.864, 0.84, 0.807, 0.772, 0.737, 0.705], // y 0.70
+  [0.866, 0.876, 0.864, 0.84, 0.807, 0.772, 0.737, 0.705], // y 0.70
   [0.893, 0.882, 0.862, 0.836, 0.804, 0.77, 0.735, 0.702], // 0.74
-  [0.905, 0.881, 0.857, 0.833, 0.802, 0.765, 0.73, 0.698], // 0.77
-  [0.885, 0.861, 0.837, 0.813, 0.789, 0.764, 0.729, 0.695], // 0.80
+  [0.897, 0.881, 0.857, 0.833, 0.802, 0.765, 0.73, 0.698], // 0.77
+  [0.881, 0.861, 0.837, 0.813, 0.789, 0.764, 0.729, 0.695], // 0.80
   [0.868, 0.846, 0.822, 0.798, 0.774, 0.75, 0.725, 0.69], // 0.83
   [0.842, 0.826, 0.808, 0.788, 0.763, 0.735, 0.709, 0.684], // 0.86
   [0.812, 0.802, 0.788, 0.77, 0.746, 0.724, 0.701, 0.676], // 0.89
@@ -289,7 +290,7 @@ const NT = [
 const noseT = tableSurface(NZ, NY, NT);
 // ridge along the V arm, from the beak up and out to the cowl's outer edge:
 // below it the arm's lower face (and the headlight under it) turns back
-const RIDGE = [[0.03, 0.758], [0.24, 0.852]];
+const RIDGE = [[0.03, 0.764], [0.24, 0.858]];
 const ridgeD = (z, y) => {
   const [a, b] = RIDGE;
   const dz = b[0] - a[0], dy = b[1] - a[1], l = Math.hypot(dz, dy);
@@ -306,12 +307,18 @@ const frontSurface = (fn) => (u, v) => fn(-u, v);
 // Face of the 2019 nose, front view (z outward, y up), right half. Traced
 // from the studio close-ups: two green "V" arms frame a large black ram-air
 // intake that runs up to the screen; each large angular headlight sits under
-// an arm (pointed at the beak, ~9 cm tall at its outer end); a pointed green
-// chin runs under both lights.
+// an arm; a pointed green chin runs under both lights.
+// (v15: lens re-traced from both side photos, each point taken onto the
+// hull, and checked against the nose close-up: a long blade, pointed at the
+// beak, whose outer end is a diagonal from the upper rear corner down and
+// forward to a short bottom edge sitting right on the chin)
 const LENS_R = [
-  [0.046, 0.724, C], [0.08, 0.721], [0.12, 0.72], [0.16, 0.722], [0.2, 0.727], [0.222, 0.733, C], [0.231, 0.765], [0.236, 0.809, C],
-  [0.215, 0.806], [0.18, 0.801], [0.14, 0.792], [0.1, 0.776], [0.07, 0.763], [0.046, 0.753, C],
+  [0.06, 0.722, C], [0.094, 0.72], [0.12, 0.718], [0.154, 0.716], [0.172, 0.716], [0.188, 0.718, C],
+  [0.206, 0.737], [0.217, 0.762], [0.232, 0.783], [0.237, 0.815, C],
+  [0.217, 0.809], [0.198, 0.805], [0.177, 0.801], [0.155, 0.799], [0.136, 0.795], [0.117, 0.791], [0.1, 0.785], [0.083, 0.778], [0.064, 0.772], [0.046, 0.765], [0.028, 0.752, C],
+  [0.044, 0.734],
 ];
+const LENS_TOP = [[0.028, 0.752], [0.046, 0.765], [0.064, 0.772], [0.083, 0.778], [0.1, 0.785], [0.117, 0.791], [0.136, 0.795], [0.155, 0.799], [0.177, 0.801], [0.198, 0.805], [0.217, 0.809], [0.237, 0.815]];
 const mirrorZY = (pts) => pts.map((p) => [-p[0], p[1], p[2] || 0]).reverse();
 // pull an outline slightly towards its centre so walls built on it do not
 // coincide with the lip of the panel around it
@@ -323,13 +330,16 @@ const SCREEN_BASE = kf([[0, 0.882], [0.07, 0.885], [0.12, 0.893], [0.16, 0.904],
 // right V arm, from the beak bottom round to the intake bottom centre
 // green: V-arm band over the headlight, joined at the outer edge to a strip
 // along the screen base that carries the mirror mounts
+// (v15: near the beak the arm sits about a centimetre higher, over the
+// taller lens, and its inner edge rises to meet the intake)
 const ARM_R = [
-  [0.03, 0.718], [0.046, 0.724, C], [0.044, 0.753, C],
-  [0.07, 0.763], [0.1, 0.776], [0.14, 0.792], [0.18, 0.801], [0.215, 0.806], [0.237, 0.811, C],
+  [0.02, 0.717], [0.06, 0.722, C], [0.044, 0.734], [0.028, 0.752, C],
+  ...LENS_TOP.slice(1, -1), [0.238, 0.816, C],
   [0.247, 0.856], [0.245, 0.878], [0.238, 0.895], [0.215, 0.913, C],
   [0.19, 0.911], [0.16, 0.903], [0.135, 0.8975, C],
-  [0.125, 0.87], [0.11, 0.84], [0.09, 0.814], [0.066, 0.795], [0.04, 0.782, C],
+  [0.125, 0.87], [0.11, 0.84], [0.093, 0.818], [0.074, 0.81], [0.058, 0.8], [0.04, 0.794], [0.026, 0.785, C],
 ];
+const BEAK_TOP = 0.781;
 // black wedge between the band and the upper cowl, opening into the deep
 // ram-air duct in the middle that runs up to the screen
 // (the intake reaches up to the screen base, its outer corner at z = 0.135;
@@ -337,7 +347,7 @@ const ARM_R = [
 // into a broad face round the mirror mounts, and the intake reaches down
 // close to the headlights)
 const MASK_R = [
-  [0.04, 0.782, C], [0.066, 0.795], [0.09, 0.814], [0.11, 0.84], [0.125, 0.87], [0.135, 0.8975, C],
+  [0.026, 0.785, C], [0.04, 0.794], [0.058, 0.8], [0.074, 0.81], [0.093, 0.818], [0.11, 0.84], [0.125, 0.87], [0.135, 0.8975, C],
   [0.11, 0.8915], [0.08, 0.887], [0.04, 0.8838],
 ];
 
@@ -345,14 +355,14 @@ function buildNose(M) {
   const grp = new THREE.Group();
   grp.name = 'Nose';
   // ---- upper cowl: the two V arms joined at the beak
-  const n1 = [[0, 0.715, C], ...ARM_R, [0, 0.777, C], ...mirrorZY(ARM_R)];
+  const n1 = [[0, 0.715, C], ...ARM_R, [0, BEAK_TOP, C], ...mirrorZY(ARM_R)];
   const g1 = toFront(
     buildPanel({ outline: zy(n1), surface: frontSurface(noseF), uv: frontUV, roll: 0.006, flange: 0.014, spacing: 0.009, edgeStep: 0.0035 })
   );
   grp.add(mesh(g1, M.decalFront, 'UpperCowl'));
   // ---- black mask above the arms: ram-air duct in the middle, trim at the sides
   {
-    const outline = [[0, 0.8835], ...MASK_R.slice().reverse(), [0, 0.777, C], ...mirrorZY(MASK_R).reverse()];
+    const outline = [[0, 0.8835], ...MASK_R.slice().reverse(), [0, BEAK_TOP, C], ...mirrorZY(MASK_R).reverse()];
     const depth = (z, y) => noseF(z, y) - lerp(0.024, 0.05, smooth(0.13, 0.07, Math.abs(z))) - 0.015 * smooth(0.82, 0.88, y) * smooth(0.13, 0.07, Math.abs(z));
     const floor = toFront(buildPanel({ outline: zy(outline), surface: frontSurface(depth), roll: 0, flange: 0, spacing: 0.01, edgeStep: 0.004 }));
     grp.add(mesh(floor, M.mesh, 'RamAirIntake'));
@@ -366,8 +376,8 @@ function buildNose(M) {
   // down to the chin and out to the side cowl
   {
     const NS = [
-      [0.222, 0.731, C], [0.231, 0.764], [0.236, 0.809, C], [0.249, 0.817, C], [0.254, 0.8], [0.253, 0.75], [0.247, 0.712, C],
-      [0.236, 0.722],
+      [0.188, 0.718, C], [0.206, 0.737], [0.217, 0.762], [0.232, 0.783], [0.237, 0.815, C], [0.249, 0.821, C], [0.254, 0.8], [0.253, 0.75], [0.247, 0.709, C],
+      [0.229, 0.7145], [0.2, 0.7125], [0.186, 0.713, C],
     ];
     for (const s of [1, -1]) {
       const g = toFront(buildPanel({ outline: zy(s > 0 ? NS : mirrorZY(NS)), surface: frontSurface((z, y) => noseF(z, y) - 0.0015), roll: 0.004, flange: 0.012, spacing: 0.006, edgeStep: 0.003 }));
@@ -378,9 +388,9 @@ function buildNose(M) {
   // behind the clear cover a black housing frames a faceted chrome reflector
   // (two reflector cups), with a broad black brow over the outer half and an
   // LED strip along the bottom edge.
-  const lensTop = kf([[0.046, 0.753], [0.07, 0.763], [0.1, 0.776], [0.14, 0.792], [0.18, 0.801], [0.215, 0.806]]);
+  const lensTop = kf(LENS_TOP);
   const REFL_R = [
-    [0.056, 0.737, C], [0.08, 0.7285], [0.12, 0.727], [0.16, 0.729], [0.2, 0.734], [0.216, 0.74, C], [0.222, 0.762], [0.225, 0.784, C],
+    [0.046, 0.746, C], [0.068, 0.728], [0.1, 0.7245], [0.13, 0.7225], [0.16, 0.7205], [0.184, 0.7215, C], [0.2, 0.739], [0.211, 0.763], [0.226, 0.786, C],
     ...[0.205, 0.17, 0.14, 0.1, 0.07].map((z) => [z, lensTop(z) - 0.006 - 0.06 * (z - 0.046)]),
   ];
   const cups = [[0.105, 0.745, 0.034], [0.172, 0.768, 0.036]];
@@ -427,20 +437,22 @@ function buildNose(M) {
     const strip = [];
     const n = 12;
     for (let i = 0; i < n; i++) {
-      const za = lerp(0.07, 0.178, i / n);
-      const zb = lerp(0.07, 0.178, (i + 1) / n);
-      const ya = 0.7335 - 0.004 * Math.sin(Math.PI * (i / n));
-      const yb = 0.7335 - 0.004 * Math.sin(Math.PI * ((i + 1) / n));
+      const za = lerp(0.075, 0.175, i / n);
+      const zb = lerp(0.075, 0.175, (i + 1) / n);
+      const ya = 0.7255 - 0.003 * Math.sin(Math.PI * (i / n));
+      const yb = 0.7255 - 0.003 * Math.sin(Math.PI * ((i + 1) / n));
       strip.push(rod(v3(noseF(za, ya) - 0.017, ya, s * za), v3(noseF(zb, yb) - 0.017, yb, s * zb), 0.0016, 6));
     }
     grp.add(mesh(merge(strip), M.led, 'PositionLight'));
   }
   // ---- pointed chin under both headlights
-  // pointed in plan, with a sharp leading edge: the top face slopes back to
-  // the headlights and the underside back to the duct
-  const chinPlan = kf([[0, 0.9], [0.04, 0.887], [0.08, 0.872], [0.12, 0.853], [0.16, 0.827], [0.2, 0.794], [0.244, 0.752]]);
-  const chinSurf = (z, y) => chinPlan(Math.abs(z)) - 0.5 * soft(0.712 - y, 0.003) - 0.45 * soft(y - 0.716, 0.003);
-  const chinTop = [[0.03, 0.717], [0.046, 0.723, C], [0.08, 0.72], [0.12, 0.719], [0.16, 0.721], [0.2, 0.726], [0.229, 0.731, C]];
+  // pointed in plan, with a sharp leading edge near its lower edge: the
+  // broad top face slopes back up to the headlights, the underside back to
+  // the duct (v15: both side photos put the leading edge at y 0.69, x 0.888,
+  // with the top face 2 cm further back where it meets the lights)
+  const chinPlan = kf([[0, 0.889], [0.04, 0.88], [0.08, 0.867], [0.12, 0.851], [0.16, 0.826], [0.2, 0.794], [0.244, 0.752]]);
+  const chinSurf = (z, y) => chinPlan(Math.abs(z)) - 1.5 * soft(0.689 - y, 0.002) - 0.8 * soft(y - 0.692, 0.003);
+  const chinTop = [[0.03, 0.716], [0.06, 0.72, C], [0.094, 0.719], [0.12, 0.717], [0.16, 0.714], [0.2, 0.714], [0.229, 0.717, C]];
   const chin = [
     [0, 0.685, C], [0.12, 0.688], [0.238, 0.695, C], [0.245, 0.709, C], ...chinTop.slice().reverse(), [0, 0.714, C],
     ...chinTop.map((p) => [-p[0], p[1], p[2] || 0]), [-0.245, 0.709, C], [-0.238, 0.695, C], [-0.12, 0.688],
@@ -449,10 +461,11 @@ function buildNose(M) {
   grp.add(mesh(gc, M.primary, 'ChinSpoiler'));
   // lower air duct around the radiator (black, under the chin)
   {
-    const rings = linspace(0.66, 0.705, 3).map((y) => {
-      const t = (y - 0.66) / 0.045;
-      const hw = lerp(0.2, 0.235, t);
-      const x = lerp(0.74, 0.865, t);
+    // (kept below the chin's leading edge, which now sits low down)
+    const rings = linspace(0.66, 0.692, 3).map((y) => {
+      const t = (y - 0.66) / 0.032;
+      const hw = lerp(0.2, 0.228, t);
+      const x = lerp(0.74, 0.858, t);
       return [[x - 0.1, y, -hw], [x - 0.02, y, -hw * 0.5], [x, y, 0], [x - 0.02, y, hw * 0.5], [x - 0.1, y, hw]];
     });
     grp.add(mesh(loft(rings, { su: 3, sv: 2 }), M.plastic, 'LowerDuct'));
@@ -526,9 +539,10 @@ function buildWindscreen(M) {
 // Tank
 // ===========================================================================
 export const TANK = {
-  top: kf([[0.336, 0.872], [0.3, 0.906], [0.26, 0.938], [0.2, 0.963], [0.12, 0.981], [0.04, 0.989], [-0.03, 0.987], [-0.08, 0.974], [-0.11, 0.952], [-0.13, 0.912], [-0.142, 0.876]]),
-  bot: kf([[0.336, 0.864], [0.25, 0.854], [0.15, 0.842], [0.05, 0.832], [0.0, 0.826], [-0.05, 0.814], [-0.1, 0.797], [-0.142, 0.785]]),
-  w: kf([[0.336, 0.12], [0.3, 0.155], [0.24, 0.186], [0.16, 0.202], [0.08, 0.2], [0.0, 0.186], [-0.06, 0.164], [-0.1, 0.14], [-0.142, 0.1]]),
+  // (v15: the rear end runs on down to the seat, as in both side photos)
+  top: kf([[0.336, 0.872], [0.3, 0.906], [0.26, 0.938], [0.2, 0.963], [0.12, 0.981], [0.04, 0.989], [-0.03, 0.987], [-0.08, 0.974], [-0.11, 0.952], [-0.13, 0.914], [-0.15, 0.877], [-0.165, 0.853]]),
+  bot: kf([[0.336, 0.864], [0.25, 0.854], [0.15, 0.842], [0.05, 0.832], [0.0, 0.826], [-0.05, 0.814], [-0.1, 0.797], [-0.142, 0.785], [-0.165, 0.78]]),
+  w: kf([[0.336, 0.12], [0.3, 0.155], [0.24, 0.186], [0.16, 0.202], [0.08, 0.2], [0.0, 0.186], [-0.06, 0.164], [-0.1, 0.14], [-0.142, 0.1], [-0.165, 0.078]]),
 };
 function tankRing(x) {
   const yt = TANK.top(x);
@@ -548,14 +562,14 @@ function tankRing(x) {
   return mirrorRing(half);
 }
 function buildTank(M, matR, matL) {
-  const xs = linspace(0.336, -0.142, 24);
+  const xs = linspace(0.336, -0.165, 25);
   const rings = xs.map(tankRing);
   const shr = (ring, k, dy) => {
     const c = ring.reduce((s, p) => [s[0] + p[0], s[1] + p[1], s[2] + p[2]], [0, 0, 0]).map((v) => v / ring.length);
     return ring.map((p) => [p[0], c[1] + (p[1] - c[1]) * k + dy, p[2] * k]);
   };
   rings.unshift(shr(tankRing(0.343), 0.7, -0.004));
-  rings.push(shr(tankRing(-0.149), 0.55, -0.006));
+  rings.push(shr(tankRing(-0.171), 0.55, -0.006));
   const g = loft(rings, { su: 3, sv: 2, creaseCols: mirrorCreases([3], 7), uv: (p) => sideUV(p[0], p[1]) });
   const grp = new THREE.Group();
   grp.name = 'Tank';
@@ -591,11 +605,12 @@ function buildTank(M, matR, matL) {
 // Seats, tail, undertray, plate holder, tail light
 // ===========================================================================
 const SEAT = {
-  top: kf([[-0.118, 0.874], [-0.14, 0.857], [-0.18, 0.843], [-0.25, 0.836], [-0.32, 0.838], [-0.38, 0.85], [-0.43, 0.872], [-0.47, 0.895], [-0.505, 0.906]]),
+  // (v15: the rear rises a little later, both side photos)
+  top: kf([[-0.118, 0.874], [-0.14, 0.857], [-0.18, 0.843], [-0.25, 0.836], [-0.32, 0.838], [-0.38, 0.848], [-0.43, 0.862], [-0.47, 0.879], [-0.49, 0.89], [-0.505, 0.9]]),
   w: kf([[-0.118, 0.07], [-0.15, 0.105], [-0.22, 0.13], [-0.32, 0.134], [-0.42, 0.122], [-0.505, 0.1]]),
 };
 const PILLION = {
-  top: kf([[-0.515, 0.912], [-0.545, 0.958], [-0.578, 0.99], [-0.62, 1.003], [-0.7, 1.013], [-0.78, 1.027], [-0.86, 1.042], [-0.876, 1.045]]),
+  top: kf([[-0.515, 0.904], [-0.53, 0.916], [-0.55, 0.948], [-0.578, 0.986], [-0.62, 1.003], [-0.7, 1.013], [-0.78, 1.027], [-0.86, 1.042], [-0.876, 1.045]]),
   w: kf([[-0.515, 0.085], [-0.58, 0.094], [-0.66, 0.088], [-0.76, 0.072], [-0.876, 0.04]]),
 };
 const TAIL = {
