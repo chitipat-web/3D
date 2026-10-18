@@ -103,15 +103,29 @@ export function buildFrame(M) {
       })
     );
     // pivot section: vertical member down past the swing-arm pivot
-    // (traced: ~16 cm deep at the top, from the engine back to -0.2)
+    // (v16: re-traced from both side photos: 8-9 cm deep, from x -0.20 to
+    // -0.12, with the engine showing in front of it; the gusset above
+    // joins it to the spar)
     parts.push(
-      sweep([v3(-0.112, 0.69, s * 0.13), v3(-0.122, 0.56, s * 0.13), v3(-0.133, 0.44, s * 0.13), v3(-0.142, 0.335, s * 0.128)], (t) =>
-        rrect(THREE.MathUtils.lerp(0.165, 0.1, t), 0.044, 0.014, 3), { steps: 24, up: v3(1, 0, 0) })
+      sweep([v3(-0.16, 0.7, s * 0.13), v3(-0.16, 0.56, s * 0.13), v3(-0.157, 0.44, s * 0.13), v3(-0.152, 0.335, s * 0.128)], (t) =>
+        rrect(THREE.MathUtils.lerp(0.085, 0.095, t), 0.044, 0.014, 3), { steps: 24, up: v3(1, 0, 0) })
     );
     // sub-frame / shock mount boss at the top rear corner
     parts.push(place(rbox(0.05, 0.045, 0.044, 0.01), { p: [-0.18, 0.705, s * 0.13], r: [0, 0, 0.3] }));
-    // front engine hanger: cast plate under the spar down to the head mount
-    parts.push(plate([[0.366, 0.702], [0.33, 0.738], [0.27, 0.722], [0.252, 0.64], [0.268, 0.566], [0.308, 0.546], [0.342, 0.578]], s * 0.142, 0.016, [], 0.003));
+    // cast gusset joining the spar's rear end to the pivot section, up to
+    // the side cover (v16: both side photos show it solid from x -0.21 to
+    // -0.05 below the side cover's silver line, with a big bolt at
+    // (-0.18, 0.665); the naked-chassis photo agrees)
+    parts.push(plate([[-0.214, 0.732], [-0.15, 0.75], [-0.09, 0.742], [-0.035, 0.72], [0.035, 0.69], [0.052, 0.6], [0.025, 0.586], [-0.05, 0.576], [-0.095, 0.567], [-0.118, 0.552], [-0.2, 0.6]], s * 0.141, 0.02, [], 0.004));
+    parts.push(place(cyl(0.009, 0.009, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.032, 0.605, s * 0.153] }));
+    parts.push(place(cyl(0.012, 0.012, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [-0.181, 0.665, s * 0.153] }));
+    // front engine hanger: cast plate under the spar down to the head mount,
+    // just outside the cylinder head (v16: re-traced from the naked-chassis
+    // photo; its front edge is the rear edge of the see-through gap behind
+    // the radiator)
+    parts.push(plate([[0.268, 0.555], [0.278, 0.578], [0.288, 0.6], [0.298, 0.62], [0.31, 0.64], [0.322, 0.66], [0.336, 0.674], [0.356, 0.688], [0.372, 0.718], [0.33, 0.738], [0.27, 0.724], [0.236, 0.672], [0.214, 0.62], [0.196, 0.565], [0.186, 0.528], [0.198, 0.506], [0.226, 0.51], [0.25, 0.53]], s * 0.158, 0.016, [], 0.003));
+    // engine mount bolt through the hanger's lower end
+    parts.push(place(cyl(0.013, 0.013, 0.006, 12), { r: [Math.PI / 2, 0, 0], p: [0.2, 0.522, s * 0.168] }));
     parts.push(beam(v3(-0.13, 0.42, s * 0.13), v3(-0.03, 0.28, s * 0.14), 0.022, 0.035));
     // pivot bolt head
     parts.push(place(cyl(0.024, 0.024, 0.012, 6), { r: [Math.PI / 2, 0, 0], p: [PIVOT.x, PIVOT.y, s * 0.157] }));
@@ -159,10 +173,11 @@ export function buildFrame(M) {
   grp.add(mesh(merge(pegBase), M.alu, 'PillionPegMounts'));
 
   // black inner fender / battery box under the seat, between the sub-frame
-  // rails and above the swing-arm (the real bike shows black here, not daylight)
+  // rails (v16: kept up behind the seat side covers; both side photos show
+  // daylight below the sub-frame, above the swing-arm)
   grp.add(
     mesh(
-      extrude(shape([[-0.165, 0.775], [-0.38, 0.792], [-0.408, 0.765], [-0.402, 0.675], [-0.36, 0.628], [-0.3, 0.6], [-0.21, 0.565], [-0.165, 0.565]]), 0.17, 0.01, 2, 4),
+      extrude(shape([[-0.165, 0.775], [-0.38, 0.792], [-0.408, 0.765], [-0.404, 0.722], [-0.33, 0.705], [-0.22, 0.703], [-0.165, 0.708]]), 0.17, 0.01, 2, 4),
       M.plastic,
       'InnerFender'
     )
@@ -442,6 +457,11 @@ export function buildFootControls(M) {
     alu.push(sweep([v3(-0.296, 0.389, z + s * 0.012), v3(-0.245, 0.356, z + s * 0.018), tip], () => rrect(0.012, 0.01, 0.003, 2), { steps: 12, up: v3(0, 0, 1) }));
     alu.push(rod(tip, tip.clone().add(v3(0, 0, s * 0.045)), 0.008, 10));
   }
+  // rear brake fluid reservoir on the right, behind the frame's pivot
+  // section, with its hose down to the master cylinder (right photo)
+  black.push(place(cyl(0.021, 0.021, 0.036, 16), { r: [Math.PI / 2, 0, 0], p: [-0.276, 0.586, 0.118] }));
+  black.push(place(cyl(0.017, 0.017, 0.008, 16), { r: [Math.PI / 2, 0, 0], p: [-0.276, 0.586, 0.139] }));
+  black.push(tube([v3(-0.27, 0.565, 0.118), v3(-0.262, 0.48, 0.13), v3(-0.25, 0.4, 0.15)], 0.004, 16, 6));
   // gear-change linkage rod (left): from the lever up to the shift arm
   black.push(rod(v3(-0.232, 0.348, -0.182), v3(-0.095, 0.418, -0.178), 0.004, 8));
   black.push(place(cyl(0.008, 0.008, 0.012, 12), { r: [Math.PI / 2, 0, 0], p: [-0.095, 0.418, -0.176] }));

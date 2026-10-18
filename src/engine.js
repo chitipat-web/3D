@@ -62,9 +62,11 @@ export function buildEngine(M) {
   const bolts = [];
 
   // crankcase (side profile extruded across the engine)
+  // (v16: the upper case rises behind the cylinders, filling the opening
+  // under the frame casting that both side photos show)
   const caseProfile = [
-    [0.225, 0.2], [0.247, 0.255], [0.248, 0.33], [0.232, 0.395], [0.2, 0.432], [0.12, 0.452], [0.02, 0.47], [-0.06, 0.468],
-    [-0.105, 0.44], [-0.115, 0.37], [-0.105, 0.27], [-0.07, 0.205], [-0.02, 0.19], [0.18, 0.19],
+    [0.225, 0.2], [0.247, 0.255], [0.248, 0.33], [0.232, 0.395], [0.2, 0.432], [0.12, 0.452], [0.06, 0.47], [0.03, 0.505], [-0.04, 0.518],
+    [-0.09, 0.497], [-0.113, 0.45], [-0.115, 0.37], [-0.105, 0.27], [-0.07, 0.205], [-0.02, 0.19], [0.18, 0.19],
   ];
   // (its lower edge is chamfered in, as on the real cases, so the lower
   // fairing's tucked-under skin clears it)
@@ -85,11 +87,15 @@ export function buildEngine(M) {
     g.translate(p.x, p.y, 0);
     return g;
   };
-  silver.push(tilt(rbox(0.112, 0.15, 0.33, 0.014), 0.13));
-  silver.push(tilt(rbox(0.142, 0.085, 0.338, 0.016), 0.245, 0.004));
-  black.push(tilt(rbox(0.125, 0.05, 0.3, 0.02), 0.305, -0.004));
+  // (v16: front faces on f = +0.022, as in the naked-chassis photo: there
+  // the exhaust ports sit at (0.245, 0.556), the block's front at y 0.5 is
+  // at x 0.21 and the head hides behind the frame hanger, leaving the gap
+  // in front of it open; the bank sits just inside the hangers)
+  silver.push(tilt(rbox(0.078, 0.15, 0.3, 0.012), 0.13, -0.017));
+  silver.push(tilt(rbox(0.089, 0.085, 0.302, 0.014), 0.245, -0.0225));
+  black.push(tilt(rbox(0.088, 0.05, 0.29, 0.018), 0.305, -0.022));
   // cam cover ribs
-  for (const z of [-0.105, -0.035, 0.035, 0.105]) silver.push(tilt(rbox(0.07, 0.012, 0.012, 0.004), 0.332, -0.01).translate(0, 0, z));
+  for (const z of [-0.105, -0.035, 0.035, 0.105]) silver.push(tilt(rbox(0.07, 0.012, 0.012, 0.004), 0.332, -0.016).translate(0, 0, z));
   // plug coils
   for (const z of [-0.105, -0.035, 0.035, 0.105]) black.push(tilt(cyl(0.012, 0.012, 0.03, 12), 0.34, -0.012).translate(0, 0, z));
 
@@ -136,16 +142,18 @@ export function buildEngine(M) {
   // sprocket cover (left)
   black.push(extrude(shape(Y([[-0.115, 0.44], [-0.02, 0.445], [0.01, 0.4], [-0.005, 0.33], [-0.06, 0.31], [-0.115, 0.33]])), 0.025, 0.006, 2, 4).translate(0, 0, -0.17));
   // oil filter + water pump
-  black.push(place(cyl(0.034, 0.034, 0.07, 24), { r: [0, 0, -1.1], p: [0.25, 0.235 + dy, 0.05] }));
+  black.push(place(cyl(0.034, 0.034, 0.07, 24), { r: [0, 0, -1.1], p: [0.212, 0.235 + dy, 0.05] }));
   silver.push(place(cyl(0.04, 0.04, 0.03, 24), { r: [Math.PI / 2, 0, 0], p: [0.19, 0.25 + dy, -0.15] }));
   // throttle bodies / intake (behind the head, mostly hidden)
   for (const z of [-0.105, -0.035, 0.035, 0.105]) black.push(rod(at(0.26, -0.07, z), at(0.37, -0.12, z), 0.019, 14));
-  // starter motor
-  black.push(place(cyl(0.028, 0.028, 0.12, 18), { r: [Math.PI / 2, 0, 0], p: [0.02, 0.475 + dy, -0.06] }));
+  // starter motor: bright cast body across the top of the upper case, just
+  // under the frame casting (silver in both side photos)
+  silver.push(place(cyl(0.029, 0.029, 0.13, 20), { r: [Math.PI / 2, 0, 0], p: [-0.045, 0.553, 0.035] }));
+  black.push(place(cyl(0.031, 0.031, 0.016, 20), { r: [Math.PI / 2, 0, 0], p: [-0.045, 0.553, 0.106] }));
   // air box under the tank, down over the throttle bodies behind the head
   // (fills the dark space seen between the frame spars on the real bike)
   black.push(
-    extrude(shape([[0.27, 0.7], [0.27, 0.8], [0.2, 0.843], [-0.07, 0.843], [-0.1, 0.78], [-0.096, 0.62], [-0.07, 0.535], [-0.02, 0.505], [0.05, 0.5], [0.1, 0.52], [0.17, 0.585], [0.2, 0.632]]), 0.24, 0.012, 2, 6)
+    extrude(shape([[0.27, 0.7], [0.27, 0.8], [0.2, 0.843], [-0.07, 0.843], [-0.1, 0.78], [-0.098, 0.66], [-0.075, 0.615], [-0.02, 0.598], [0.05, 0.596], [0.1, 0.6], [0.17, 0.61], [0.2, 0.632]]), 0.24, 0.012, 2, 6)
   );
 
   grp.add(mesh(merge(dark), M.engineDark, 'Crankcase'));
@@ -156,27 +164,53 @@ export function buildEngine(M) {
   grp.add(mesh(merge(bolts), M.bolt, 'EngineBolts'));
   grp.add(mesh(merge(engineHoses), M.rubber, 'EngineHoses'));
 
-  // ---- radiator
+  // ---- radiator (v16: traced from the naked-chassis photo: it leans
+  // forward at the top by 12 deg and its core bows forward in the middle,
+  // so from the side it spans from the end tank at x 0.31-0.35 to the
+  // middle of the core at 0.38 (bottom) - 0.45 (top); behind it, between
+  // its end tanks and the frame hangers, the bike is open right through,
+  // which is what shows through the fairing vents)
   const rad = new THREE.Group();
   rad.name = 'Radiator';
-  const core = rbox(0.036, 0.32, 0.33, 0.006);
+  const RT = 12 * DEG;
+  const RO = v3(0.348, 0.62, 0); // rear face of the end tanks, upper part
+  const bow = (z) => 0.045 * (1 - Math.min(1, (z / 0.17) ** 2));
+  // box in radiator space (a forward, b up along the core, z across)
+  const radBox = (a0, a1, b0, b1, z0, z1, segZ = 1, bowed = true) => {
+    const g = new THREE.BoxGeometry(a1 - a0, b1 - b0, z1 - z0, 1, 1, segZ);
+    g.translate((a0 + a1) / 2, (b0 + b1) / 2, (z0 + z1) / 2);
+    if (bowed) {
+      const p = g.attributes.position;
+      for (let i = 0; i < p.count; i++) p.setX(i, p.getX(i) + bow(p.getZ(i)));
+    }
+    g.rotateZ(-RT);
+    g.translate(RO.x, RO.y, 0);
+    g.computeVertexNormals();
+    return g;
+  };
+  const radPt = (a, b, z) => v3(RO.x + a * Math.cos(RT) + b * Math.sin(RT), RO.y - a * Math.sin(RT) + b * Math.cos(RT), z);
   const coreMat = M.radiator.clone();
   const ft = finTexture();
   if (ft) coreMat.map = ft;
-  const coreMesh = mesh(core, coreMat, 'RadiatorCore');
-  coreMesh.rotation.z = 8 * DEG;
-  coreMesh.position.set(0.352, 0.555, 0);
-  rad.add(coreMesh);
+  rad.add(mesh(radBox(0.004, 0.044, -0.2, 0.05, -0.165, 0.165, 24), coreMat, 'RadiatorCore'));
   const tanks = [];
-  // (side tanks kept inside the tucked-in lower edge of the mid panels)
-  for (const s of [-1, 1]) tanks.push(place(rbox(0.05, 0.33, 0.03, 0.008), { p: [0.35, 0.555, s * 0.176], r: [0, 0, 8 * DEG] }));
-  tanks.push(place(rbox(0.05, 0.03, 0.37, 0.008), { p: [0.33, 0.725, 0], r: [0, 0, 8 * DEG] }));
-  tanks.push(place(rbox(0.05, 0.03, 0.36, 0.008), { p: [0.375, 0.39, 0], r: [0, 0, 8 * DEG] }));
+  for (const s of [-1, 1]) tanks.push(radBox(0, 0.048, -0.212, 0.062, s > 0 ? 0.162 : -0.19, s > 0 ? 0.19 : -0.162, 1, false));
+  tanks.push(radBox(0, 0.048, 0.05, 0.075, -0.19, 0.19, 24));
+  tanks.push(radBox(0, 0.048, -0.222, -0.2, -0.19, 0.19, 24));
+  // brackets up to the frame and a slim bracket along each end tank's
+  // rear edge (the dark bar between the two openings of each vent)
+  for (const s of [-1, 1]) {
+    tanks.push(place(rbox(0.024, 0.05, 0.012, 0.004), { p: [0.386, 0.708, s * 0.1] }));
+    tanks.push(rod(v3(0.313, 0.55, s * 0.172), v3(0.339, 0.664, s * 0.172), 0.0055, 8));
+  }
   rad.add(mesh(merge(tanks), M.plastic, 'RadiatorTanks'));
-  // hoses
+  // hoses: top tank round over the vent to the thermostat on the head,
+  // bottom tank to the water pump on the left
+  const top = radPt(0.024, 0.062, 0.15);
+  const bot = radPt(0.024, -0.212, -0.15);
   const hoses = [
-    tube([v3(0.33, 0.7, 0.16), v3(0.29, 0.69, 0.16), v3(0.26, 0.62, 0.14)], 0.014, 16, 10),
-    tube([v3(0.37, 0.41, -0.17), v3(0.3, 0.33, -0.18), v3(0.21, 0.3, -0.18)], 0.014, 16, 10),
+    tube([top, v3(0.35, 0.69, 0.115), v3(0.29, 0.69, 0.1), v3(0.24, 0.655, 0.09)], 0.014, 20, 10),
+    tube([bot, v3(0.29, 0.36, -0.165), v3(0.22, 0.31, -0.17)], 0.014, 16, 10),
   ];
   rad.add(mesh(merge(hoses), M.rubber, 'CoolantHoses'));
   grp.add(rad);
@@ -196,16 +230,24 @@ export function buildExhaust(M) {
   grp.name = 'Exhaust';
   const headers = [];
   const zs = [-0.105, -0.035, 0.035, 0.105];
-  for (const zi of zs) {
-    const p0 = at(0.215, 0.065, zi);
+  // (v16: traced from the naked-chassis photo: out of the ports at
+  // (0.245, 0.556), down the front of the engine at x 0.25-0.30 and round
+  // under it, clear of the radiator, which sits well ahead of them)
+  // the four pipes fan out in the lower bend (seen from the side they
+  // spread over 6-9 cm there), tucked just under the radiator's bottom
+  for (const [k, zi] of zs.entries()) {
+    const p0 = at(0.215, 0.028, zi);
+    const fan = [0.022, 0.008, -0.008, -0.022][k];
     const pts = [
       p0,
-      p0.clone().add(v3(0.03, -0.025, 0)),
-      v3(0.336, 0.4, zi),
-      v3(0.338, 0.33, zi * 0.92),
-      v3(0.315, 0.255, zi * 0.82),
-      v3(0.265, 0.2, zi * 0.66),
-      v3(0.19, 0.198, zi * 0.45),
+      v3(0.266, 0.523, zi),
+      v3(0.279, 0.46, zi),
+      v3(0.282, 0.4, zi * 0.97),
+      v3(0.298 + 0.6 * fan, 0.34, zi * 0.93),
+      v3(0.31 + fan, 0.29, zi * 0.88),
+      v3(0.296 + fan, 0.25, zi * 0.8),
+      v3(0.262 + 0.5 * fan, 0.222, zi * 0.7),
+      v3(0.2, 0.2, zi * 0.5),
       v3(0.11, 0.197, zi * 0.28),
       v3(0.07, 0.198, zi * 0.2),
     ];

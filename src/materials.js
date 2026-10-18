@@ -13,7 +13,7 @@ export const LIVERIES = {
     stripeB: '#cfe03a', // yellow-green
     stripeC: '#c9ced3', // silver line
     stripeD: '#77797d', // graphite panel
-    lower: '#33363a', // lower fairing (dark graphite)
+    lower: '#4a4e53', // lower fairing (satin graphite; matched to the side photos' brightness)
     tankLogo: '#16181b',
     rim: '#62c02c',
     script: '#ffffff',
@@ -133,7 +133,9 @@ export function createMaterials() {
     disc: std({ color: '#74787c', roughness: 0.42, metalness: 1 }),
     alu: std({ color: '#a3a9b0', roughness: 0.38, metalness: 1 }),
     aluDark: std({ color: '#202226', roughness: 0.38, metalness: 0.75 }),
-    frame: phys({ color: '#1d1f23', roughness: 0.45, metalness: 0.45, clearcoat: 0.35, clearcoatRoughness: 0.3 }),
+    // cast aluminium frame and swingarm, black painted: reads dark grey in
+    // the studio photos (matched to the side photos' brightness)
+    frame: phys({ color: '#35383d', roughness: 0.45, metalness: 0.45, clearcoat: 0.35, clearcoatRoughness: 0.3 }),
     forkOuter: std({ color: '#1b1c1f', roughness: 0.32, metalness: 0.7 }),
     forkInner: std({ color: '#e8eaec', roughness: 0.05, metalness: 1 }),
     engine: std({ color: '#5b5f65', roughness: 0.5, metalness: 0.6 }),
