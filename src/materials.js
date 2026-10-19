@@ -130,7 +130,9 @@ export function createMaterials() {
     wheel: phys({ color: '#0c0c0d', roughness: 0.28, metalness: 0.35, clearcoat: 0.8, clearcoatRoughness: 0.08 }),
     chrome: std({ color: '#f2f4f6', roughness: 0.06, metalness: 1, side: THREE.DoubleSide }),
     steel: std({ color: '#c3c7cc', roughness: 0.3, metalness: 1 }),
-    disc: std({ color: '#74787c', roughness: 0.42, metalness: 1 }),
+    // (v19: machined stainless reads mid-light grey in the side photos,
+    // median 146 on the front disc's ring; it was 88)
+    disc: std({ color: '#b0b0ae', roughness: 0.36, metalness: 1 }),
     alu: std({ color: '#c0c5cb', roughness: 0.3, metalness: 1 }),
     aluDark: std({ color: '#202226', roughness: 0.38, metalness: 0.75 }),
     // cast aluminium frame and swingarm, black painted: reads dark grey in
@@ -146,11 +148,16 @@ export function createMaterials() {
     engineDark: std({ color: '#403e3d', roughness: 0.5, metalness: 0.5 }),
     engineBlack: std({ color: '#2b2c2f', roughness: 0.45, metalness: 0.35 }),
     caliper: std({ color: '#2b2d31', roughness: 0.42, metalness: 0.55 }),
-    chain: std({ color: '#3d3e41', roughness: 0.4, metalness: 0.95 }),
-    sprocket: std({ color: '#9ea3a9', roughness: 0.3, metalness: 1 }),
+    // (v19: plain steel plates read light grey in the photos; the rollers
+    // between them darker, so the links show instead of a dotted line)
+    chain: std({ color: '#8d9196', roughness: 0.42, metalness: 0.9 }),
+    chainPin: std({ color: '#45474b', roughness: 0.5, metalness: 0.8 }),
+    sprocket: std({ color: '#c6cace', roughness: 0.32, metalness: 1 }),
     exhaust: phys({ color: '#141517', roughness: 0.28, metalness: 0.65, clearcoat: 0.6 }),
     exhaustTip: std({ color: '#d7dade', roughness: 0.14, metalness: 1 }),
-    brushed: phys({ color: '#c9cdd1', roughness: 0.3, metalness: 1, clearcoat: 0.3, clearcoatRoughness: 0.2 }),
+    // (v19: warmer, so the canister reads neutral light grey like the side
+    // photo instead of picking up the studio's blue)
+    brushed: phys({ color: '#e0deda', roughness: 0.32, metalness: 1, clearcoat: 0.3, clearcoatRoughness: 0.2 }),
     // stainless headers, faintly heat-tinted (pale bronze-grey in the 3/4 photo)
     exhaustHot: std({ color: '#76716a', roughness: 0.36, metalness: 0.9 }),
     chamber: std({ color: '#a4a8ad', roughness: 0.38, metalness: 1 }),

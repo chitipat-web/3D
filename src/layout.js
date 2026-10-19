@@ -38,5 +38,7 @@ export const PIVOT = new THREE.Vector3(-0.137, 0.43, 0);
 export const CRANK = new THREE.Vector3(0.115, 0.375, 0);
 export const CYL_DIR = new THREE.Vector3(Math.sin(30 * DEG), Math.cos(30 * DEG), 0); // cylinder axis
 export const CYL_FWD = new THREE.Vector3(Math.cos(30 * DEG), -Math.sin(30 * DEG), 0); // normal to bank, forward
-export const SPROCKET_F = new THREE.Vector3(-0.068, 0.392, -0.098); // countershaft sprocket centre
+// (v19: centred in its cover, which puts the chain's upper run where the
+// naked-chassis photo shows it through the swing arm's window)
+export const SPROCKET_F = new THREE.Vector3(-0.06, 0.418, -0.098); // countershaft sprocket centre
 export const CHAIN_Z = -0.098;

@@ -25,7 +25,7 @@ function plate(pts, z, thick, holes = [], bevel = 0.0015) {
 // Box-section arm built from constant-x cross-sections: rounded rectangles in
 // the z-y plane spanning bot(x)..top(x) and zIn(x)..zOut(x). dent(x, y) pushes
 // the outer face in (cast scallops). Right side; mirror for the left.
-function sectionArm(xs, { top, bot, zIn, zOut, r = 0.012, dent = null, nFace = 10 }) {
+function sectionArm(xs, { top, bot, zIn, zOut, r = 0.012, dent = null, nFace = 10, bevel = null }) {
   const rings = xs.map((x) => {
     const y0 = bot(x);
     const y1 = top(x);
@@ -39,12 +39,17 @@ function sectionArm(xs, { top, bot, zIn, zOut, r = 0.012, dent = null, nFace = 1
         ring.push([x, cy + rr * Math.sin(a), cz + rr * Math.cos(a)]);
       }
     };
-    for (let k = 0; k <= nFace; k++) {
-      const y = y0 + rr + ((y1 - y0 - 2 * rr) * k) / nFace;
+    // (bevel: the top of the outer face chamfered in, so it catches the
+    // light as a bright band along the arm, as in the 3/4 photos)
+    const bv = bevel ? THREE.MathUtils.clamp(bevel(x), 0.004, (y1 - y0) * 0.4) : 0;
+    const nF = bevel ? nFace - 2 : nFace;
+    for (let k = 0; k <= nF; k++) {
+      const y = y0 + rr + ((y1 - rr - bv - y0 - rr) * k) / nF;
       ring.push([x, y, z1 - (dent ? dent(x, y) : 0)]);
     }
-    arc(z1 - rr, y1 - rr, 0);
-    ring.push([x, y1, z1 - rr], [x, y1 + 0.002, (z0 + z1) / 2], [x, y1, z0 + rr]);
+    if (bevel) ring.push([x, y1 - rr - bv * 0.5, z1 - bv * 0.375], [x, y1 - rr, z1 - bv * 0.75]);
+    arc(z1 - rr - bv * 0.75, y1 - rr, 0);
+    ring.push([x, y1, z1 - rr - bv * 0.75], [x, y1 + 0.002, (z0 + z1) / 2], [x, y1, z0 + rr]);
     arc(z0 + rr, y1 - rr, Math.PI / 2);
     for (let k = 0; k <= 3; k++) ring.push([x, y1 - rr - ((y1 - y0 - 2 * rr) * k) / 3, z0]);
     arc(z0 + rr, y0 + rr, Math.PI);
@@ -210,23 +215,48 @@ export function buildSwingarm(M) {
   grp.name = 'Swingarm';
   const parts = [];
   // Cast arms, side profile traced from the 2019 studio side photo: tall at
-  // the front (about 20 cm) with a scooped outer face, tapering to the axle.
-  // They sit inside the frame at the pivot and step out behind it.
-  const arm = sectionArm(
-    Array.from({ length: 27 }, (_, i) => -0.115 - (0.64 * i) / 26),
-    {
-      top: kf([[-0.115, 0.462], [-0.15, 0.496], [-0.2, 0.536], [-0.26, 0.566], [-0.32, 0.58], [-0.38, 0.581], [-0.44, 0.566], [-0.5, 0.538], [-0.56, 0.5], [-0.625, 0.448], [-0.68, 0.4], [-0.725, 0.362], [-0.755, 0.338]]),
-      bot: kf([[-0.115, 0.398], [-0.16, 0.388], [-0.22, 0.377], [-0.32, 0.36], [-0.42, 0.344], [-0.52, 0.327], [-0.62, 0.307], [-0.7, 0.29], [-0.755, 0.288]]),
-      zIn: kf([[-0.115, 0.07], [-0.2, 0.078], [-0.27, 0.108], [-0.34, 0.112], [-0.755, 0.112]]),
-      zOut: kf([[-0.115, 0.104], [-0.2, 0.107], [-0.27, 0.146], [-0.34, 0.151], [-0.6, 0.15], [-0.755, 0.146]]),
-      r: 0.014,
+  // the front (about 20 cm), tapering to the axle, the top of the outer face
+  // chamfered so it catches the light (3/4 photos). They sit inside the
+  // frame at the pivot and step out behind it.
+  const XS = (a, b, n) => Array.from({ length: n + 1 }, (_, i) => a + ((b - a) * i) / n);
+  const prof = {
+    top: kf([[-0.115, 0.462], [-0.15, 0.496], [-0.2, 0.536], [-0.26, 0.566], [-0.32, 0.58], [-0.38, 0.581], [-0.44, 0.566], [-0.5, 0.538], [-0.56, 0.5], [-0.625, 0.448], [-0.68, 0.4], [-0.725, 0.362], [-0.755, 0.338]]),
+    bot: kf([[-0.115, 0.398], [-0.16, 0.388], [-0.22, 0.377], [-0.32, 0.36], [-0.42, 0.344], [-0.52, 0.327], [-0.62, 0.307], [-0.7, 0.29], [-0.755, 0.288]]),
+    zIn: kf([[-0.115, 0.07], [-0.2, 0.078], [-0.27, 0.108], [-0.34, 0.112], [-0.755, 0.112]]),
+    zOut: kf([[-0.115, 0.104], [-0.2, 0.107], [-0.27, 0.146], [-0.34, 0.151], [-0.6, 0.15], [-0.755, 0.146]]),
+    r: 0.014,
+    bevel: kf([[-0.115, 0.01], [-0.3, 0.024], [-0.62, 0.02], [-0.755, 0.012]]),
+  };
+  // right arm: a shallow scoop in its outer face
+  parts.push(
+    sectionArm(XS(-0.115, -0.755, 26), {
+      ...prof,
       dent: (x, y) => {
         const e = ((x + 0.39) / 0.08) ** 2 + ((y - 0.462) / 0.048) ** 2;
         return e < 1 ? 0.011 * Math.pow(1 - e, 0.6) : 0;
       },
-    }
+    })
   );
-  parts.push(arm, mirrorZ(arm));
+  // left arm (v19, naked-chassis photo): the chain window, a rounded slot
+  // through the arm at x -0.478..-0.325, y 0.421..0.519, through which the
+  // chain's upper run shows; the arm is built round it as four pieces
+  {
+    const W0 = -0.325;
+    const W1 = -0.478;
+    const WM = 0.47;
+    const WH = 0.049;
+    const half = (x) => {
+      const d = Math.min(x - W1, W0 - x);
+      return d <= 0 ? 0 : d >= WH ? WH : Math.sqrt(WH * WH - (WH - d) ** 2);
+    };
+    const left = [
+      sectionArm(XS(-0.115, W0, 9), prof),
+      sectionArm(XS(W0, W1, 24), { ...prof, bot: (x) => WM + half(x) }),
+      sectionArm(XS(W0, W1, 24), { ...prof, top: (x) => WM - half(x), bevel: null }),
+      sectionArm(XS(W1, -0.755, 12), prof),
+    ];
+    parts.push(mirrorZ(merge(left)));
+  }
   // pivot tube
   parts.push(place(cyl(0.034, 0.034, 0.2, 24), { r: [Math.PI / 2, 0, 0], p: [PIVOT.x, PIVOT.y, 0] }));
   // cross member + linkage boss
@@ -246,41 +276,8 @@ export function buildSwingarm(M) {
   // chain slider / guard (black plastic) on the left
   const guard = [];
   guard.push(place(rbox(0.3, 0.012, 0.03, 0.004), { p: [-0.28, 0.452, -0.108], r: [0, 0, -0.14] }));
-  // rear hugger over the tyre
-  const hug = [];
-  const huggerRings = [];
-  for (let i = 0; i <= 10; i++) {
-    const a = (40 + (85 * i) / 10) * DEG;
-    const r = 0.345;
-    const ring = [];
-    for (let j = 0; j <= 8; j++) {
-      const z = -0.1 + (0.2 * j) / 8;
-      const lift = 0.012 * (1 - Math.pow(z / 0.1, 2));
-      ring.push([RA.x + (r + lift) * Math.cos(a), RA.y + (r + lift) * Math.sin(a), z]);
-    }
-    huggerRings.push(ring);
-  }
-  void hug;
   grp.add(mesh(merge(guard), M.plastic, 'ChainSlider'));
-  // rear hugger (inner fender) over the front-top of the tyre
-  {
-    const rings = [];
-    for (let i = 0; i <= 12; i++) {
-      const a = (58 + (70 * i) / 12) * DEG;
-      const ring = [];
-      for (let j = 0; j <= 6; j++) {
-        const z = -0.105 + (0.21 * j) / 6;
-        const r = 0.338 + 0.01 * (1 - Math.pow(z / 0.105, 2));
-        ring.push([RA.x + r * Math.cos(a), RA.y + r * Math.sin(a), z]);
-      }
-      rings.push(ring);
-    }
-    const hugger = loft(rings, { su: 2, sv: 2 });
-    // mounting arm down to the swing-arm
-    const arms = [];
-    for (const s of [-1, 1]) arms.push(sweep([v3(RA.x + 0.338 * Math.cos(1.05), RA.y + 0.338 * Math.sin(1.05), s * 0.1), v3(-0.5, 0.39, s * 0.115)], () => rrect(0.014, 0.008, 0.003, 1), { steps: 4, up: UP, spline: false }));
-    grp.add(mesh(merge([hugger, ...arms]), M.plastic, 'RearHugger'));
-  }
+  // (v19: no rear hugger: the 3/4 rear photo shows the top of the tyre bare)
   // chain guard: a blade over the upper run as it reaches the sprocket (left),
   // standing clear above the arm (traced from the side photo)
   {
@@ -294,7 +291,7 @@ export function buildSwingarm(M) {
     }
     grp.add(mesh(loft(rings, { su: 2, sv: 2 }), M.plastic, 'ChainGuard'));
   }
-  return { grp, huggerRings };
+  return { grp };
 }
 
 // External tangent points between two circles (upper/lower runs).
@@ -314,8 +311,9 @@ export function buildChain(M) {
   grp.name = 'Drive';
   const F = v3(SPROCKET_F.x, SPROCKET_F.y, 0);
   const R = v3(RA.x, RA.y, 0);
-  const rf = 0.0395; // 15T 525 pitch
-  const rr = 0.1045; // 43T
+  // pitch radii, 525 chain: 15T and 43T
+  const rf = 0.0382;
+  const rr = 0.1087;
   const t = tangentRuns(R, rr, F, rf);
   // build a closed polyline: rear sprocket arc (back side) -> run -> front arc -> run
   const pts = [];
@@ -347,6 +345,13 @@ export function buildChain(M) {
   while (b1 > b0) b1 -= Math.PI * 2;
   if (Math.cos((b0 + b1) / 2) < 0) b1 += Math.PI * 2;
   arc(F, rf, b0, b1, 16);
+  // lower run back to the rear sprocket, sagging with the chain's slack
+  // (v19: both side photos show it hanging below the straight line)
+  const lr0 = pts[pts.length - 1].clone();
+  for (let i = 1; i < 12; i++) {
+    const t = i / 12;
+    pts.push(lr0.clone().lerp(pts[0], t).add(v3(0, -0.015 * 4 * t * (1 - t), 0)));
+  }
   pts.push(pts[0].clone());
   // resample by pitch
   const pitch = 0.015875;
@@ -387,7 +392,7 @@ export function buildChain(M) {
     rollers.push(place(cyl(0.0051, 0.0051, 0.016, 6, true), { r: [Math.PI / 2, 0, 0], p: [r.p.x, r.p.y, CHAIN_Z] }));
   }
   grp.add(mesh(merge(plates), M.chain, 'ChainPlates'));
-  grp.add(mesh(merge(rollers), M.steel, 'ChainRollers'));
+  grp.add(mesh(merge(rollers), M.chainPin, 'ChainRollers'));
   // front sprocket (15T)
   const teeth = 15;
   const sp = [];

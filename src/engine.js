@@ -392,19 +392,28 @@ export function buildExhaust(M) {
   // underneath into a chamfered "beak" and finished with a polished rim
   // round a dark face and a rounded-triangle outlet (side, rear and rear 3/4
   // photos).
-  const A = v3(-0.548, 0.42, 0.176);
-  const B = v3(-0.88, 0.558, 0.176);
+  // (v19: re-traced from a close crop of the right-side photo: the canister
+  // tapers slightly, 17 cm deep at the front and 15.5 cm at the back, its
+  // top runs from (-0.65, 0.563) to (-0.83, 0.632) and its axis is 1 cm
+  // higher than before; at the back its top corner is cut away at 45 deg
+  // down to (-0.9, 0.565) and the face below stands upright to the bottom
+  // corner at (-0.907, 0.505); profiles are in units of the front section,
+  // scaled by Hs along the canister)
+  const A = v3(-0.548, 0.427, 0.176);
+  const B = v3(-0.878, 0.571, 0.176);
   const dir = B.clone().sub(A).normalize();
   const secA = new THREE.Vector3(0, 1, 0).addScaledVector(dir, -dir.y).normalize(); // section height axis
   const secB = new THREE.Vector3().crossVectors(dir, secA).normalize();
-  const sec = (k = 1) => rrect(0.172 * k, 0.122 * k, 0.034 * k, 4);
+  const H0 = 0.17;
+  const Hs = (s) => lerp(H0, 0.155, clamp(s / 0.38, 0, 1));
+  const prof = rrect(H0, 0.122, 0.034, 4);
   const S0 = 0.26;
   const C0 = A.clone().addScaledVector(dir, S0);
-  const body = sweep(segPts(A, C0, 10), () => sec(1), { steps: 10, up: v3(0, 1, 0), spline: false, caps: false });
-  // end: each section point runs on to the cut, longest at the top
-  const sEnd = kf([[-0.086, 0.3], [-0.062, 0.33], [-0.034, 0.37], [0.0, 0.384], [0.04, 0.383], [0.086, 0.376]]);
-  const at3 = (s, a, b) => A.clone().addScaledVector(dir, s).addScaledVector(secA, a).addScaledVector(secB, b);
-  const prof = sec(1);
+  const body = sweep(segPts(A, C0, 10), (t) => prof.map(([a, b]) => [(a * Hs(t * S0)) / H0, b]), { steps: 10, up: v3(0, 1, 0), spline: false, caps: false });
+  // end: each section point runs on to the cut (shortest at the top, where
+  // the corner is chamfered away)
+  const sEnd = kf([[-0.085, 0.357], [-0.06, 0.366], [-0.016, 0.378], [0.031, 0.361], [0.085, 0.347]]);
+  const at3 = (s, a, b) => A.clone().addScaledVector(dir, s).addScaledVector(secA, (a * Hs(s)) / H0).addScaledVector(secB, b);
   const endRings = [];
   for (let i = 0; i <= 8; i++) {
     const t = i / 8;
@@ -460,10 +469,24 @@ export function buildExhaust(M) {
   const F0 = v3(-0.405, 0.37, 0.172);
   const F1 = A.clone().addScaledVector(dir, 0.03);
   const cone = sweep(segPts(F0, F1, 10), (t) => {
-    const k = 0.6 + 0.42 * Math.pow(t, 0.8);
-    return sec(k);
+    // (ends 4.5% over the canister so the joint reads as a clean lip)
+    const k = 0.6 + 0.445 * Math.pow(t, 0.8);
+    return rrect(Hs(0.03) * k, 0.122 * k, 0.034 * k, 4);
   }, { steps: 10, up: v3(0, 1, 0), spline: false });
   grp.add(mesh(cone, M.engineBlack, 'SilencerCone'));
+  // black cover on the top of the canister, toward the wheel, from the cone
+  // back; its rear part lifts off as a thin blade, 2 cm clear of the top,
+  // and curls down at the tip over the chamfered corner (side photo: blade
+  // at (-0.78, 0.635) and (-0.825, 0.66), tip at (-0.853, 0.651); 3/4 photo)
+  const gapS = kf([[0.2, -0.003], [0.24, 0.004], [0.3, 0.015], [0.345, 0.021], [0.368, 0.014], [0.385, 0.002]]);
+  const cover = sweep(segPts(A.clone().addScaledVector(dir, 0.02), A.clone().addScaledVector(dir, 0.385), 24), (t) => {
+    const sc = lerp(0.02, 0.385, t);
+    const h = Hs(sc) / 2;
+    const w = lerp(0.105, 0.045, clamp((sc - 0.12) / 0.265, 0, 1));
+    const g = sc < 0.2 ? -0.003 : gapS(sc);
+    return rrect(0.007, w, 0.0025, 2).map(([a, b]) => [a + h + 0.0035 + g, b + 0.057 - w / 2]);
+  }, { steps: 24, up: v3(0, 1, 0), spline: false });
+  grp.add(mesh(cover, M.engineBlack, 'SilencerCover'));
   // hanger to the pillion footpeg bracket
   grp.add(mesh(rod(v3(-0.66, 0.565, 0.165), v3(-0.55, 0.615, 0.138), 0.009, 8), M.frame, 'SilencerHanger'));
   return grp;

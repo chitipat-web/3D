@@ -235,28 +235,58 @@ export function buildWheel(M, front) {
     const carrier = extrude(discCarrier(0.072, 0.03, 5), 0.008, 0.0008, 1, 6).translate(0, 0, 0.086);
     grp.add(mesh(discG, M.disc, 'RearDisc'));
     grp.add(mesh(carrier, M.aluDark, 'RearDiscCarrier'));
-    // sprocket (43T) on the left
+    // sprocket (43T) on the left (v19, side, naked and 3/4 photos): bright,
+    // ten rounded cut-outs between the hub ring and the teeth, the teeth cut
+    // round the chain's pitch circle so the rollers sit in their seats
     const teeth = 43;
     const pts = [];
-    const rr = 0.1045;
+    const rp = 0.1087; // pitch radius, 43T 525
+    const rRoot = rp - 0.0053;
+    const rTip = rp + 0.0062;
+    const pol = (r, a) => [r * Math.cos(a), r * Math.sin(a)];
     for (let i = 0; i < teeth; i++) {
       const a0 = (i / teeth) * Math.PI * 2;
       const da = (Math.PI * 2) / teeth;
-      pts.push([(rr - 0.007) * Math.cos(a0), (rr - 0.007) * Math.sin(a0)]);
-      pts.push([(rr + 0.002) * Math.cos(a0 + da * 0.32), (rr + 0.002) * Math.sin(a0 + da * 0.32)]);
-      pts.push([(rr + 0.002) * Math.cos(a0 + da * 0.55), (rr + 0.002) * Math.sin(a0 + da * 0.55)]);
-      pts.push([(rr - 0.007) * Math.cos(a0 + da * 0.85), (rr - 0.007) * Math.sin(a0 + da * 0.85)]);
+      pts.push(pol(rRoot + 0.0012, a0 - da * 0.13), pol(rRoot, a0), pol(rRoot + 0.0012, a0 + da * 0.13));
+      pts.push(pol(rp + 0.0012, a0 + da * 0.3), pol(rTip, a0 + da * 0.42), pol(rTip, a0 + da * 0.58), pol(rp + 0.0012, a0 + da * 0.7));
     }
-    const sHoles = [circlePts(0, 0, 0.042, 40, true)];
-    for (let k = 0; k < 6; k++) {
-      const a = ((k + 0.5) / 6) * Math.PI * 2;
-      sHoles.push(circlePts(0.07 * Math.cos(a), 0.07 * Math.sin(a), 0.014, 18, true));
-    }
+    // cut-out: rounded trapezoid between r 0.054 and 0.088 (clockwise, a hole)
+    const cutout = (ac) => {
+      const r1 = 0.054;
+      const r2 = 0.088;
+      const ho = 0.2;
+      const hi = 0.125;
+      const c = [pol(r2, ac + ho), pol(r1, ac + hi), pol(r1, ac - hi), pol(r2, ac - ho)];
+      const out = [];
+      for (let k = 0; k < 4; k++) {
+        const P = c[k];
+        const A = c[(k + 3) % 4];
+        const B = c[(k + 1) % 4];
+        const rc = 0.006;
+        const la = Math.hypot(A[0] - P[0], A[1] - P[1]);
+        const lb = Math.hypot(B[0] - P[0], B[1] - P[1]);
+        const pa = [P[0] + ((A[0] - P[0]) * rc) / la, P[1] + ((A[1] - P[1]) * rc) / la];
+        const pb = [P[0] + ((B[0] - P[0]) * rc) / lb, P[1] + ((B[1] - P[1]) * rc) / lb];
+        for (let j = 0; j <= 3; j++) {
+          const t = j / 3;
+          out.push([(1 - t) ** 2 * pa[0] + 2 * (1 - t) * t * P[0] + t * t * pb[0], (1 - t) ** 2 * pa[1] + 2 * (1 - t) * t * P[1] + t * t * pb[1]]);
+        }
+      }
+      return out;
+    };
+    const sHoles = [circlePts(0, 0, 0.044, 40, true)];
+    for (let k = 0; k < 10; k++) sHoles.push(cutout(((k + 0.5) / 10) * Math.PI * 2));
     const spr = extrude(shape(pts, sHoles), 0.006, 0.0005, 1, 4).translate(0, 0, -0.098);
     grp.add(mesh(spr, M.sprocket, 'RearSprocket'));
-    // sprocket carrier / cush drive
+    // sprocket carrier / cush drive (dark cast hub) with six bright nuts
     const cush = latheZ([[0.03, -0.096], [0.06, -0.096], [0.065, -0.09], [0.065, -0.07], [0.05, -0.065], [0.03, -0.065]], 40);
-    grp.add(mesh(cush, M.alu, 'CushDrive'));
+    grp.add(mesh(cush, M.aluDark, 'CushDrive'));
+    const nuts = [];
+    for (let k = 0; k < 6; k++) {
+      const a = (k / 6) * Math.PI * 2;
+      nuts.push(place(cyl(0.0055, 0.0055, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [0.049 * Math.cos(a), 0.049 * Math.sin(a), -0.103] }));
+    }
+    grp.add(mesh(merge(nuts), M.bolt, 'SprocketNuts'));
   }
   return grp;
 }
