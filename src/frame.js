@@ -110,6 +110,13 @@ export function buildFrame(M) {
       sweep([v3(-0.16, 0.7, s * 0.13), v3(-0.16, 0.56, s * 0.13), v3(-0.157, 0.44, s * 0.13), v3(-0.152, 0.335, s * 0.128)], (t) =>
         rrect(THREE.MathUtils.lerp(0.085, 0.095, t), 0.044, 0.014, 3), { steps: 24, up: v3(1, 0, 0) })
     );
+    // (v18: the naked-chassis photo shows the casting running on down below
+    // the pivot, narrowing, to a bolt at (-0.157, 0.256): the lower engine
+    // mount and the linkage's tie-rod mount)
+    parts.push(
+      sweep([v3(-0.152, 0.345, s * 0.128), v3(-0.156, 0.295, s * 0.127), v3(-0.159, 0.243, s * 0.126)], (t) =>
+        rrect(THREE.MathUtils.lerp(0.092, 0.06, t), THREE.MathUtils.lerp(0.044, 0.036, t), 0.014, 3), { steps: 12, up: v3(1, 0, 0) })
+    );
     // sub-frame / shock mount boss at the top rear corner
     parts.push(place(rbox(0.05, 0.045, 0.044, 0.01), { p: [-0.18, 0.705, s * 0.13], r: [0, 0, 0.3] }));
     // cast gusset joining the spar's rear end to the pivot section, up to
@@ -131,6 +138,7 @@ export function buildFrame(M) {
   // cross member behind the engine (shock top mount)
   parts.push(place(rbox(0.06, 0.07, 0.24, 0.01), { p: [-0.11, 0.625, 0] }));
   parts.push(place(rbox(0.05, 0.05, 0.24, 0.01), { p: [-0.15, 0.355, 0] }));
+  parts.push(place(rbox(0.035, 0.035, 0.24, 0.008), { p: [-0.16, 0.272, 0] }));
   grp.add(mesh(merge(parts), M.frame, 'MainFrame'));
 
   // ---- sub-frame (seat rails) and pillion peg hangers
@@ -182,11 +190,12 @@ export function buildFrame(M) {
   );
   // frame bolts seen in the side photos, all bright: the big bolt in the
   // gusset, the lower pivot boss, the sub-frame / hanger bolt, the gusset's
-  // front bolt and the front engine mount bolt; and the polished swing-arm
+  // front bolt, the front engine mount bolt and (v18) the two on the casting
+  // below the pivot; and the polished swing-arm
   // pivot caps (a round cap with a hex socket, 3/4 photo)
   const bolts = [];
   for (const s of [-1, 1]) {
-    for (const [x, y, z, r] of [[-0.181, 0.666, 0.155, 0.0115], [-0.198, 0.585, 0.153, 0.0105], [-0.31, 0.674, 0.144, 0.0105], [0.032, 0.605, 0.153, 0.009], [0.2, 0.522, 0.168, 0.012]]) {
+    for (const [x, y, z, r] of [[-0.181, 0.666, 0.155, 0.0115], [-0.198, 0.585, 0.153, 0.0105], [-0.31, 0.674, 0.144, 0.0105], [0.032, 0.605, 0.153, 0.009], [0.2, 0.522, 0.168, 0.012], [-0.157, 0.256, 0.146, 0.0085], [-0.157, 0.323, 0.152, 0.0105]]) {
       bolts.push(place(cyl(r, r, 0.008, 18), { r: [Math.PI / 2, 0, 0], p: [x, y, s * z] }));
       bolts.push(place(cyl(r * 0.6, r * 0.6, 0.01, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, s * (z + 0.002)] }));
     }
@@ -412,11 +421,17 @@ export function buildRearShock(M) {
     coil.push(v3(0.031 * Math.cos(a), h, 0.031 * Math.sin(a)).applyQuaternion(q).add(top));
   }
   grp.add(mesh(tube(coil, 0.0048, turns * 24, 8), M.engineDark, 'ShockSpring'));
-  // linkage plates
+  // Bottom-link Uni-Trak (v18): a triangular rocker under the swing arm
+  // carrying the shock's lower eye, and twin tie-rods forward to the
+  // frame's lower mount below the pivot (they fill the dark space under
+  // the pivot that both side photos show)
   const link = [];
-  link.push(beam(v3(-0.205, 0.37, 0.03), v3(-0.16, 0.31, 0.03), 0.01, 0.03));
-  link.push(beam(v3(-0.205, 0.37, -0.03), v3(-0.16, 0.31, -0.03), 0.01, 0.03));
-  link.push(beam(v3(-0.16, 0.31, 0), v3(-0.15, 0.36, 0), 0.05, 0.025));
+  const RK = [[-0.205, 0.372], [-0.256, 0.352], [-0.222, 0.31]];
+  for (const z of [-0.028, 0.028]) {
+    link.push(plate([[-0.2, 0.382], [-0.215, 0.384], [-0.262, 0.362], [-0.266, 0.346], [-0.232, 0.302], [-0.214, 0.302], [-0.198, 0.362]], z, 0.012, [], 0.002));
+  }
+  for (const z of [-0.046, 0.046]) link.push(beam(v3(RK[2][0], RK[2][1], z), v3(-0.16, 0.274, z), 0.012, 0.022));
+  for (const [x, y] of [...RK, [-0.16, 0.274]]) link.push(place(cyl(0.009, 0.009, 0.11, 14), { r: [Math.PI / 2, 0, 0], p: [x, y, 0] }));
   grp.add(mesh(merge(link), M.frame, 'Linkage'));
   return grp;
 }
@@ -445,18 +460,44 @@ export function buildFootControls(M) {
     };
     const holes = [slot(-0.362, 0.528, -0.338, 0.516, 0.0035), slot(-0.334, 0.505, -0.312, 0.494, 0.0035), slot(-0.321, 0.522, -0.302, 0.512, 0.0035)];
     alu.push(plate(outline, z, 0.01, holes, 0.0015));
-    // dark cast hanger from the plate's lower tip down to the peg pivot
-    hang.push(plate([[-0.247, 0.432], [-0.27, 0.426], [-0.309, 0.398], [-0.309, 0.378], [-0.288, 0.376], [-0.25, 0.408]], z - s * 0.004, 0.012, [], 0.002));
-    // footpeg (straight out, a touch swept back)
-    const pegA = v3(-0.296, 0.389, z + s * 0.005);
-    const pegB = v3(-0.312, 0.387, z + s * 0.085);
-    alu.push(rod(pegA, pegB, 0.011, 14));
-    rub.push(rod(pegA.clone().lerp(pegB, 0.35), pegB, 0.0125, 14));
-    // brake pedal (right) / gear lever (left), pivoting at the peg and
-    // reaching forward and down to the toe pad
-    const tip = v3(s > 0 ? -0.19 : -0.176, s > 0 ? 0.305 : 0.322, z + s * 0.03);
-    alu.push(sweep([v3(-0.296, 0.389, z + s * 0.012), v3(-0.245, 0.356, z + s * 0.018), tip], () => rrect(0.012, 0.01, 0.003, 2), { steps: 12, up: v3(0, 0, 1) }));
-    alu.push(rod(tip, tip.clone().add(v3(0, 0, s * 0.045)), 0.008, 10));
+    // its two bolts into the hanger
+    for (const [x, y] of [[-0.24, 0.455], [-0.262, 0.432]]) alu.push(place(cyl(0.006, 0.006, 0.005, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, z + s * 0.007] }));
+    // cast hanger (v18, traced through the 3/4 photo): two arms from
+    // the peg pivot forward to bolts on the frame's pivot section at
+    // (-0.197, 0.452) and (-0.185, 0.37), the heel plate on its upper arm
+    const hz = z - s * 0.004;
+    hang.push(plate([[-0.176, 0.466], [-0.205, 0.472], [-0.25, 0.452], [-0.283, 0.418], [-0.304, 0.398], [-0.304, 0.377], [-0.284, 0.37], [-0.2, 0.353], [-0.174, 0.36], [-0.17, 0.412]], hz, 0.012, [[[-0.202, 0.44], [-0.262, 0.408], [-0.205, 0.381]]], 0.002));
+    for (const [x, y] of [[-0.197, 0.452], [-0.185, 0.37]]) alu.push(place(cyl(0.0068, 0.0068, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, hz + s * 0.008] }));
+    // footpeg: swept back and up a little (3/4 photo), ribbed rubber, a
+    // bright pivot pin
+    const pegA = v3(-0.29, 0.39, z + s * 0.005);
+    const pegB = v3(-0.322, 0.4, z + s * 0.082);
+    const pegDir = pegB.clone().sub(pegA).normalize();
+    alu.push(rod(pegA, pegB, 0.0105, 14));
+    rub.push(rod(pegA.clone().lerp(pegB, 0.35), pegB, 0.0122, 14));
+    for (let i = 0; i < 5; i++) {
+      const ring = new THREE.TorusGeometry(0.0122, 0.0016, 6, 16);
+      ring.applyQuaternion(new THREE.Quaternion().setFromUnitVectors(v3(0, 0, 1), pegDir));
+      const c = pegA.clone().lerp(pegB, 0.42 + 0.13 * i);
+      ring.translate(c.x, c.y, c.z);
+      rub.push(ring);
+    }
+    alu.push(place(cyl(0.0055, 0.0055, 0.034, 10), { p: [pegA.x, pegA.y, pegA.z + s * 0.008] }));
+    if (s > 0) {
+      // brake pedal: a straight flat polished bar down and forward to a
+      // serrated toe pad (3/4 photo)
+      const p0 = v3(-0.29, 0.39, z + s * 0.017);
+      const p1 = v3(-0.2, 0.319, z + s * 0.024);
+      alu.push(sweep([p0, p1], () => rrect(0.006, 0.016, 0.002, 2), { steps: 2, up: v3(0, 0, 1), spline: false }));
+      alu.push(place(rbox(0.032, 0.012, 0.042, 0.003), { p: [-0.197, 0.317, z + s * 0.042], r: [0, 0, -0.12] }));
+      for (let k = 0; k < 5; k++) black.push(place(rbox(0.0024, 0.002, 0.036, 0.0008), { p: [-0.209 + 0.006 * k, 0.3245 - 0.0007 * k, z + s * 0.042], r: [0, 0, -0.12] }));
+    } else {
+      // gear lever, forward and down to its rubber toe peg
+      const tip = v3(-0.176, 0.322, z + s * 0.03);
+      alu.push(sweep([v3(-0.29, 0.39, z + s * 0.012), v3(-0.24, 0.358, z + s * 0.018), tip], () => rrect(0.012, 0.01, 0.003, 2), { steps: 12, up: v3(0, 0, 1) }));
+      alu.push(rod(tip, tip.clone().add(v3(0, 0, s * 0.012)), 0.008, 10));
+      rub.push(rod(tip.clone().add(v3(0, 0, s * 0.012)), tip.clone().add(v3(0, 0, s * 0.048)), 0.0095, 12));
+    }
   }
   // rear brake fluid reservoir on the right (v17: right-side and 3/4
   // photos): a pale translucent cup in front of the frame's pivot section,
@@ -469,9 +510,15 @@ export function buildFootControls(M) {
   // (the hose drops inside the frame's pivot section, out of sight)
   black.push(tube([v3(-0.072, 0.512, 0.145), v3(-0.1, 0.475, 0.1), v3(-0.2, 0.405, 0.098), v3(-0.245, 0.375, 0.13), v3(-0.255, 0.367, 0.148)], 0.0042, 24, 8));
   black.push(place(cyl(0.011, 0.011, 0.05, 12), { r: [0, 0, 1.1], p: [-0.262, 0.362, 0.152] }));
-  // gear-change linkage rod (left): from the lever up to the shift arm
-  black.push(rod(v3(-0.232, 0.348, -0.182), v3(-0.095, 0.418, -0.178), 0.004, 8));
-  black.push(place(cyl(0.008, 0.008, 0.012, 12), { r: [Math.PI / 2, 0, 0], p: [-0.095, 0.418, -0.176] }));
+  // gear-change linkage (v18, left and naked-chassis photos): a short rod
+  // from the lever's front end, nearly level, forward to the shift arm on
+  // the gearbox shaft just under the sprocket cover, with bright rod ends
+  const g0 = v3(-0.19, 0.327, -0.176);
+  const g1 = v3(-0.098, 0.333, -0.18);
+  alu.push(rod(g0, g1, 0.0045, 8));
+  for (const p of [g0, g1]) alu.push(place(new THREE.SphereGeometry(0.0075, 10, 8), { p: [p.x, p.y, p.z] }));
+  alu.push(rod(g1, v3(-0.082, 0.35, -0.178), 0.0055, 8));
+  black.push(place(cyl(0.009, 0.009, 0.012, 12), { r: [Math.PI / 2, 0, 0], p: [-0.082, 0.35, -0.172] }));
   // side stand (left, folded): pivot bolt under the engine at x -0.14, the
   // leg tucked up level with the chain's lower run (left photo)
   black.push(sweep([v3(-0.143, 0.266, -0.15), v3(-0.27, 0.274, -0.165), v3(-0.385, 0.281, -0.17)], (t) => rrect(0.02, 0.016, 0.005, 2), { steps: 10, up: UP }));
@@ -480,7 +527,9 @@ export function buildFootControls(M) {
   grp.add(mesh(merge(alu), M.alu, 'Rearsets'));
   grp.add(mesh(merge(rub), M.rubber, 'PegRubbers'));
   grp.add(mesh(merge(cup), M.fluidCup, 'RearReservoir'));
-  grp.add(mesh(merge(hang), M.aluDark, 'RearsetHangers'));
+  // (cast, painted like the frame: in the side photos the hangers blend
+  // into the frame behind them)
+  grp.add(mesh(merge(hang), M.frame, 'RearsetHangers'));
   grp.add(mesh(merge(black), M.frame, 'SideStand'));
   return grp;
 }

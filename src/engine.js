@@ -119,11 +119,13 @@ export function buildEngine(M) {
   const rims = [];
   // each bolt sits on a cast boss on the cover's rim, which gives the
   // covers their scalloped outline (3/4 photo)
-  const cover = (cx, cy, z0, r, depth, sd, nBolts = 0, boltR = r * 1.07, boss = 0.38, a0 = 0.2) => {
+  const cover = (cx, cy, z0, r, depth, sd, nBolts = 0, boltR = r * 1.07, boss = 0.38, a0 = 0.2, rimmed = true) => {
     covers.push(sideCover(cx, cy, z0, r, depth, sd, boss));
-    const rim = new THREE.TorusGeometry(r * 0.93, 0.0026, 6, 64);
-    rim.translate(cx, cy, z0 + sd * depth * 0.7);
-    rims.push(rim);
+    if (rimmed) {
+      const rim = new THREE.TorusGeometry(r * 0.93, 0.0026, 6, 64);
+      rim.translate(cx, cy, z0 + sd * depth * 0.7);
+      rims.push(rim);
+    }
     for (let k = 0; k < nBolts; k++) {
       const a = (k / nBolts) * Math.PI * 2 + a0;
       const bx = cx + boltR * Math.cos(a);
@@ -140,12 +142,14 @@ export function buildEngine(M) {
   const CL = { x: -0.025, y: 0.378 };
   const CR = 0.083;
   const clutchZ = cover(CL.x, CL.y, 0.155, CR, 0.04, 1, 12, CR * 1.035, 0.2);
-  // crank-end: a broad low casting carrying the two plugs, with the round
-  // pickup cover standing out of its upper part (right-side and 3/4
-  // photos: six bolts on bosses round it, a small bolt in the middle)
-  const crankZ = cover(0.092, 0.464, 0.155, 0.072, 0.022, 1, 0, 0, 0.3);
-  cover(0.088, 0.482, 0.155, 0.048, 0.04, 1, 6, 0.05, 0.3, 0.5);
-  bolts.push(place(cyl(0.0055, 0.0055, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [0.088, 0.482, 0.155 + 0.04 + 0.002] }));
+  // crank end (v18, edge map of the right-side photo and the 3/4 photo): a
+  // broad low casting whose rim runs from x 0.035 to 0.177 and up to
+  // y 0.531, with the two plugs low on its rear side and, on its upper rear
+  // part, a raised round cover standing well out (centre bolt at
+  // (0.09, 0.497) in the side photo), scalloped by eight bolt bosses
+  const crankZ = cover(0.106, 0.46, 0.155, 0.071, 0.02, 1, 0, 0, 0.3, 0, false);
+  cover(0.092, 0.492, 0.155, 0.038, 0.042, 1, 8, 0.0395, 0.26, 1.18);
+  bolts.push(place(cyl(0.0055, 0.0055, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [0.092, 0.492, 0.155 + 0.042 + 0.002] }));
   cover(0.13, 0.43, -0.155, 0.07, 0.034, -1, 8, 0.0725, 0.3);
   // clutch cover: six short radial ribs following the dome
   for (let k = 0; k < 6; k++) {
@@ -176,6 +180,9 @@ export function buildEngine(M) {
   // crank-end cover: timing and crank-turning plugs
   for (const [x, y] of [[0.081, 0.412], [0.106, 0.406]]) black.push(place(cyl(0.0105, 0.0105, 0.01, 18), { r: [Math.PI / 2, 0, 0], p: [x, y, crankZ(x, y) + 0.002] }));
   // hoses and wiring round the engine (black rubber), as seen in the photos
+  // (v18: the right-side photo shows a thick dark hose curving up from
+  // behind the crank-end casting to the radiator, ahead of the cylinders)
+  engineHoses.push(tube([v3(0.15, 0.425, 0.115), v3(0.19, 0.452, 0.12), v3(0.225, 0.484, 0.12), v3(0.255, 0.52, 0.115), v3(0.285, 0.565, 0.108), v3(0.315, 0.6, 0.1)], 0.014, 40, 12));
   engineHoses.push(
     tube([v3(0.24, 0.47, -0.15), v3(0.2, 0.53, -0.16), v3(0.12, 0.56, -0.162), v3(0.04, 0.55, -0.158)], 0.012, 28, 10),
     tube([v3(-0.1, 0.56, 0.12), v3(-0.06, 0.52, 0.16), v3(0.0, 0.505, 0.172), v3(0.05, 0.53, 0.168)], 0.005, 24, 8),
@@ -202,6 +209,11 @@ export function buildEngine(M) {
   silver.push(place(cyl(0.04, 0.04, 0.03, 24), { r: [Math.PI / 2, 0, 0], p: [0.19, 0.25 + dy, -0.15] }));
   // throttle bodies / intake (behind the head, mostly hidden)
   for (const z of [-0.105, -0.035, 0.035, 0.105]) black.push(rod(at(0.26, -0.07, z), at(0.37, -0.12, z), 0.019, 14));
+  // dark engine internals behind the cylinders and under the air box
+  // (throttle bodies, wiring, upper case): in both side photos this is
+  // dark, not open to the background
+  black.push(place(rbox(0.25, 0.075, 0.2, 0.01), { p: [0.012, 0.565, 0] }));
+  black.push(place(rbox(0.09, 0.065, 0.18, 0.01), { p: [0.135, 0.528, 0] }));
   // starter motor: bright cast body across the top of the upper case, just
   // under the frame casting (silver in both side photos)
   silver.push(place(cyl(0.029, 0.029, 0.13, 20), { r: [Math.PI / 2, 0, 0], p: [-0.045, 0.553, 0.035] }));
@@ -349,7 +361,10 @@ export function buildExhaust(M) {
     buildPanel({
       // (v14: re-traced lower at the back, where it stays level down to
       // y 0.21 in front of the tyre; a lower step in front over the collector)
-      outline: [[-0.06, 0.302, 1], [-0.15, 0.298], [-0.205, 0.295, 1], [-0.228, 0.306], [-0.248, 0.322, 1], [-0.3, 0.33], [-0.37, 0.328], [-0.42, 0.319], [-0.445, 0.303, 1], [-0.455, 0.27], [-0.449, 0.235], [-0.432, 0.214, 1], [-0.36, 0.205], [-0.25, 0.198], [-0.15, 0.193], [-0.06, 0.193, 1]],
+      // (v18: behind the pedal it rises to just under the swing arm, as in
+      // the right-side photo; through the gap under the swing arm the left
+      // photo shows it too)
+      outline: [[-0.06, 0.302, 1], [-0.15, 0.298], [-0.205, 0.295, 1], [-0.228, 0.31], [-0.25, 0.336, 1], [-0.29, 0.36], [-0.34, 0.362], [-0.385, 0.346], [-0.42, 0.321], [-0.445, 0.303, 1], [-0.455, 0.27], [-0.449, 0.235], [-0.432, 0.214, 1], [-0.36, 0.205], [-0.25, 0.198], [-0.15, 0.193], [-0.06, 0.193, 1]],
       surface: (x, y) => 0.13 + 0.1 * clamp((-0.08 - x) / 0.34, 0, 1) - 0.5 * (y - 0.265) ** 2,
       roll: 0.006, flange: 0.014, spacing: 0.012,
     })
