@@ -117,18 +117,16 @@ export function buildFrame(M) {
     // -0.05 below the side cover's silver line, with a big bolt at
     // (-0.18, 0.665); the naked-chassis photo agrees)
     parts.push(plate([[-0.214, 0.732], [-0.15, 0.75], [-0.09, 0.742], [-0.035, 0.72], [0.035, 0.69], [0.052, 0.6], [0.025, 0.586], [-0.05, 0.576], [-0.095, 0.567], [-0.118, 0.552], [-0.2, 0.6]], s * 0.141, 0.02, [], 0.004));
-    parts.push(place(cyl(0.009, 0.009, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [0.032, 0.605, s * 0.153] }));
-    parts.push(place(cyl(0.012, 0.012, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [-0.181, 0.665, s * 0.153] }));
+
     // front engine hanger: cast plate under the spar down to the head mount,
     // just outside the cylinder head (v16: re-traced from the naked-chassis
     // photo; its front edge is the rear edge of the see-through gap behind
     // the radiator)
     parts.push(plate([[0.268, 0.555], [0.278, 0.578], [0.288, 0.6], [0.298, 0.62], [0.31, 0.64], [0.322, 0.66], [0.336, 0.674], [0.356, 0.688], [0.372, 0.718], [0.33, 0.738], [0.27, 0.724], [0.236, 0.672], [0.214, 0.62], [0.196, 0.565], [0.186, 0.528], [0.198, 0.506], [0.226, 0.51], [0.25, 0.53]], s * 0.158, 0.016, [], 0.003));
-    // engine mount bolt through the hanger's lower end
-    parts.push(place(cyl(0.013, 0.013, 0.006, 12), { r: [Math.PI / 2, 0, 0], p: [0.2, 0.522, s * 0.168] }));
+
     parts.push(beam(v3(-0.13, 0.42, s * 0.13), v3(-0.03, 0.28, s * 0.14), 0.022, 0.035));
-    // pivot bolt head
-    parts.push(place(cyl(0.024, 0.024, 0.012, 6), { r: [Math.PI / 2, 0, 0], p: [PIVOT.x, PIVOT.y, s * 0.157] }));
+    // dark hex socket in the polished swing-arm pivot cap (see FrameBolts)
+    parts.push(place(cyl(0.0075, 0.0075, 0.004, 6), { r: [Math.PI / 2, 0, 0], p: [PIVOT.x, PIVOT.y, s * 0.1675] }));
   }
   // cross member behind the engine (shock top mount)
   parts.push(place(rbox(0.06, 0.07, 0.24, 0.01), { p: [-0.11, 0.625, 0] }));
@@ -182,14 +180,17 @@ export function buildFrame(M) {
       'InnerFender'
     )
   );
-  // frame bolts seen in the side photos: pivot-section top boss, lower
-  // pivot boss and the sub-frame / hanger bolt
+  // frame bolts seen in the side photos, all bright: the big bolt in the
+  // gusset, the lower pivot boss, the sub-frame / hanger bolt, the gusset's
+  // front bolt and the front engine mount bolt; and the polished swing-arm
+  // pivot caps (a round cap with a hex socket, 3/4 photo)
   const bolts = [];
   for (const s of [-1, 1]) {
-    for (const [x, y, z] of [[-0.18, 0.668, 0.155], [-0.198, 0.585, 0.153], [-0.31, 0.674, 0.144]]) {
-      bolts.push(place(cyl(0.0105, 0.0105, 0.008, 18), { r: [Math.PI / 2, 0, 0], p: [x, y, s * z] }));
-      bolts.push(place(cyl(0.006, 0.006, 0.01, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, s * (z + 0.002)] }));
+    for (const [x, y, z, r] of [[-0.181, 0.666, 0.155, 0.0115], [-0.198, 0.585, 0.153, 0.0105], [-0.31, 0.674, 0.144, 0.0105], [0.032, 0.605, 0.153, 0.009], [0.2, 0.522, 0.168, 0.012]]) {
+      bolts.push(place(cyl(r, r, 0.008, 18), { r: [Math.PI / 2, 0, 0], p: [x, y, s * z] }));
+      bolts.push(place(cyl(r * 0.6, r * 0.6, 0.01, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, s * (z + 0.002)] }));
     }
+    bolts.push(place(cyl(0.0205, 0.0215, 0.009, 28), { r: [Math.PI / 2, 0, 0], p: [PIVOT.x, PIVOT.y, s * 0.1615] }));
   }
   grp.add(mesh(merge(bolts), M.bolt, 'FrameBolts'));
   return grp;
@@ -457,11 +458,17 @@ export function buildFootControls(M) {
     alu.push(sweep([v3(-0.296, 0.389, z + s * 0.012), v3(-0.245, 0.356, z + s * 0.018), tip], () => rrect(0.012, 0.01, 0.003, 2), { steps: 12, up: v3(0, 0, 1) }));
     alu.push(rod(tip, tip.clone().add(v3(0, 0, s * 0.045)), 0.008, 10));
   }
-  // rear brake fluid reservoir on the right, behind the frame's pivot
-  // section, with its hose down to the master cylinder (right photo)
-  black.push(place(cyl(0.021, 0.021, 0.036, 16), { r: [Math.PI / 2, 0, 0], p: [-0.276, 0.586, 0.118] }));
-  black.push(place(cyl(0.017, 0.017, 0.008, 16), { r: [Math.PI / 2, 0, 0], p: [-0.276, 0.586, 0.139] }));
-  black.push(tube([v3(-0.27, 0.565, 0.118), v3(-0.262, 0.48, 0.13), v3(-0.25, 0.4, 0.15)], 0.004, 16, 6));
+  // rear brake fluid reservoir on the right (v17: right-side and 3/4
+  // photos): a pale translucent cup in front of the frame's pivot section,
+  // above the crankcase, on a black bracket, with a black cap; its hose runs
+  // down and back to the master cylinder behind the brake pedal
+  const cup = [];
+  cup.push(place(rbox(0.044, 0.03, 0.024, 0.006), { p: [-0.082, 0.527, 0.15] }));
+  black.push(place(rbox(0.03, 0.007, 0.02, 0.003), { p: [-0.086, 0.545, 0.15] }));
+  black.push(place(rbox(0.012, 0.036, 0.006, 0.002), { p: [-0.108, 0.53, 0.137] }));
+  // (the hose drops inside the frame's pivot section, out of sight)
+  black.push(tube([v3(-0.072, 0.512, 0.145), v3(-0.1, 0.475, 0.1), v3(-0.2, 0.405, 0.098), v3(-0.245, 0.375, 0.13), v3(-0.255, 0.367, 0.148)], 0.0042, 24, 8));
+  black.push(place(cyl(0.011, 0.011, 0.05, 12), { r: [0, 0, 1.1], p: [-0.262, 0.362, 0.152] }));
   // gear-change linkage rod (left): from the lever up to the shift arm
   black.push(rod(v3(-0.232, 0.348, -0.182), v3(-0.095, 0.418, -0.178), 0.004, 8));
   black.push(place(cyl(0.008, 0.008, 0.012, 12), { r: [Math.PI / 2, 0, 0], p: [-0.095, 0.418, -0.176] }));
@@ -472,6 +479,7 @@ export function buildFootControls(M) {
   black.push(place(cyl(0.017, 0.017, 0.03, 16), { r: [Math.PI / 2, 0, 0], p: [-0.143, 0.268, -0.145] }));
   grp.add(mesh(merge(alu), M.alu, 'Rearsets'));
   grp.add(mesh(merge(rub), M.rubber, 'PegRubbers'));
+  grp.add(mesh(merge(cup), M.fluidCup, 'RearReservoir'));
   grp.add(mesh(merge(hang), M.aluDark, 'RearsetHangers'));
   grp.add(mesh(merge(black), M.frame, 'SideStand'));
   return grp;

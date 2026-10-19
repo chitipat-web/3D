@@ -118,8 +118,8 @@ export function createMaterials() {
     // ---- plastics, rubber, trim
     plastic: std({ color: '#121315', roughness: 0.62, metalness: 0.0, side: THREE.DoubleSide }),
     plasticGloss: phys({ color: '#0d0e10', roughness: 0.25, metalness: 0.1, clearcoat: 0.6, side: THREE.DoubleSide }),
-    rubber: std({ color: '#141414', roughness: 0.9, metalness: 0 }),
-    fluidCup: std({ color: '#e4dfcf', roughness: 0.35, metalness: 0 }),
+    rubber: std({ color: '#1b1b1c', roughness: 0.75, metalness: 0 }),
+    fluidCup: std({ color: '#d2ccbc', roughness: 0.45, metalness: 0 }),
     // back wall of the fairing vents: reads as a shadowed cavity
     ventDark: std({ color: '#060607', roughness: 0.9, metalness: 0, side: THREE.DoubleSide }),
     tire: std({ color: '#161616', roughness: 0.82, metalness: 0 }),
@@ -131,18 +131,20 @@ export function createMaterials() {
     chrome: std({ color: '#f2f4f6', roughness: 0.06, metalness: 1, side: THREE.DoubleSide }),
     steel: std({ color: '#c3c7cc', roughness: 0.3, metalness: 1 }),
     disc: std({ color: '#74787c', roughness: 0.42, metalness: 1 }),
-    alu: std({ color: '#a3a9b0', roughness: 0.38, metalness: 1 }),
+    alu: std({ color: '#c0c5cb', roughness: 0.3, metalness: 1 }),
     aluDark: std({ color: '#202226', roughness: 0.38, metalness: 0.75 }),
     // cast aluminium frame and swingarm, black painted: reads dark grey in
     // the studio photos (matched to the side photos' brightness)
-    frame: phys({ color: '#35383d', roughness: 0.45, metalness: 0.45, clearcoat: 0.35, clearcoatRoughness: 0.3 }),
+    frame: phys({ color: '#3b3a3b', roughness: 0.45, metalness: 0.45, clearcoat: 0.35, clearcoatRoughness: 0.3 }),
     forkOuter: std({ color: '#1b1c1f', roughness: 0.32, metalness: 0.7 }),
     forkInner: std({ color: '#e8eaec', roughness: 0.05, metalness: 1 }),
-    engine: std({ color: '#5b5f65', roughness: 0.5, metalness: 0.6 }),
+    engine: std({ color: '#53565b', roughness: 0.5, metalness: 0.6 }),
     // cast side covers (alternator, clutch): warm satin metallic gray, as in the photos
-    engineCover: std({ color: '#8d8f91', roughness: 0.38, metalness: 0.8 }),
-    engineDark: std({ color: '#383b40', roughness: 0.5, metalness: 0.5 }),
-    engineBlack: std({ color: '#1a1b1e', roughness: 0.45, metalness: 0.35 }),
+    // cast covers: satin silver with a warm cast (photos), domed so they
+    // catch graded highlights
+    engineCover: std({ color: '#948f88', roughness: 0.3, metalness: 0.85 }),
+    engineDark: std({ color: '#403e3d', roughness: 0.5, metalness: 0.5 }),
+    engineBlack: std({ color: '#2b2c2f', roughness: 0.45, metalness: 0.35 }),
     caliper: std({ color: '#2b2d31', roughness: 0.42, metalness: 0.55 }),
     chain: std({ color: '#3d3e41', roughness: 0.4, metalness: 0.95 }),
     sprocket: std({ color: '#9ea3a9', roughness: 0.3, metalness: 1 }),
@@ -159,13 +161,13 @@ export function createMaterials() {
 
     // ---- glass and lights
     screen: phys({ color: '#c3ccd2', roughness: 0.03, metalness: 0, transparent: true, opacity: 0.2, side: THREE.DoubleSide, depthWrite: false }),
-    lens: phys({ color: '#ffffff', roughness: 0.02, metalness: 0, transparent: true, opacity: 0.28, side: THREE.DoubleSide, depthWrite: false }),
+    lens: phys({ color: '#ffffff', roughness: 0.02, metalness: 0, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false }),
     lensRed: phys({ color: '#b3121b', roughness: 0.08, metalness: 0, transparent: true, opacity: 0.75, side: THREE.DoubleSide }),
     // faceted chrome reflector: semi-gloss so it reads bright silver in the
     // studio light from any angle, as in the photos
     headlightInner: std({ color: '#eef1f4', roughness: 0.26, metalness: 0.72, map: facetTexture(), side: THREE.DoubleSide }),
     // headlight reflector: polished, flat-shaded facets; faintly lit with the lights on
-    lampFacets: std({ color: '#e9edf2', roughness: 0.12, metalness: 1, emissive: '#dfe9ff', emissiveIntensity: 0.18, side: THREE.DoubleSide }),
+    lampFacets: std({ color: '#e9edf2', roughness: 0.08, metalness: 1, emissive: '#dfe9ff', emissiveIntensity: 0.08, side: THREE.DoubleSide }),
     led: std({ color: '#ffffff', emissive: '#e9f3ff', emissiveIntensity: 2.4, roughness: 0.3 }),
     ledRed: std({ color: '#ff2a2a', emissive: '#ff1010', emissiveIntensity: 1.6, roughness: 0.4 }),
     amber: std({ color: '#ffae2a', emissive: '#ff8c00', emissiveIntensity: 0.25, roughness: 0.3 }),

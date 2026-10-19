@@ -15,9 +15,9 @@ function finTexture() {
   c.width = 256;
   c.height = 256;
   const g = c.getContext('2d');
-  g.fillStyle = '#2a2b2e';
+  g.fillStyle = '#3b3d41';
   g.fillRect(0, 0, 256, 256);
-  g.fillStyle = '#0c0c0d';
+  g.fillStyle = '#141516';
   for (let x = 0; x < 256; x += 4) g.fillRect(x, 0, 2, 256);
   g.fillStyle = 'rgba(0,0,0,0.6)';
   for (let y = 0; y < 256; y += 16) g.fillRect(0, y, 256, 3);
@@ -29,13 +29,24 @@ function finTexture() {
 }
 
 // Cast engine side cover facing +z (s = 1) or -z (s = -1): straight wall,
-// chamfered edge, flat face with a low central boss.
+// rounded shoulder and a domed face rising to a low central boss (v17: the
+// real covers bulge, which is what gives them their graded, bright
+// highlights in the studio photos; a flat face lit evenly read as a grey
+// disc). coverFace(rho, boss) is the face height (fraction of depth) at
+// rho = distance from the centre / r.
+const coverFace = (rho, boss) => {
+  if (rho >= 0.9) return 0.66 - 0.8 * (rho - 0.9);
+  const t = clamp((0.9 - rho) / (0.9 - boss - 0.04), 0, 1);
+  return 0.66 + 0.26 * Math.sin((t * Math.PI) / 2) + (rho < boss ? 0.06 : 0);
+};
 function sideCover(cx, cy, z0, r, depth, s, boss = 0.38) {
-  const prof = [
-    [r, 0], [r, depth * 0.55], [r * 0.97, depth * 0.72], [r * 0.9, depth * 0.78], [r * (boss + 0.04), depth * 0.8], [r * boss, depth * 0.9], [r * boss * 0.8, depth * 0.93],
-    [0.0001, depth * 0.93],
-  ];
-  const g = latheZ(prof, 48);
+  const prof = [[r, 0], [r, depth * 0.42], [r * 0.985, depth * 0.53], [r * 0.95, depth * 0.61], [r * 0.9, depth * 0.66]];
+  for (let i = 1; i <= 10; i++) {
+    const rho = 0.9 - (0.9 - boss - 0.04) * (i / 10);
+    prof.push([r * rho, depth * coverFace(rho, boss)]);
+  }
+  prof.push([r * boss, depth * 0.94], [r * boss * 0.97, depth * 0.98], [r * boss * 0.8, depth], [0.0001, depth]);
+  const g = latheZ(prof, 64);
   if (s < 0) g.scale(1, 1, -1).index && flipIdx(g);
   g.translate(cx, cy, z0);
   return g;
@@ -60,13 +71,14 @@ export function buildEngine(M) {
   const silver = [];
   const black = [];
   const bolts = [];
+  const engineHoses = [];
 
   // crankcase (side profile extruded across the engine)
   // (v16: the upper case rises behind the cylinders, filling the opening
   // under the frame casting that both side photos show)
   const caseProfile = [
-    [0.225, 0.2], [0.247, 0.255], [0.248, 0.33], [0.232, 0.395], [0.2, 0.432], [0.12, 0.452], [0.06, 0.47], [0.03, 0.505], [-0.04, 0.518],
-    [-0.09, 0.497], [-0.113, 0.45], [-0.115, 0.37], [-0.105, 0.27], [-0.07, 0.205], [-0.02, 0.19], [0.18, 0.19],
+    [0.225, 0.2], [0.247, 0.255], [0.248, 0.33], [0.232, 0.395], [0.2, 0.432], [0.12, 0.452], [0.06, 0.47], [0.03, 0.505], [-0.04, 0.515],
+    [-0.065, 0.475], [-0.1, 0.46], [-0.113, 0.43], [-0.115, 0.37], [-0.105, 0.27], [-0.07, 0.205], [-0.02, 0.19], [0.18, 0.19],
   ];
   // (its lower edge is chamfered in, as on the real cases, so the lower
   // fairing's tucked-under skin clears it)
@@ -105,42 +117,86 @@ export function buildEngine(M) {
   // alternator cover. Satin cast finish, machined rims, bolt circles.
   const covers = [];
   const rims = [];
-  const cover = (cx, cy, z0, r, depth, sd, nBolts = 0, boltR = r * 1.07, boss = 0.38) => {
+  // each bolt sits on a cast boss on the cover's rim, which gives the
+  // covers their scalloped outline (3/4 photo)
+  const cover = (cx, cy, z0, r, depth, sd, nBolts = 0, boltR = r * 1.07, boss = 0.38, a0 = 0.2) => {
     covers.push(sideCover(cx, cy, z0, r, depth, sd, boss));
-    const rim = new THREE.TorusGeometry(r * 0.93, 0.0028, 6, 48);
-    rim.translate(cx, cy, z0 + sd * depth * 0.76);
+    const rim = new THREE.TorusGeometry(r * 0.93, 0.0026, 6, 64);
+    rim.translate(cx, cy, z0 + sd * depth * 0.7);
     rims.push(rim);
-    const face = z0 + sd * depth * 0.55;
     for (let k = 0; k < nBolts; k++) {
-      const a = (k / nBolts) * Math.PI * 2 + 0.2;
-      bolts.push(place(cyl(0.0052, 0.0052, 0.008, 6), { r: [Math.PI / 2, 0, 0], p: [cx + boltR * Math.cos(a), cy + boltR * Math.sin(a), face] }));
+      const a = (k / nBolts) * Math.PI * 2 + a0;
+      const bx = cx + boltR * Math.cos(a);
+      const by = cy + boltR * Math.sin(a);
+      covers.push(place(cyl(0.0062, 0.0072, depth * 0.5, 14), { r: [Math.PI / 2, 0, 0], p: [bx, by, z0 + sd * depth * 0.25] }));
+      bolts.push(place(cyl(0.0045, 0.0045, 0.005, 6), { r: [Math.PI / 2, 0, 0], p: [bx, by, z0 + sd * (depth * 0.5 + 0.002)] }));
     }
+    // face height of this cover at (x, y), for parts that sit on it
+    return (x, y) => z0 + sd * depth * coverFace(Math.hypot(x - cx, y - cy) / r, boss);
   };
-  const CL = { x: -0.03, y: 0.41 };
-  cover(CL.x, CL.y, 0.155, 0.09, 0.036, 1, 12, 0.096, 0.2);
-  cover(0.092, 0.47, 0.155, 0.074, 0.03, 1, 9, 0.079, 0.26);
-  cover(0.13, 0.43, -0.155, 0.07, 0.034, -1, 8, 0.075, 0.3);
-  // clutch cover: six radial ribs on its face and the oil filler cap
+  // (v17: clutch cover re-placed from the right-side photo, where its
+  // ribs converge at (-0.02, 0.375) and its rim runs out to x -0.10; it
+  // was 3.5 cm too high and a little too large)
+  const CL = { x: -0.025, y: 0.378 };
+  const CR = 0.083;
+  const clutchZ = cover(CL.x, CL.y, 0.155, CR, 0.04, 1, 12, CR * 1.035, 0.2);
+  // crank-end: a broad low casting carrying the two plugs, with the round
+  // pickup cover standing out of its upper part (right-side and 3/4
+  // photos: six bolts on bosses round it, a small bolt in the middle)
+  const crankZ = cover(0.092, 0.464, 0.155, 0.072, 0.022, 1, 0, 0, 0.3);
+  cover(0.088, 0.482, 0.155, 0.048, 0.04, 1, 6, 0.05, 0.3, 0.5);
+  bolts.push(place(cyl(0.0055, 0.0055, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [0.088, 0.482, 0.155 + 0.04 + 0.002] }));
+  cover(0.13, 0.43, -0.155, 0.07, 0.034, -1, 8, 0.0725, 0.3);
+  // clutch cover: six short radial ribs following the dome
   for (let k = 0; k < 6; k++) {
     const a = (k / 6) * Math.PI * 2 + 0.35;
-    const rib = rbox(0.05, 0.0065, 0.006, 0.002);
-    rib.rotateZ(a);
-    rib.translate(CL.x + 0.052 * Math.cos(a), CL.y + 0.052 * Math.sin(a), 0.155 + 0.036 * 0.79);
-    covers.push(rib);
+    const pts = [];
+    for (let i = 0; i <= 6; i++) {
+      const rr = lerp(0.03, 0.07, i / 6);
+      const x = CL.x + rr * Math.cos(a);
+      const y = CL.y + rr * Math.sin(a);
+      pts.push(v3(x, y, clutchZ(x, y) + 0.0012));
+    }
+    covers.push(sweep(pts, () => rrect(0.006, 0.0045, 0.0018, 2), { steps: 10, up: v3(0, 0, 1) }));
   }
-  black.push(place(cyl(0.015, 0.015, 0.012, 20), { r: [Math.PI / 2, 0, 0], p: [CL.x + 0.004, CL.y + 0.052, 0.155 + 0.036 * 0.82] }));
-  rims.push(place(new THREE.TorusGeometry(0.0155, 0.0022, 6, 24), { p: [CL.x + 0.004, CL.y + 0.052, 0.155 + 0.036 * 0.82 + 0.006] }));
+  // oil filler cap at the top of the clutch cover, in a raised neck
+  const OF = [CL.x + 0.016, CL.y + 0.067];
+  const ofz = clutchZ(OF[0], OF[1]);
+  covers.push(place(cyl(0.019, 0.02, 0.012, 24), { r: [Math.PI / 2, 0, 0], p: [OF[0], OF[1], ofz + 0.003] }));
+  black.push(place(cyl(0.0145, 0.0145, 0.008, 20), { r: [Math.PI / 2, 0, 0], p: [OF[0], OF[1], ofz + 0.011] }));
+  black.push(place(rbox(0.022, 0.005, 0.006, 0.002), { p: [OF[0], OF[1], ofz + 0.016] }));
+  // clutch release: a silver tube rising out of the cover's upper rear
+  // quarter, with the cable leaving its end up and forward under the frame
+  // (3/4 and right-side photos)
+  const rl0 = v3(CL.x - 0.032, CL.y + 0.046, clutchZ(CL.x - 0.032, CL.y + 0.046) + 0.004);
+  const rl1 = v3(CL.x - 0.062, CL.y + 0.084, rl0.z + 0.012);
+  covers.push(rod(rl0, rl1, 0.0078, 16));
+  covers.push(place(new THREE.SphereGeometry(0.0078, 12, 8), { p: [rl1.x, rl1.y, rl1.z] }));
+  engineHoses.push(tube([rl1.clone().add(v3(0.004, 0.006, 0)), v3(-0.06, 0.49, 0.2), v3(0.02, 0.515, 0.19), v3(0.11, 0.565, 0.17), v3(0.2, 0.615, 0.15)], 0.0042, 40, 8));
   // crank-end cover: timing and crank-turning plugs
-  for (const [x, y] of [[0.081, 0.412], [0.106, 0.406]]) black.push(place(cyl(0.0105, 0.0105, 0.01, 18), { r: [Math.PI / 2, 0, 0], p: [x, y, 0.155 + 0.03 * 0.84] }));
+  for (const [x, y] of [[0.081, 0.412], [0.106, 0.406]]) black.push(place(cyl(0.0105, 0.0105, 0.01, 18), { r: [Math.PI / 2, 0, 0], p: [x, y, crankZ(x, y) + 0.002] }));
   // hoses and wiring round the engine (black rubber), as seen in the photos
-  const engineHoses = [
-    tube([v3(0.2, 0.545, 0.13), v3(0.12, 0.575, 0.15), v3(0.02, 0.565, 0.155), v3(-0.07, 0.53, 0.15), v3(-0.12, 0.49, 0.14)], 0.011, 32, 10),
+  engineHoses.push(
     tube([v3(0.24, 0.47, -0.15), v3(0.2, 0.53, -0.16), v3(0.12, 0.56, -0.162), v3(0.04, 0.55, -0.158)], 0.012, 28, 10),
     tube([v3(-0.1, 0.56, 0.12), v3(-0.06, 0.52, 0.16), v3(0.0, 0.505, 0.172), v3(0.05, 0.53, 0.168)], 0.005, 24, 8),
     tube([v3(-0.11, 0.57, -0.12), v3(-0.05, 0.53, -0.17), v3(0.03, 0.52, -0.175)], 0.005, 20, 8),
-  ];
+  );
   // sprocket cover (left)
-  black.push(extrude(shape(Y([[-0.115, 0.44], [-0.02, 0.445], [0.01, 0.4], [-0.005, 0.33], [-0.06, 0.31], [-0.115, 0.33]])), 0.025, 0.006, 2, 4).translate(0, 0, -0.17));
+  // (cast like the crankcase: dark grey in the left photo, not black; a
+  // few cast ribs and its bolts break up the face)
+  dark.push(extrude(shape(Y([[-0.115, 0.44], [-0.02, 0.445], [0.01, 0.4], [-0.005, 0.33], [-0.06, 0.31], [-0.115, 0.33]])), 0.025, 0.006, 2, 4).translate(0, 0, -0.17));
+  for (const [x0, y0, x1, y1] of [[-0.1, 0.46, -0.03, 0.47], [-0.105, 0.425, -0.025, 0.43], [-0.1, 0.39, -0.035, 0.385]]) {
+    dark.push(rod(v3(x0, y0, -0.183), v3(x1, y1, -0.183), 0.0035, 6));
+  }
+  for (const [x, y] of [[-0.108, 0.47], [-0.03, 0.478], [0.0, 0.435], [-0.012, 0.375], [-0.062, 0.355], [-0.108, 0.375]]) {
+    bolts.push(place(cyl(0.0048, 0.0048, 0.006, 6), { r: [Math.PI / 2, 0, 0], p: [x, y, -0.184] }));
+  }
+  // coolant hose down the left side over the sprocket cover, with bright
+  // clamps (left photo)
+  engineHoses.push(tube([v3(0.11, 0.565, -0.15), v3(0.04, 0.545, -0.168), v3(-0.02, 0.51, -0.188), v3(-0.045, 0.45, -0.192), v3(-0.048, 0.38, -0.19), v3(-0.035, 0.33, -0.175)], 0.0115, 40, 12));
+  for (const [x, y, z, ax] of [[0.062, 0.551, -0.163, 1.3], [0.025, 0.538, -0.173, 1.0], [-0.044, 0.43, -0.192, 0.05]]) {
+    bolts.push(place(new THREE.TorusGeometry(0.0125, 0.0022, 6, 18), { r: [Math.PI / 2, ax, 0], p: [x, y, z] }));
+  }
   // oil filter + water pump
   black.push(place(cyl(0.034, 0.034, 0.07, 24), { r: [0, 0, -1.1], p: [0.212, 0.235 + dy, 0.05] }));
   silver.push(place(cyl(0.04, 0.04, 0.03, 24), { r: [Math.PI / 2, 0, 0], p: [0.19, 0.25 + dy, -0.15] }));
@@ -191,7 +247,12 @@ export function buildEngine(M) {
   const radPt = (a, b, z) => v3(RO.x + a * Math.cos(RT) + b * Math.sin(RT), RO.y - a * Math.sin(RT) + b * Math.cos(RT), z);
   const coreMat = M.radiator.clone();
   const ft = finTexture();
-  if (ft) coreMat.map = ft;
+  // (the fin texture carries the darkness; a dark base colour on top of it
+  // made the core read near black, where the photos show dark grey)
+  if (ft) {
+    coreMat.map = ft;
+    coreMat.color.set('#ffffff');
+  }
   rad.add(mesh(radBox(0.004, 0.044, -0.2, 0.05, -0.165, 0.165, 24), coreMat, 'RadiatorCore'));
   const tanks = [];
   for (const s of [-1, 1]) tanks.push(radBox(0, 0.048, -0.212, 0.062, s > 0 ? 0.162 : -0.19, s > 0 ? 0.19 : -0.162, 1, false));

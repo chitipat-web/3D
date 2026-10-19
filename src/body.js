@@ -401,13 +401,20 @@ function buildNose(M) {
     ...[0.205, 0.17, 0.14, 0.1, 0.07].map((z) => [z, lensTop(z) - 0.006 - 0.06 * (z - 0.046)]),
   ];
   const cups = [[0.105, 0.745, 0.034], [0.172, 0.768, 0.036]];
+  // (v17: each facet vertex is pushed in or out by up to 4.5 mm, so the
+  // flat-shaded facets tilt every which way and sparkle like the real
+  // crystal-cut reflector instead of reading as a white sheet)
+  const facetJitter = (z, y) => {
+    const h = Math.sin(Math.round(z * 2000) * 12.9898 + Math.round(y * 2000) * 78.233) * 43758.5453;
+    return (h - Math.floor(h) - 0.5) * 0.009;
+  };
   const reflSurf = (z, y) => {
     let d = 0.03;
     for (const [cz, cy, r] of cups) {
       const q = ((Math.abs(z) - cz) ** 2 + (y - cy) ** 2) / (r * r);
       if (q < 1) d += 0.02 * (1 - q);
     }
-    return noseF(z, y) - d;
+    return noseF(z, y) - d + facetJitter(z, y);
   };
   for (const s of [1, -1]) {
     const mz = (pts) => (s > 0 ? pts : mirrorZY(pts));
@@ -459,7 +466,9 @@ function buildNose(M) {
   // with the top face 2 cm further back where it meets the lights)
   const chinPlan = kf([[0, 0.889], [0.04, 0.88], [0.08, 0.867], [0.12, 0.851], [0.16, 0.826], [0.2, 0.794], [0.244, 0.752]]);
   const chinSurf = (z, y) => chinPlan(Math.abs(z)) - 1.5 * soft(0.689 - y, 0.002) - 0.8 * soft(y - 0.692, 0.003);
-  const chinTop = [[0.03, 0.716], [0.06, 0.72, C], [0.094, 0.719], [0.12, 0.717], [0.16, 0.714], [0.2, 0.714], [0.229, 0.717, C]];
+  // (its top edge stays 5 mm under the lens: the close-up shows a thin dark
+  // line of the light's housing between them)
+  const chinTop = [[0.03, 0.714], [0.06, 0.716, C], [0.094, 0.715], [0.12, 0.713], [0.16, 0.71], [0.2, 0.71], [0.229, 0.713, C]];
   const chin = [
     [0, 0.685, C], [0.12, 0.688], [0.238, 0.695, C], [0.245, 0.709, C], ...chinTop.slice().reverse(), [0, 0.714, C],
     ...chinTop.map((p) => [-p[0], p[1], p[2] || 0]), [-0.245, 0.709, C], [-0.238, 0.695, C], [-0.12, 0.688],
@@ -547,7 +556,7 @@ function buildWindscreen(M) {
 // ===========================================================================
 export const TANK = {
   // (v15: the rear end runs on down to the seat, as in both side photos)
-  top: kf([[0.336, 0.872], [0.3, 0.906], [0.26, 0.938], [0.2, 0.963], [0.12, 0.981], [0.04, 0.989], [-0.03, 0.987], [-0.08, 0.974], [-0.11, 0.952], [-0.13, 0.914], [-0.15, 0.877], [-0.165, 0.853]]),
+  top: kf([[0.336, 0.872], [0.3, 0.906], [0.26, 0.938], [0.2, 0.963], [0.12, 0.981], [0.04, 0.989], [-0.03, 0.987], [-0.08, 0.972], [-0.11, 0.946], [-0.13, 0.905], [-0.15, 0.869], [-0.165, 0.85]]),
   bot: kf([[0.336, 0.864], [0.25, 0.854], [0.15, 0.842], [0.05, 0.832], [0.0, 0.826], [-0.05, 0.814], [-0.1, 0.797], [-0.142, 0.785], [-0.165, 0.78]]),
   w: kf([[0.336, 0.12], [0.3, 0.155], [0.24, 0.186], [0.16, 0.202], [0.08, 0.2], [0.0, 0.186], [-0.06, 0.164], [-0.1, 0.14], [-0.142, 0.1], [-0.165, 0.078]]),
 };
@@ -613,7 +622,9 @@ function buildTank(M, matR, matL) {
 // ===========================================================================
 const SEAT = {
   // (v15: the rear rises a little later, both side photos)
-  top: kf([[-0.118, 0.874], [-0.14, 0.857], [-0.18, 0.843], [-0.25, 0.836], [-0.32, 0.838], [-0.38, 0.848], [-0.43, 0.862], [-0.47, 0.879], [-0.49, 0.89], [-0.505, 0.9]]),
+  // (v17: the front half sits 1-2 cm lower, both side photos; the tank's
+  // rear end steps down onto it)
+  top: kf([[-0.118, 0.858], [-0.14, 0.838], [-0.165, 0.826], [-0.18, 0.823], [-0.21, 0.825], [-0.25, 0.828], [-0.3, 0.833], [-0.34, 0.841], [-0.38, 0.849], [-0.43, 0.862], [-0.47, 0.879], [-0.49, 0.89], [-0.505, 0.9]]),
   w: kf([[-0.118, 0.07], [-0.15, 0.105], [-0.22, 0.13], [-0.32, 0.134], [-0.42, 0.122], [-0.505, 0.1]]),
 };
 const PILLION = {
